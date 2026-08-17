@@ -9,6 +9,13 @@
     "cli",
     "build"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moros-oxus/vertekum.git",
+    "directory": "packages/workbench/cli"
+  },
+  "homepage": "https://github.com/moros-oxus/vertekum",
+  "bugs": "https://github.com/moros-oxus/vertekum/issues",
   "files": [
     "CHANGELOG.md",
     "bin",

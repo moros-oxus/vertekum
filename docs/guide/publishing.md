@@ -53,10 +53,8 @@ The `files` allowlists ship `src` and `tsconfig.json` and exclude `*.test.ts(x)`
 `LICENSE`, and `package.json` ride along automatically — npm always includes them regardless
 of the allowlist, which is why each public package holds its own `LICENSE` copy.
 
-`repository`/`homepage`/`bugs` fields are deliberately absent: they wait until the public
-repository URL exists. At first publish: add them across the public packages, switch the
-changelog generator to `@changesets/changelog-github`, and wire the changesets GitHub
-action for release PRs.
+Every public package carries `repository` (with its monorepo `directory`), `homepage`, and
+`bugs`, all pointing at [moros-oxus/vertekum](https://github.com/moros-oxus/vertekum).
 
 ## Versioning and releasing
 
@@ -79,10 +77,15 @@ either releases, both version together, so a core is never shipped that the cli 
 versioned against. `pnpm changeset:status` lists public packages changed on a branch that
 no changeset covers.
 
-A release consumes the queue:
+Releasing is automated: on every push to `main`, the changesets GitHub action
+(`.github/workflows/release.yml`) maintains a **"Version Packages" PR** that previews all
+pending bumps and changelog lines; merging that PR publishes to npm (via the repo's
+`NPM_TOKEN` secret) and tags. The manual equivalent still works:
 
 ```bash
-pnpm release:version   # bumps versions + writes per-package CHANGELOG.md, empties .changeset/
+GITHUB_TOKEN=<read-only PAT> pnpm release:version
+                       # bumps versions + writes per-package CHANGELOG.md, empties .changeset/
+                       # (the token is for the github changelog generator's commit/PR links)
 git diff               # the review artifact: every bump and changelog line
 git commit -am "chore(release): version packages"
 pnpm release:publish   # publishes changed packages (npm), creates git tags

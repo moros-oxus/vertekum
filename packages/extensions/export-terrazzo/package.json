@@ -9,6 +9,13 @@
     "terrazzo",
     "export"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moros-oxus/vertekum.git",
+    "directory": "packages/extensions/export-terrazzo"
+  },
+  "homepage": "https://github.com/moros-oxus/vertekum",
+  "bugs": "https://github.com/moros-oxus/vertekum/issues",
   "files": [
     "CHANGELOG.md",
     "src",

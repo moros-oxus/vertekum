@@ -9,6 +9,13 @@
     "schema",
     "atlassian"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moros-oxus/vertekum.git",
+    "directory": "packages/schemas/atlassian"
+  },
+  "homepage": "https://github.com/moros-oxus/vertekum",
+  "bugs": "https://github.com/moros-oxus/vertekum/issues",
   "files": [
     "CHANGELOG.md",
     "*.json",

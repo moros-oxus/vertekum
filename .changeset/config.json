@@ -1,6 +1,11 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
-  "changelog": "@changesets/cli/changelog",
+  "changelog": [
+    "@changesets/changelog-github",
+    {
+      "repo": "moros-oxus/vertekum"
+    }
+  ],
   "commit": false,
   "fixed": [],
   "linked": [["@vertekum/core", "@vertekum/cli"]],
@@ -9,5 +14,8 @@
   "updateInternalDependencies": "patch",
   "bumpVersionsWithWorkspaceProtocolOnly": true,
   "ignore": [],
-  "privatePackages": { "version": false, "tag": false }
+  "privatePackages": {
+    "version": false,
+    "tag": false
+  }
 }
