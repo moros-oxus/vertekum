@@ -1,0 +1,841 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum://schema-atlassian/motion.json",
+  "title": "Atlassian Design System — motion",
+  "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
+  "type": "object",
+  "properties": {
+    "motion": {
+      "type": "object",
+      "properties": {
+        "avatar": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "hovered": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "blanket": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "button": {
+          "type": "object",
+          "properties": {
+            "hovered": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "pressed": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "duration": {
+          "type": "object",
+          "properties": {
+            "instant": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "long": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "medium": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "short": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xlong": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xshort": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xxlong": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xxshort": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "easing": {
+          "type": "object",
+          "properties": {
+            "in": {
+              "type": "object",
+              "properties": {
+                "practical": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "inout": {
+              "type": "object",
+              "properties": {
+                "bold": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "out": {
+              "type": "object",
+              "properties": {
+                "bold": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "practical": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "spring": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "flag": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "reposition": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "keyframe": {
+          "type": "object",
+          "properties": {
+            "fade": {
+              "type": "object",
+              "properties": {
+                "in": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "out": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "scale": {
+              "type": "object",
+              "properties": {
+                "in": {
+                  "type": "object",
+                  "properties": {
+                    "medium": {
+                      "type": "object",
+                      "properties": {},
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "small": {
+                      "type": "object",
+                      "properties": {},
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    }
+                  },
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "out": {
+                  "type": "object",
+                  "properties": {
+                    "medium": {
+                      "type": "object",
+                      "properties": {},
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "small": {
+                      "type": "object",
+                      "properties": {},
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    }
+                  },
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "slide": {
+              "type": "object",
+              "properties": {
+                "in": {
+                  "type": "object",
+                  "properties": {
+                    "bottom": {
+                      "type": "object",
+                      "properties": {
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "left": {
+                      "type": "object",
+                      "properties": {
+                        "half": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        },
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "right": {
+                      "type": "object",
+                      "properties": {
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "top": {
+                      "type": "object",
+                      "properties": {
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    }
+                  },
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "out": {
+                  "type": "object",
+                  "properties": {
+                    "bottom": {
+                      "type": "object",
+                      "properties": {
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "left": {
+                      "type": "object",
+                      "properties": {
+                        "half": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        },
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "right": {
+                      "type": "object",
+                      "properties": {
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    },
+                    "top": {
+                      "type": "object",
+                      "properties": {
+                        "short": {
+                          "type": "object",
+                          "properties": {},
+                          "patternProperties": {
+                            "^\\$": true
+                          },
+                          "unevaluatedProperties": false
+                        }
+                      },
+                      "patternProperties": {
+                        "^\\$": true
+                      },
+                      "unevaluatedProperties": false
+                    }
+                  },
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "label": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "listitem": {
+          "type": "object",
+          "properties": {
+            "hovered": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "pressed": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "selected": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "modal": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "panel": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "popup": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {
+                "bottom": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "left": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "right": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "top": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {
+                "bottom": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "left": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "right": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "top": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "sidenav": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "right": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "right": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "spotlight": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "patternProperties": {
+    "^\\$": true
+  }
+}

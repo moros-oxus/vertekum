@@ -1,0 +1,50 @@
+{
+  "color": {
+    "gray": {
+      "100": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.967, 0.0029, 264.542],
+          "alpha": 1,
+          "hex": "#f3f4f6"
+        }
+      },
+      "500": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.551, 0.0234, 264.3637],
+          "alpha": 1,
+          "hex": "#6b7280"
+        }
+      },
+      "900": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.2101, 0.0318, 264.6645],
+          "alpha": 1,
+          "hex": "#111827"
+        }
+      },
+      "$type": "color"
+    },
+    "red": {
+      "100": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.9356, 0.0309, 17.7171],
+          "alpha": 1,
+          "hex": "#fee2e2"
+        }
+      },
+      "900": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.3958, 0.1331, 25.723],
+          "alpha": 1,
+          "hex": "#7f1d1d"
+        }
+      },
+      "$type": "color"
+    }
+  }
+}

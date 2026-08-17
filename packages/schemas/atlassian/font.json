@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum://schema-atlassian/font.json",
+  "title": "Atlassian Design System — font",
+  "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
+  "type": "object",
+  "properties": {
+    "font": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "properties": {
+            "large": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "small": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "code": {
+          "type": "object",
+          "properties": {},
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "family": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "brand": {
+              "type": "object",
+              "properties": {
+                "body": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "heading": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "code": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "heading": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "heading": {
+          "type": "object",
+          "properties": {
+            "large": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "medium": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "small": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xlarge": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xsmall": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xxlarge": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "xxsmall": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "metric": {
+          "type": "object",
+          "properties": {
+            "large": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "medium": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "small": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "weight": {
+          "type": "object",
+          "properties": {
+            "bold": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "medium": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "regular": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "semibold": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "patternProperties": {
+    "^\\$": true
+  }
+}

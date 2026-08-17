@@ -1,0 +1,32 @@
+@scope ([data-vtk-value-field]) {
+  :scope {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  [data-vtk-value-field-row] {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+
+  [data-vtk-value-field-control] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  [data-vtk-value-field-row] button[aria-pressed="true"] {
+    color: var(--vtk-accent);
+    border-color: var(--vtk-accent);
+  }
+
+  [data-vtk-value-field-control] [data-vtk-invalid] {
+    border-color: var(--vtk-danger);
+  }
+
+  [data-vtk-value-field-error] {
+    font-size: 11px;
+    color: var(--vtk-danger);
+  }
+}

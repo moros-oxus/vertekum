@@ -1,0 +1,36 @@
+{
+  "color": {
+    "$type": "color",
+    "blue": {
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.5461, 0.2152, 262.8809],
+        "alpha": 1,
+        "hex": "#0055cc"
+      }
+    },
+    "text": {
+      "$root": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.2101, 0.0318, 264.6645],
+          "alpha": 1,
+          "hex": "#172b4d"
+        }
+      },
+      "subtle": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.4779, 0.0308, 264.3728],
+          "alpha": 1,
+          "hex": "#44546f"
+        }
+      }
+    },
+    "link": { "$value": "{color.text.$root}" },
+    "accent": { "$ref": "#/color/blue" }
+  },
+  "chroma": {
+    "accent": { "$ref": "#/color/blue/$value/components/1", "$type": "number" }
+  }
+}

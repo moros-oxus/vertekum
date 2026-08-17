@@ -1,0 +1,54 @@
+@scope ([data-vtk-token-editor]) {
+  [data-vtk-field-grid] {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  [data-vtk-field] {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  [data-vtk-field-label] {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--vtk-muted);
+  }
+
+  [data-vtk-field] [data-vtk-invalid] {
+    border-color: var(--vtk-danger);
+  }
+
+  [data-vtk-field-error] {
+    font-size: 11px;
+    color: var(--vtk-danger);
+  }
+
+  [data-vtk-field-label] abbr {
+    color: var(--vtk-accent);
+    text-decoration: none;
+  }
+
+  [data-vtk-clear] {
+    margin-left: auto;
+    padding: 1px 8px;
+    font-size: 11px;
+  }
+
+  [data-vtk-empty] {
+    margin: 0;
+    font-size: 13px;
+    color: var(--vtk-muted);
+  }
+
+  [data-vtk-panel-actions] {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum://fixture.grammar/vocabulary.json",
+  "properties": {
+    "color": {
+      "properties": {
+        "text": {
+          "allOf": [
+            { "$ref": "./grammar-denotations.json#/$defs/emphasis.open" }
+          ],
+          "properties": {
+            "brand": { "$ref": "./grammar-denotations.json#/$defs/emphasis" }
+          },
+          "patternProperties": { "^\\$": true },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": { "^\\$": true },
+      "unevaluatedProperties": false
+    }
+  },
+  "patternProperties": { "^\\$": true },
+  "unevaluatedProperties": false
+}

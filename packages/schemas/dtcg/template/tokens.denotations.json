@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/tokens.denotations.json",
+  "title": "Token denotations",
+  "description": "The reusable meaning-units a vocabulary references: what a position MAY contain, defined once and applied at many paths. An `.open` denotation lists names without sealing them, so vocabularies can compose it into unions; its sealed twin is what positions reference directly.",
+  "$defs": {
+    "emphasis.open": {
+      "properties": {
+        "subtle": { "$ref": "./token.terminus.json" },
+        "default": { "$ref": "./token.terminus.json" },
+        "bold": { "$ref": "./token.terminus.json" }
+      }
+    },
+
+    "emphasis": {
+      "allOf": [{ "$ref": "#/$defs/emphasis.open" }],
+      "patternProperties": { "^\\$": true },
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "color": {
+    "$type": "color",
+    "text": {
+      "$root": {
+        "$value": "{color.neutral.0}"
+      }
+    }
+  }
+}

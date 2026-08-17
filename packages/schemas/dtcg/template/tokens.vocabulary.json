@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/tokens.vocabulary.json",
+  "title": "Token vocabulary",
+  "description": "The names this system permits, position by position. Positions reference denotations from ./tokens.denotations.json; paths end at ./token.terminus.json. The DTCG format schema validates the same files in parallel — this file never composes it.",
+  "properties": {
+    "color": {
+      "properties": {
+        "text": {
+          "allOf": [
+            { "$ref": "./tokens.denotations.json#/$defs/emphasis.open" }
+          ],
+          "properties": {
+            "brand": { "$ref": "./tokens.denotations.json#/$defs/emphasis" }
+          },
+          "patternProperties": { "^\\$": true },
+          "unevaluatedProperties": false
+        },
+        "background": {
+          "$ref": "./tokens.denotations.json#/$defs/emphasis"
+        }
+      },
+      "patternProperties": { "^\\$": true },
+      "unevaluatedProperties": false
+    }
+  },
+  "patternProperties": { "^\\$": true },
+  "unevaluatedProperties": false
+}

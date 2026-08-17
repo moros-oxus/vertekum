@@ -1,0 +1,28 @@
+@scope (.vtk-dashboard) {
+  :scope {
+    display: block;
+    padding: 24px;
+  }
+  .vtk-dashboard-stats {
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+  }
+  .vtk-dashboard-stats > div {
+    min-inline-size: 6rem;
+    padding: 0.75rem 1rem;
+    background: var(--vtk-surface);
+    border: 1px solid var(--vtk-border);
+    border-radius: 8px;
+  }
+  .vtk-dashboard-stats dt {
+    color: var(--vtk-muted);
+    font-size: 0.8rem;
+  }
+  .vtk-dashboard-stats dd {
+    margin: 0.25rem 0 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+}

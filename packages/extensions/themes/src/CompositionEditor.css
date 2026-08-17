@@ -1,0 +1,101 @@
+@scope ([data-vtk-composition-editor]) {
+  [data-vtk-comp-toolbar],
+  [data-vtk-comp-footer] {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  [data-vtk-comp-toolbar] {
+    margin-bottom: 12px;
+  }
+  [data-vtk-comp-footer] {
+    margin-top: 12px;
+  }
+  [data-vtk-comp-spacer] {
+    flex: 1;
+  }
+  [data-vtk-comp-name] {
+    font-weight: 600;
+  }
+  [data-vtk-comp-sublabel] {
+    margin: 8px 0 2px;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+  [data-vtk-comp-form] label {
+    display: block;
+    margin-bottom: 6px;
+  }
+  [data-vtk-comp-row],
+  [data-vtk-comp-context] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0;
+  }
+  [data-vtk-comp-context] {
+    padding: 6px;
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+  }
+
+  /* Validation surfacing (contrast: #fff on #c0392b ≈ 5.9:1; #000 on #e0a800 ≈ 8:1). */
+  vtk-concertina-item[data-vtk-invalid="error"] {
+    outline: 2px solid #c0392b;
+  }
+  vtk-concertina-item[data-vtk-invalid="warning"] {
+    outline: 2px solid #e0a800;
+  }
+  [data-vtk-comp-badge] {
+    display: inline-block;
+    inline-size: 14px;
+    block-size: 14px;
+    margin-inline-start: 6px;
+    border-radius: 50%;
+    position: relative;
+  }
+  [data-vtk-comp-badge="error"] {
+    background: #c0392b;
+  }
+  [data-vtk-comp-badge="error"]::before {
+    content: "";
+    position: absolute;
+    inset-block: 45%;
+    inset-inline: 25%;
+    background: #fff;
+  }
+  [data-vtk-comp-badge="warning"] {
+    background: #e0a800;
+  }
+  [data-vtk-comp-badge="warning"]::before {
+    content: "i";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #000;
+    font: italic 700 10px / 1 serif;
+  }
+  [data-vtk-comp-issue] {
+    margin: 2px 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  [data-vtk-comp-issue="error"] {
+    color: #fff;
+    background: #c0392b;
+  }
+  [data-vtk-comp-issue="warning"] {
+    color: #000;
+    background: #e0a800;
+  }
+  [data-vtk-comp-row][data-vtk-invalid] select {
+    border-color: #c0392b;
+  }
+  [data-vtk-comp-rowmsg] {
+    color: #c0392b;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "version": "2025.10",
+  "name": "default",
+  "description": "Primitives, then the semantic text layer, then one theme context on top.",
+  "sets": {
+    "core": {
+      "sources": [
+        {
+          "$ref": "core.json"
+        }
+      ]
+    },
+    "text": {
+      "sources": [
+        {
+          "$ref": "text.json"
+        }
+      ]
+    }
+  },
+  "modifiers": {
+    "theme": {
+      "description": "Colour theme.",
+      "default": "light",
+      "contexts": {
+        "light": [
+          {
+            "$ref": "text-light.json"
+          }
+        ],
+        "dark": [
+          {
+            "$ref": "text-dark.json"
+          }
+        ]
+      }
+    }
+  },
+  "resolutionOrder": [
+    {
+      "$ref": "#/sets/core"
+    },
+    {
+      "$ref": "#/sets/text"
+    },
+    {
+      "$ref": "#/modifiers/theme"
+    }
+  ]
+}

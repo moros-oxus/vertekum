@@ -1,0 +1,22 @@
+{
+  "name": "@vertekum/server",
+  "version": "0.1.0",
+  "description": "Vertekum local bridge server",
+  "license": "UNLICENSED",
+  "private": true,
+  "files": [
+    "src",
+    "tsconfig.json",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "type": "module",
+  "main": "./src/main.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@vertekum/core": "workspace:*"
+  }
+}

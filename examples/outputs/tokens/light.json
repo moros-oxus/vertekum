@@ -1,0 +1,11 @@
+{
+  "surface": {
+    "$type": "color",
+    "$value": {
+      "colorSpace": "oklch",
+      "components": [1, 0, 0],
+      "alpha": 1,
+      "hex": "#ffffff"
+    }
+  }
+}

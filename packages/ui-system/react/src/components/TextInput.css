@@ -1,0 +1,17 @@
+@scope ([data-vtk-input]) {
+  :scope {
+    width: 100%;
+    padding: 5px 8px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--vtk-fg);
+    background: var(--vtk-bg);
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+  }
+
+  :scope:focus-visible {
+    outline: 2px solid var(--vtk-accent);
+    outline-offset: -1px;
+  }
+}

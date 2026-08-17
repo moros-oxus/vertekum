@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/self.json",
+  "type": "object",
+  "properties": {
+    "a": { "$ref": "https://example.com/self.json#/definitions/inner" },
+    "b": { "$ref": "https://example.com/embedded.json" }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "inner": { "type": "object" },
+    "https://example.com/embedded.json": {
+      "$id": "https://example.com/embedded.json",
+      "type": "object",
+      "required": ["$value"]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+@scope ([data-vtk-dialog]) {
+  :scope {
+    width: min(560px, 92vw);
+    max-height: 85vh;
+    padding: 0;
+    color: var(--vtk-fg);
+    background: var(--vtk-surface);
+    border: 1px solid var(--vtk-border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  :scope::backdrop {
+    background: rgb(0 0 0 / 0.5);
+  }
+
+  [data-vtk-dialog-body] {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 85vh;
+    padding: 18px 20px 20px;
+    overflow: auto;
+  }
+
+  [data-vtk-dialog-title] {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  [data-vtk-dialog-actions] {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+  }
+}

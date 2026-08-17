@@ -1,0 +1,19 @@
+@scope ([data-vtk-textarea]) {
+  :scope {
+    width: 100%;
+    min-height: 56px;
+    padding: 5px 8px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--vtk-fg);
+    background: var(--vtk-bg);
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+    resize: vertical;
+  }
+
+  :scope:focus-visible {
+    outline: 2px solid var(--vtk-accent);
+    outline-offset: -1px;
+  }
+}

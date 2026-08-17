@@ -1,0 +1,51 @@
+@scope ([data-vtk-setnav]) {
+  :scope {
+    overflow: auto;
+    border-right: 1px solid var(--vtk-border);
+    padding: 8px;
+  }
+  :scope ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  :scope li {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  /* The list + add buttons only — NOT the dialog buttons (those are @vtk-ui Buttons). */
+  :scope ul button,
+  [data-vtk-set-add] {
+    text-align: left;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--vtk-fg);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  :scope ul button:hover,
+  [data-vtk-set-add]:hover {
+    background: var(--vtk-border);
+  }
+  :scope li > button:first-child {
+    flex: 1;
+  }
+  :scope li > button:first-child[data-vtk-active] {
+    background: color-mix(in srgb, var(--vtk-accent) 24%, transparent);
+  }
+  [data-vtk-set-delete] {
+    flex: none;
+    opacity: 0.6;
+  }
+  [data-vtk-set-delete]:hover {
+    opacity: 1;
+  }
+  [data-vtk-set-add] {
+    width: 100%;
+    margin-top: 4px;
+  }
+}

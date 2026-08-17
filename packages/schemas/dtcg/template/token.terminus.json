@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/token.terminus.json",
+  "title": "Token terminus",
+  "description": "A terminal position in a vocabulary: the name ends here, as a token. Requiring $value is what refuses a group at this position — the format schema, validating in parallel, takes care of everything else a token must be. Reference this file wherever a vocabulary path reaches its leaf.",
+  "type": "object",
+  "required": ["$value"]
+}

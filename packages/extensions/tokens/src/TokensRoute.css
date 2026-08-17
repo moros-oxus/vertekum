@@ -1,0 +1,48 @@
+@scope ([data-vtk-tokens]) {
+  :scope {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: 100%;
+  }
+  :scope > section {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: auto;
+  }
+  .vtk-tokens-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--vtk-border);
+  }
+  .vtk-tokens-toolbar button {
+    padding: 4px 10px;
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+    background: var(--vtk-surface);
+    color: var(--vtk-fg);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .vtk-tokens-toolbar button:hover {
+    background: var(--vtk-border);
+  }
+  .vtk-theme-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--vtk-muted);
+  }
+  .vtk-theme-select select {
+    padding: 3px 6px;
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+    background: var(--vtk-bg);
+    color: var(--vtk-fg);
+    font: inherit;
+    font-size: 12px;
+  }
+}

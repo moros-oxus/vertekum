@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum://schema-atlassian/elevation.json",
+  "title": "Atlassian Design System — elevation",
+  "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
+  "type": "object",
+  "properties": {
+    "elevation": {
+      "type": "object",
+      "properties": {
+        "shadow": {
+          "type": "object",
+          "properties": {
+            "overflow": {
+              "type": "object",
+              "properties": {
+                "perimeter": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "spread": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "overlay": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "raised": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "surface": {
+          "type": "object",
+          "properties": {
+            "container": {
+              "type": "object",
+              "properties": {
+                "hovered": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "pressed": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "hovered": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "overlay": {
+              "type": "object",
+              "properties": {
+                "hovered": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "pressed": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "pressed": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "raised": {
+              "type": "object",
+              "properties": {
+                "hovered": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                },
+                "pressed": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "sunken": {
+              "type": "object",
+              "properties": {},
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "patternProperties": {
+    "^\\$": true
+  }
+}

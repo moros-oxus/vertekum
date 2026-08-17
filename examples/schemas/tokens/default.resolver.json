@@ -1,0 +1,30 @@
+{
+  "version": "2025.10",
+  "name": "default",
+  "description": "Primitives, then the semantic layer.",
+  "sets": {
+    "core": {
+      "sources": [
+        {
+          "$ref": "core.json"
+        }
+      ]
+    },
+    "semantic": {
+      "sources": [
+        {
+          "$ref": "semantic.json"
+        }
+      ]
+    }
+  },
+  "modifiers": {},
+  "resolutionOrder": [
+    {
+      "$ref": "#/sets/core"
+    },
+    {
+      "$ref": "#/sets/semantic"
+    }
+  ]
+}

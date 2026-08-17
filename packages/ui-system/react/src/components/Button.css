@@ -1,0 +1,36 @@
+@scope ([data-vtk-button]) {
+  :scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--vtk-fg);
+    background: var(--vtk-surface);
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  :scope:hover:not(:disabled) {
+    border-color: var(--vtk-accent);
+  }
+
+  :scope:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  :scope[data-vtk-variant="primary"] {
+    color: var(--vtk-on-accent, #fff);
+    background: var(--vtk-accent);
+    border-color: var(--vtk-accent);
+  }
+
+  :scope[data-vtk-variant="danger"] {
+    color: var(--vtk-danger, #c0392b);
+    border-color: var(--vtk-danger, #c0392b);
+  }
+  /* secondary = the default surface style (no override needed). */
+}

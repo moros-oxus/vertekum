@@ -1,0 +1,31 @@
+{
+  "name": "@vertekum",
+  "private": true,
+  "version": "0.1.0",
+  "description": "UI Systematics Management Application",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "pnpm --filter @vertekum-example/unabridged dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "clean:pristine": "pnpm dlx rimraf --glob **/node_modules",
+    "changeset": "changeset",
+    "changeset:status": "changeset status",
+    "release:version": "changeset version",
+    "release:publish": "changeset publish"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.1",
+    "@changesets/cli": "^3.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.0.0",
+    "hakoba": "^0.2.1",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

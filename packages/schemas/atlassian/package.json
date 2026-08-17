@@ -1,0 +1,37 @@
+{
+  "name": "@vertekum/schema-atlassian",
+  "version": "0.1.0",
+  "description": "The Atlassian Design System token vocabulary as JSON Schema files",
+  "license": "MIT",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "schema",
+    "atlassian"
+  ],
+  "files": [
+    "CHANGELOG.md",
+    "*.json",
+    "!package.json",
+    "!tsconfig.json",
+    "src/vocabulary.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./atlassian.json",
+    "./*": "./*"
+  },
+  "scripts": {
+    "derive": "tsx scripts/derive.ts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@atlaskit/tokens": "^16.5.0",
+    "ajv": "^8.20.0",
+    "tsx": "^4.22.5",
+    "vitest": "^3.0.5"
+  }
+}

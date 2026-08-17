@@ -1,0 +1,7 @@
+@scope (vtk-concertina-header) {
+  :scope {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}

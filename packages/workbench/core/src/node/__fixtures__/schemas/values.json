@@ -1,0 +1,13 @@
+{
+  "$id": "test:values",
+  "type": "object",
+  "properties": {
+    "color": {
+      "properties": {
+        "brand": {
+          "properties": { "$value": { "pattern": "^#[0-9a-fA-F]{6}$" } }
+        }
+      }
+    }
+  }
+}

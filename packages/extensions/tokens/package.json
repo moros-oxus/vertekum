@@ -1,0 +1,40 @@
+{
+  "name": "@vertekum/ext-tokens",
+  "version": "0.1.0",
+  "description": "Vertekum extension: the token table + editor panel (the /tokens route)",
+  "license": "UNLICENSED",
+  "private": true,
+  "files": [
+    "src",
+    "tsconfig.json",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts",
+    "./cli": "./src/cli.ts",
+    "./ui": "./src/ui.tsx"
+  },
+  "peerDependencies": {
+    "@vertekum-ui/react": "workspace:*",
+    "@vertekum/ext-value-editors": "workspace:*",
+    "react": "^19.0.0",
+    "vertekum": "workspace:*"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.0.0",
+    "@vertekum-ui/react": "workspace:*",
+    "@vertekum/ext-value-editors": "workspace:*",
+    "jsdom": "^29.1.1",
+    "react": "^19.0.0",
+    "vertekum": "workspace:*"
+  }
+}

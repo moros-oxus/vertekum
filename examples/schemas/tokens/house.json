@@ -1,0 +1,20 @@
+{
+  "color": {
+    "$type": "color",
+    "text": {
+      "neutral": {
+        "subtle": {
+          "$value": "{color.neutral.500}"
+        },
+        "bold": {
+          "$value": "{color.neutral.900}"
+        }
+      },
+      "brand": {
+        "bold": {
+          "$value": "{color.brand.500}"
+        }
+      }
+    }
+  }
+}

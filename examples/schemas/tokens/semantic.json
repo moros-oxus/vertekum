@@ -1,0 +1,16 @@
+{
+  "color": {
+    "$type": "color",
+    "text": {
+      "$root": {
+        "$value": "{color.neutral.900}"
+      },
+      "subtle": {
+        "$value": "{color.neutral.500}"
+      },
+      "marketing": {
+        "$value": "{color.brand.500}"
+      }
+    }
+  }
+}

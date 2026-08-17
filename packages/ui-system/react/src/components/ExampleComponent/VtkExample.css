@@ -1,0 +1,13 @@
+@scope (vtk-example) {
+  :scope {
+    --vtk-example-background: #bbb;
+    --vtk-example-background-focused: #999;
+
+    display: block;
+    background-color: var(--vtk-example-background);
+  }
+
+  :scope:focus-within {
+    background-color: var(--vtk-example-background-focused);
+  }
+}

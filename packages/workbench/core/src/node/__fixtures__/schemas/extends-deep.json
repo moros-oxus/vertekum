@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "test:extends-deep",
+  "allOf": [{ "$ref": "./base.json" }],
+  "properties": {
+    "color": {
+      "allOf": [{ "$ref": "./base.json#/properties/color" }],
+      "properties": { "accent": { "type": "object" } },
+      "unevaluatedProperties": false
+    }
+  },
+  "unevaluatedProperties": false
+}

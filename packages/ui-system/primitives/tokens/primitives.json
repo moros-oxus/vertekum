@@ -1,0 +1,38 @@
+{
+  "color": {
+    "bg": {
+      "$type": "color",
+      "$value": "#0f1115"
+    },
+    "surface": {
+      "$type": "color",
+      "$value": "#171a21"
+    },
+    "border": {
+      "$type": "color",
+      "$value": "#262b36"
+    },
+    "fg": {
+      "$type": "color",
+      "$value": "#e6e8ec"
+    },
+    "muted": {
+      "$type": "color",
+      "$value": "#8b93a3"
+    },
+    "accent": {
+      "$type": "color",
+      "$value": "#3b82f6"
+    }
+  },
+  "dimension": {
+    "radius-sm": {
+      "$type": "dimension",
+      "$value": "4px"
+    },
+    "radius-md": {
+      "$type": "dimension",
+      "$value": "8px"
+    }
+  }
+}

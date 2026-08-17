@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependency directories 
+node_modules
+
+# Environment variables / Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+
+
+# Build output
+dist
+
+# Generated export artifacts (demo)
+examples/*/build/
+
+# Local scratch / working notes (not version-controlled)
+.scratch/
+
+# Per-user config-engine overrides (tier 3), at any consumer's working dir. The release lock +
+# CHANGELOG in .vertekum/ ARE tracked. `**/` so nested consumers (examples/*, packages/*) match too.
+**/.vertekum/settings.json
+
+# AI Files and Settings. Root-anchored: the repo's own .claude/ is untracked, but examples
+# ship theirs (the agentic example's skill is content, written by `vertekum init`).
+CLAUDE.local.md
+/.claude/
+
+# CLI e2e fixtures (throwaway copies of examples/default; removed per test)
+examples/*/.e2e-*

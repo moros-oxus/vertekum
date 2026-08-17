@@ -1,0 +1,34 @@
+{
+  "name": "@vertekum/ext-themes",
+  "version": "0.1.0",
+  "description": "Vertekum extension: the Composition view (the /composition route over resolver documents)",
+  "license": "UNLICENSED",
+  "private": true,
+  "files": [
+    "src",
+    "tsconfig.json",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts",
+    "./ui": "./src/ui.tsx"
+  },
+  "peerDependencies": {
+    "@vertekum-ui/react": "workspace:*",
+    "react": "^19.0.0",
+    "vertekum": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.0.0",
+    "@vertekum-ui/react": "workspace:*",
+    "jsdom": "^29.1.1",
+    "react": "^19.0.0",
+    "vertekum": "workspace:*"
+  }
+}

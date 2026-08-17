@@ -1,0 +1,14 @@
+{
+  "name": "@vertekum-example/unabridged",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Reference Vertekum consumer \u2014 a dev/teaching example (run `pnpm dev`).",
+  "type": "module",
+  "scripts": {
+    "dev": "vertekum dev"
+  },
+  "devDependencies": {
+    "@vertekum/ext-essentials": "workspace:*",
+    "vertekum": "workspace:*"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "color": {
+    "brand": {
+      "primary": {
+        "$type": "color",
+        "$value": "{color.red.900}"
+      }
+    },
+    "neutral": {
+      "bold": {
+        "$type": "color",
+        "$value": "{color.gray.900}"
+      },
+      "default": {
+        "$type": "color",
+        "$value": "{color.gray.100}"
+      }
+    }
+  }
+}

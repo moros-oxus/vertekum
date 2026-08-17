@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum://fixture.grammar/denotations.json",
+  "$defs": {
+    "token": {
+      "type": "object",
+      "required": ["$value"]
+    },
+    "emphasis.open": {
+      "properties": {
+        "subtle": {
+          "$ref": "#/$defs/token"
+        },
+        "bold": {
+          "$ref": "#/$defs/token"
+        }
+      }
+    },
+    "emphasis": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/emphasis.open"
+        }
+      ],
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

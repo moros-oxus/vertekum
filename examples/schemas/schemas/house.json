@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "example:house",
+  "title": "A hand-written house vocabulary",
+  "description": "color.text.[neutral|brand|success].[subtle|bold] — names and order only; what a granted name IS belongs to the token author and the DTCG format schema.",
+  "$defs": {
+    "emphasis": {
+      "type": "object",
+      "properties": {
+        "subtle": {
+          "type": "object",
+          "properties": {},
+          "patternProperties": { "^\\$": true },
+          "unevaluatedProperties": false
+        },
+        "bold": {
+          "type": "object",
+          "properties": {},
+          "patternProperties": { "^\\$": true },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": { "^\\$": true },
+      "unevaluatedProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "color": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "object",
+          "properties": {
+            "neutral": { "$ref": "#/$defs/emphasis" },
+            "brand": { "$ref": "#/$defs/emphasis" },
+            "success": { "$ref": "#/$defs/emphasis" }
+          },
+          "patternProperties": { "^\\$": true },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": { "^\\$": true },
+      "unevaluatedProperties": false
+    }
+  },
+  "patternProperties": { "^\\$": true },
+  "unevaluatedProperties": false
+}

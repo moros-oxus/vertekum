@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum:dtcg/resolver",
+  "type": "object",
+  "required": ["version", "sets", "modifiers", "resolutionOrder"],
+  "properties": {
+    "version": {
+      "const": "2025.10"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "$schema": {
+      "type": "string"
+    },
+    "$defs": {
+      "type": "object"
+    },
+    "$extensions": {
+      "type": "object"
+    },
+    "sets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["sources"],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "modifiers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["contexts"],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "default": {
+            "type": "string"
+          },
+          "contexts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "resolutionOrder": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["$ref"],
+        "properties": {
+          "$ref": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

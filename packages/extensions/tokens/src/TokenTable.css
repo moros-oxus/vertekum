@@ -1,0 +1,42 @@
+@scope (.vtk-token-table) {
+  :scope {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--vtk-border);
+  }
+  thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--vtk-muted);
+  }
+  tbody th {
+    font-weight: 500;
+    color: var(--vtk-fg);
+  }
+  tbody td {
+    color: var(--vtk-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .vtk-token-actions {
+    width: 1%;
+    text-align: right;
+    white-space: nowrap;
+  }
+  td input[type="text"] {
+    width: 12ch;
+    padding: 4px 8px;
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+    background: var(--vtk-bg);
+    color: var(--vtk-fg);
+    font: inherit;
+    font-size: 12px;
+  }
+}

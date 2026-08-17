@@ -1,0 +1,21 @@
+{
+  "color": {
+    "$type": "color",
+    "text": {
+      "$root": {
+        "$value": "{color.neutral.900}"
+      },
+      "subtle": {
+        "$value": "{color.neutral.500}"
+      },
+      "brand": {
+        "$value": "{color.brand.500}"
+      },
+      "success": {
+        "$root": {
+          "$value": "{color.success.500}"
+        }
+      }
+    }
+  }
+}

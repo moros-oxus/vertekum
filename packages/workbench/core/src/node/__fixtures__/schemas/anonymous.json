@@ -1,0 +1,5 @@
+{
+  "type": "object",
+  "properties": { "space": { "type": "object" } },
+  "unevaluatedProperties": false
+}

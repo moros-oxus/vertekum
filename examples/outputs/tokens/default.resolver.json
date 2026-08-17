@@ -1,0 +1,24 @@
+{
+  "version": "2025.10",
+  "name": "default",
+  "description": "The full product composition: primitives, then one theme context.",
+  "sets": {
+    "core": {
+      "sources": [{ "$ref": "core.json" }]
+    }
+  },
+  "modifiers": {
+    "theme": {
+      "description": "Colour theme.",
+      "default": "light",
+      "contexts": {
+        "light": [{ "$ref": "light.json" }],
+        "dark": [{ "$ref": "dark.json" }]
+      }
+    }
+  },
+  "resolutionOrder": [
+    { "$ref": "#/sets/core" },
+    { "$ref": "#/modifiers/theme" }
+  ]
+}

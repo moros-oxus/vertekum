@@ -1,0 +1,19 @@
+@scope ([data-vtk-composition]) {
+  :scope {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+  :scope > section {
+    min-width: 0;
+  }
+  [data-vtk-composition-placeholder] h1 {
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+  [data-vtk-composition-placeholder] p {
+    margin: 0;
+    opacity: 0.7;
+  }
+}

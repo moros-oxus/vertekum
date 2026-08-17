@@ -1,0 +1,72 @@
+{
+  "color": {
+    "$type": "color",
+    "neutral": {
+      "0": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [1, 0, 0],
+          "alpha": 1,
+          "hex": "#ffffff"
+        }
+      },
+      "500": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.551, 0.0234, 264.3637],
+          "alpha": 1,
+          "hex": "#6b7280"
+        }
+      },
+      "900": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.2101, 0.0318, 264.6645],
+          "alpha": 1,
+          "hex": "#111827"
+        }
+      }
+    },
+    "brand": {
+      "500": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.5461, 0.2152, 262.8809],
+          "alpha": 1,
+          "hex": "#2563eb"
+        }
+      }
+    },
+    "success": {
+      "500": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.5273, 0.1371, 150.0693],
+          "alpha": 1,
+          "hex": "#15803d"
+        }
+      }
+    }
+  },
+  "space": {
+    "1": {
+      "$value": {
+        "value": 4,
+        "unit": "px"
+      }
+    },
+    "2": {
+      "$value": {
+        "value": 8,
+        "unit": "px"
+      }
+    },
+    "3": {
+      "$value": {
+        "value": 16,
+        "unit": "px"
+      }
+    },
+    "$type": "dimension"
+  }
+}

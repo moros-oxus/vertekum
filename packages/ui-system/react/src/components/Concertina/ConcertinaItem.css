@@ -1,0 +1,10 @@
+@scope (vtk-concertina-item) {
+  :scope {
+    display: block;
+  }
+
+  /* Open/closed is styling, not conditional rendering: hide the (always-mounted) content when closed. */
+  :scope:not([data-vtk-open]) > vtk-concertina-content {
+    display: none;
+  }
+}

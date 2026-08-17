@@ -1,0 +1,31 @@
+@scope ([data-vtk-tabs]) {
+  [data-vtk-tablist] {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--vtk-border);
+  }
+
+  [data-vtk-tab] {
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--vtk-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+
+  [data-vtk-tab]:hover {
+    color: var(--vtk-fg);
+  }
+
+  [data-vtk-tab][data-vtk-active] {
+    color: var(--vtk-fg);
+    border-bottom-color: var(--vtk-accent);
+  }
+
+  [data-vtk-tabpanel] {
+    padding-top: 14px;
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "$id": "test:remote",
+  "allOf": [{ "$ref": "https://example.com/schema.json" }]
+}

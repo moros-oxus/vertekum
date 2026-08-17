@@ -1,0 +1,59 @@
+{
+  "name": "@vertekum/cli",
+  "version": "0.1.0",
+  "description": "Headless CLI for Vertekum — build, check, describe, and extension-contributed commands over DTCG token projects",
+  "license": "Apache-2.0",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "cli",
+    "build"
+  ],
+  "files": [
+    "CHANGELOG.md",
+    "bin",
+    "src",
+    "loader.mjs",
+    "tsconfig.json",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./loader.mjs": "./loader.mjs"
+  },
+  "dependencies": {
+    "@vertekum/core": "workspace:*",
+    "commander": "^13.0.0",
+    "tsx": "^4.19.2"
+  },
+  "peerDependencies": {
+    "@vertekum/server": "*",
+    "vertekum": "*",
+    "vite": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "vertekum": "workspace:*",
+    "@vertekum/server": "workspace:*",
+    "vite": "^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@vertekum/server": {
+      "optional": true
+    },
+    "vertekum": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
+  },
+  "bin": {
+    "vertekum": "./bin/vertekum.mjs"
+  }
+}

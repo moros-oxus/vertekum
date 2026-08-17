@@ -1,0 +1,37 @@
+{
+  "name": "@vertekum/schema-dtcg",
+  "version": "0.1.0",
+  "description": "The DTCG schemas as files: the published 2025.10 base, verbatim, plus a vocabulary template",
+  "license": "MIT",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "schema",
+    "w3c"
+  ],
+  "files": [
+    "CHANGELOG.md",
+    "format.json",
+    "resolver.json",
+    "template"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./format.json",
+    "./format.json": "./format.json",
+    "./resolver.json": "./resolver.json",
+    "./template/*": "./template/*"
+  },
+  "scripts": {
+    "fetch": "tsx scripts/fetch.ts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "tsx": "^4.22.5",
+    "vitest": "^3.0.5"
+  }
+}

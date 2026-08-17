@@ -1,0 +1,26 @@
+@scope (.vtk-color-field) {
+  :scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  input[type="color"] {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+    background: none;
+    cursor: pointer;
+  }
+  input[type="text"] {
+    width: 12ch;
+    padding: 4px 8px;
+    border: 1px solid var(--vtk-border);
+    border-radius: 6px;
+    background: var(--vtk-bg);
+    color: var(--vtk-fg);
+    font: inherit;
+    font-size: 12px;
+  }
+}

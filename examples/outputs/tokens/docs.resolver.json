@@ -1,0 +1,12 @@
+{
+  "version": "2025.10",
+  "name": "docs",
+  "description": "The leaner selection a docs site consumes: primitives only, no theming.",
+  "sets": {
+    "core": {
+      "sources": [{ "$ref": "core.json" }]
+    }
+  },
+  "modifiers": {},
+  "resolutionOrder": [{ "$ref": "#/sets/core" }]
+}

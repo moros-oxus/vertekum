@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum://schema-atlassian/utility.json",
+  "title": "Atlassian Design System — utility",
+  "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
+  "type": "object",
+  "properties": {
+    "utility": {
+      "type": "object",
+      "properties": {
+        "elevation": {
+          "type": "object",
+          "properties": {
+            "surface": {
+              "type": "object",
+              "properties": {
+                "current": {
+                  "type": "object",
+                  "properties": {},
+                  "patternProperties": {
+                    "^\\$": true
+                  },
+                  "unevaluatedProperties": false
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "patternProperties": {
+    "^\\$": true
+  }
+}

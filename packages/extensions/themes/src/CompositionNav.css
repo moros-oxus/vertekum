@@ -1,0 +1,39 @@
+@scope ([data-vtk-compnav]) {
+  :scope ul {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+  }
+  :scope li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  :scope li > button:first-child {
+    flex: 1;
+    text-align: left;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  :scope li > button[data-vtk-active] {
+    background: var(--vtk-surface-active, rgb(127 127 127 / 0.15));
+    font-weight: 600;
+  }
+  :scope [data-vtk-comp-delete] {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+  }
+  :scope [data-vtk-comp-delete]:hover {
+    opacity: 1;
+  }
+}
