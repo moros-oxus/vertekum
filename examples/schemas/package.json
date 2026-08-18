@@ -9,9 +9,8 @@
     "describe": "vertekum describe"
   },
   "devDependencies": {
-    "@vertekum/ext-themes": "workspace:*",
-    "@vertekum/ext-tokens": "workspace:*",
-    "@vertekum/schema-atlassian": "workspace:*",
-    "vertekum": "workspace:*"
+    "@vertekum/cli": "workspace:*",
+    "@vertekum/core": "workspace:*",
+    "@vertekum/schema-atlassian": "workspace:*"
   }
 }

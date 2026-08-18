@@ -1,7 +1,7 @@
 import css from '@terrazzo/plugin-css';
 import js from '@terrazzo/plugin-js';
+import { defineConfig } from '@vertekum/core';
 import { terrazzoExportExtension } from '@vertekum/ext-export-terrazzo';
-import { defineConfig } from 'vertekum';
 
 /**
  * Terrazzo-driven outputs: Vertekum passes the token and resolver FILES to terrazzo and runs it;

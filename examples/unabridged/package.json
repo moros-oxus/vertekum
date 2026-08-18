@@ -2,13 +2,18 @@
   "name": "@vertekum-example/unabridged",
   "private": true,
   "version": "0.1.0",
-  "description": "Reference Vertekum consumer \u2014 a dev/teaching example (run `pnpm dev`).",
+  "description": "Reference Vertekum consumer — the fully commented config example.",
   "type": "module",
   "scripts": {
-    "dev": "vertekum dev"
+    "check": "vertekum check",
+    "build": "vertekum build",
+    "describe": "vertekum describe"
   },
   "devDependencies": {
-    "@vertekum/ext-essentials": "workspace:*",
-    "vertekum": "workspace:*"
+    "@vertekum/cli": "workspace:*",
+    "@vertekum/core": "workspace:*",
+    "@vertekum/ext-export-css": "workspace:*",
+    "@vertekum/ext-release": "workspace:*",
+    "@vertekum/ext-tokens": "workspace:*"
   }
 }

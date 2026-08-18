@@ -44,6 +44,9 @@ importers:
 
   examples/agentic:
     devDependencies:
+      '@vertekum/cli':
+        specifier: workspace:*
+        version: link:../../packages/workbench/cli
       '@vertekum/core':
         specifier: workspace:*
         version: link:../../packages/workbench/core
@@ -53,9 +56,6 @@ importers:
       '@vertekum/schema-atlassian':
         specifier: workspace:*
         version: link:../../packages/schemas/atlassian
-      vertekum:
-        specifier: workspace:*
-        version: link:../../packages/workbench/app
 
   examples/outputs:
     devDependencies:
@@ -65,36 +65,45 @@ importers:
       '@terrazzo/plugin-js':
         specifier: ^2.7.1
         version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1(yaml-to-momoa@0.0.8))
+      '@vertekum/cli':
+        specifier: workspace:*
+        version: link:../../packages/workbench/cli
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../packages/workbench/core
       '@vertekum/ext-export-terrazzo':
         specifier: workspace:*
         version: link:../../packages/extensions/export-terrazzo
-      vertekum:
-        specifier: workspace:*
-        version: link:../../packages/workbench/app
 
   examples/schemas:
     devDependencies:
-      '@vertekum/ext-themes':
+      '@vertekum/cli':
         specifier: workspace:*
-        version: link:../../packages/extensions/themes
-      '@vertekum/ext-tokens':
+        version: link:../../packages/workbench/cli
+      '@vertekum/core':
         specifier: workspace:*
-        version: link:../../packages/extensions/tokens
+        version: link:../../packages/workbench/core
       '@vertekum/schema-atlassian':
         specifier: workspace:*
         version: link:../../packages/schemas/atlassian
-      vertekum:
-        specifier: workspace:*
-        version: link:../../packages/workbench/app
 
   examples/unabridged:
     devDependencies:
-      '@vertekum/ext-essentials':
+      '@vertekum/cli':
         specifier: workspace:*
-        version: link:../../packages/extensions/essentials
-      vertekum:
+        version: link:../../packages/workbench/cli
+      '@vertekum/core':
         specifier: workspace:*
-        version: link:../../packages/workbench/app
+        version: link:../../packages/workbench/core
+      '@vertekum/ext-export-css':
+        specifier: workspace:*
+        version: link:../../packages/extensions/export-css
+      '@vertekum/ext-release':
+        specifier: workspace:*
+        version: link:../../packages/extensions/release
+      '@vertekum/ext-tokens':
+        specifier: workspace:*
+        version: link:../../packages/extensions/tokens
 
   packages/extensions/dashboard:
     devDependencies:

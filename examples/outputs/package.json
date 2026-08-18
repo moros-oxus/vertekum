@@ -12,7 +12,8 @@
   "devDependencies": {
     "@terrazzo/plugin-css": "^2.7.1",
     "@terrazzo/plugin-js": "^2.7.1",
-    "@vertekum/ext-export-terrazzo": "workspace:*",
-    "vertekum": "workspace:*"
+    "@vertekum/cli": "workspace:*",
+    "@vertekum/core": "workspace:*",
+    "@vertekum/ext-export-terrazzo": "workspace:*"
   }
 }

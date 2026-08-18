@@ -10,9 +10,9 @@
     "describe": "vertekum describe"
   },
   "devDependencies": {
+    "@vertekum/cli": "workspace:*",
     "@vertekum/core": "workspace:*",
     "@vertekum/ext-export-css": "workspace:*",
-    "@vertekum/schema-atlassian": "workspace:*",
-    "vertekum": "workspace:*"
+    "@vertekum/schema-atlassian": "workspace:*"
   }
 }

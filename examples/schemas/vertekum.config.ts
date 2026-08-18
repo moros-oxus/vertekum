@@ -1,6 +1,4 @@
-import { themesExtension } from '@vertekum/ext-themes';
-import { tokensExtension } from '@vertekum/ext-tokens';
-import { defineConfig } from 'vertekum';
+import { defineConfig } from '@vertekum/core';
 
 /**
  * Three routes to a token vocabulary, in one project.
@@ -39,6 +37,4 @@ export default defineConfig({
       },
     },
   ],
-
-  extensions: [tokensExtension, themesExtension],
 });

@@ -1,14 +1,7 @@
-import {
-  cssExportExtension,
-  dashboardExtension,
-  exportExtension,
-  releaseExtension,
-  statsExtension,
-  themesExtension,
-  tokensExtension,
-  valueEditorsExtension,
-} from '@vertekum/ext-essentials';
-import { defineConfig } from 'vertekum';
+import { defineConfig } from '@vertekum/core';
+import { cssExportExtension } from '@vertekum/ext-export-css';
+import { releaseExtension } from '@vertekum/ext-release';
+import { tokensExtension } from '@vertekum/ext-tokens';
 
 /**
  * Reference Vertekum config for the `examples/unabridged` consumer.
@@ -17,11 +10,16 @@ import { defineConfig } from 'vertekum';
  * the system-governed `.vertekum/` dir (settings + release lock), the CHANGELOG, and export outputs
  * all resolve relative to this file.
  *
+ * Extensions are named by CAPABILITY, each from its own package — the css exporter the `web`
+ * target runs, the token verbs (`vertekum token rename`), the release engine. There is no
+ * `@vertekum/ext-essentials` here: that bundle is a convenience for the batteries-included app,
+ * and pulling it would drag in UI-only extensions a headless project never mounts.
+ *
  * Extensions are configured INLINE, Vite-plugin style: call an extension with its settings, e.g.
  * `tokensExtension({ showIds: true })`. Options become tier-2 host overrides (the user can still
  * override them at runtime, and the Settings UI edits them live). Listed uncalled = defaults only.
- * In a real project the system merges the app's `defaultConfig` underneath, so you only need the
- * parts you change — e.g. `defineConfig({ collection })`.
+ * When the app is installed, the system merges its `defaultConfig` underneath, so you only need
+ * the parts you change — e.g. `defineConfig({ collection })`.
  */
 export default defineConfig({
   // Where your DTCG token files live, relative to this config file. Default: './tokens'
@@ -39,15 +37,9 @@ export default defineConfig({
   ],
 
   extensions: [
-    // no config/settings
-    dashboardExtension,
-    themesExtension,
-    // The /export route (UI, deferred). The CSS exporter itself is @vertekum/ext-export-css;
-    // targets are ROOT config (below), not extension settings.
-    exportExtension,
+    // no config/settings — registers the `css` exporter the `web` target names; targets are
+    // ROOT config (above), not extension settings.
     cssExportExtension,
-    // config explicitly omitted (defaults)
-    valueEditorsExtension,
     // configured inline (showing defaults)
     tokensExtension({ showIds: false, density: 'comfortable' }),
     releaseExtension({
@@ -69,6 +61,5 @@ export default defineConfig({
       // Every git write action defaults to false — hands-off: it writes the changelog and
       // leaves the commit + tag to you (turn them on to have the app drive git).
     }),
-    statsExtension,
   ],
 });

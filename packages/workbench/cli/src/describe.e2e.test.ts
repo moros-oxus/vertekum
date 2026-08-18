@@ -12,7 +12,7 @@ test('describe reports the live inventory', async () => {
 
   expect(info.project.collectionDir.endsWith('tokens')).toBe(true);
   expect(info.extensions.map((e: { id: string }) => e.id)).toContain(
-    'vtk.export',
+    'vtk.tokens',
   );
   expect(info.exporters.map((e: { id: string }) => e.id)).toContain('css');
   expect(info.validators.map((v: { id: string }) => v.id)).toContain(

@@ -9,8 +9,8 @@ export const repoRoot = resolve(
   '../../../..',
 );
 
-/** The published `vertekum` bin, exercised as a real subprocess by the e2e specs. */
-export const bin = join(repoRoot, 'packages/workbench/app/bin/vertekum.mjs');
+/** The published `vertekum` bin (owned by @vertekum/cli), exercised as a real subprocess by the e2e specs. */
+export const bin = join(repoRoot, 'packages/workbench/cli/bin/vertekum.mjs');
 
 /** Entries never copied into a fixture: installed deps and generated output. */
 const SKIP = new Set(['node_modules', 'build', '.vertekum']);
@@ -20,8 +20,8 @@ const SKIP = new Set(['node_modules', 'build', '.vertekum']);
  *
  * It is created INSIDE `examples/unabridged` rather than the system temp dir: pnpm links workspace
  * packages into each consumer's own `node_modules` (the repo root has no `@vertekum/*`), and those links
- * are relative, so a copy anywhere else cannot resolve the config's `vertekum` and
- * `@vertekum/ext-essentials` imports. Living under the example lets Node's resolution walk up into its
+ * are relative, so a copy anywhere else cannot resolve the config's `@vertekum/core` and
+ * `@vertekum/ext-*` imports. Living under the example lets Node's resolution walk up into its
  * `node_modules` with no symlink. Each fixture removes itself when its test finishes; `.e2e-*` is
  * git-ignored so a killed run leaves nothing tracked.
  */
