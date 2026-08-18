@@ -8,14 +8,14 @@ Accepted
 
 ## Context
 
-The app package (`@vertekum/app`) and the UI kit (`@vertekum-ui/react`) needed a settled relation: what the UI kit is
+The app package (`vertekum`) and the UI kit (`@vertekum-ui/react`) needed a settled relation: what the UI kit is
 relative to the app, and — critically — how the tokens that style the app's own interface
 relate to the tokens the user is editing. If those were the same set, editing a color would
 restyle the whole application mid-edit.
 
 ## Decision
 
-- **Dependency direction is one-way: `@vertekum/app` depends on `@vertekum-ui/react` (app → ui).**
+- **Dependency direction is one-way: `vertekum` (the app) depends on `@vertekum-ui/react` (app → ui).**
   The UI kit is the app's internal design system (buttons, inputs, layout); it
   knows nothing about the app and must not import from it.
 - **Two disjoint token namespaces.** The **app tokens** that the UI kit uses to style the

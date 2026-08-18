@@ -44,7 +44,7 @@ data records what an extension actually contributes.
 - A first-party non-view demonstrator (`vtk.stats`) publishes `TokenStatsService`,
   consumed by the Dashboard (soft-dependency, ADR-0023), proving the surface shows
   extensions with no ribbon entry. Its contract and pure counting live with the
-  extension in `@vertekum/app`, not the kernel — token-stats is a feature, not a core
+  extension (`@vertekum/ext-stats`), not the kernel — token-stats is a feature, not a core
   concept (ADR-0009); core stays thin.
 - Enumerate-without-executing (hosted/sandboxed loading) remains the deferred seam
   from ADR-0024; provenance is a runtime record, not a static one.

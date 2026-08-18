@@ -1,4 +1,4 @@
-import { createDocument, serializeDocument, type Token } from 'vertekum/core';
+import { createDocument, serializeDocument, type Token } from '@vertekum/core';
 import { expect, test } from 'vitest';
 import { runMigrate } from './migrate';
 

@@ -1,6 +1,6 @@
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EXPORTER_SERVICE, type ExporterService } from 'vertekum/core';
+import { EXPORTER_SERVICE, type ExporterService } from '@vertekum/core';
 import { expect, test } from 'vitest';
 import { loadProject } from './loadProject';
 

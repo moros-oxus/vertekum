@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { renamePath } from 'vertekum/core';
+import { renamePath } from '@vertekum/core';
 import { expect, test, vi } from 'vitest';
 import { exampleFixture } from '../e2e-fixture';
 import { loadProject } from '../loadProject';

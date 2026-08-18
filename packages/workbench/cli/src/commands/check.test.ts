@@ -1,4 +1,4 @@
-import { createDocument } from 'vertekum/core';
+import { createDocument } from '@vertekum/core';
 import { expect, test } from 'vitest';
 import { collectRelational } from './check';
 

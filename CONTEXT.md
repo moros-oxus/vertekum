@@ -5,7 +5,7 @@ codebase and use these terms — not synonyms — when naming concepts in issues
 refactors, hypotheses, and tests.
 
 > **Status: built, headless-first.** The core packages live under
-> `packages/workbench/*` (@vertekum/core, @vertekum/server, @vertekum/app) and the design system under
+> `packages/workbench/*` (@vertekum/core, @vertekum/server, @vertekum/cli, and the `vertekum` app umbrella) and the design system under
 > `packages/ui-system/*` (@vertekum-ui/react, @vertekum-ui/primitives). The DTCG vocabulary is grounded in
 > the README and the
 > [W3C Design Tokens Community Group (DTCG) format](https://tr.designtokens.org/format/).
@@ -133,7 +133,7 @@ concepts above, these are settled.
 
 ## Application architecture
 
-The app design, fixed by the ADRs cited. `@vertekum/app` is a local-first browser SPA with
+The app design, fixed by the ADRs cited. `vertekum` (the app package) is a local-first browser SPA with
 no backend in Scenarios 1–3. (The app layer is currently deferred; the design record
 stands.)
 
@@ -150,7 +150,7 @@ stands.)
 - **Config resolution & dev entry points** — Vertekum installs as a dependency; a
   `vertekum.config.ts` marks the **working directory** (repo root for a single repo, package
   root in a monorepo). `vertekum dev` is the one entry point: the `vertekum` bin
-  (`@vertekum/app` → `@vertekum/cli`) walks up from cwd to the nearest config (else infers the repo root
+  (`vertekum` → `@vertekum/cli`) walks up from cwd to the nearest config (else infers the repo root
   via `.git`/`pnpm-workspace.yaml` and uses `defaultConfig` alone). The bridge is **dual-root**:
   token files at the config's `collection`, but `.vertekum/` (system-governed only: per-user
   settings, release lock, CHANGELOG) and export outputs at the working dir. The app ships a
