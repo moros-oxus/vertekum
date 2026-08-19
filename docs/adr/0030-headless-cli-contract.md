@@ -105,3 +105,13 @@ and the same reasoning applies here. Commander stays an implementation detail of
   built-in verbs and nothing else, and `describe --json` reports the commands available here.
 - Registrations are attributed to their extension (ADR-0027), so `getExtensions()` reports them
   alongside routes and services.
+
+## Amendment (2026-08-19): declared file artifacts
+
+Some contributed commands produce files that are not token documents — the schema builder
+emits built JSON Schema files. The rule that a handler never writes stands; what changes is
+that a `CommandResult` may now DECLARE artifacts: `files?: Array<{ path, content }>`, paths
+relative to the working directory. The runner writes them after the mutation gate — so
+`--dry-run` lists them unwritten, `--json` carries them, and a path resolving outside the
+working directory is refused with exit `2`. Persistence stays owned in one place; a
+third-party command still cannot invent its own write path.

@@ -53,6 +53,77 @@ test('a handler that mutates the document has its change written', async () => {
   expect(light).toContain('{color.red.950}');
 });
 
+test('declared file artifacts are written by the runner, relative to the project', async () => {
+  const cwd = await exampleFixture('vtk-run-');
+  const project = await loadProject(cwd);
+  const out = silence();
+
+  const code = await runContributed({
+    project,
+    command: {
+      name: 'demo emit',
+      description: 'x',
+      run: () => ({ files: [{ path: 'schemas/built.json', content: '{}\n' }] }),
+    },
+    args: {},
+    options: {},
+  });
+
+  out.mockRestore();
+  expect(code).toBe(0);
+  expect(await readFile(join(cwd, 'schemas/built.json'), 'utf8')).toBe('{}\n');
+});
+
+test('--dry-run lists artifacts without writing; --json carries them', async () => {
+  const cwd = await exampleFixture('vtk-run-');
+  const project = await loadProject(cwd);
+  let output = '';
+  const out = vi.spyOn(process.stdout, 'write').mockImplementation((s) => {
+    output += s;
+    return true;
+  });
+
+  const code = await runContributed({
+    project,
+    command: {
+      name: 'demo emit',
+      description: 'x',
+      run: () => ({ files: [{ path: 'schemas/built.json', content: '{}\n' }] }),
+    },
+    args: {},
+    options: { dryRun: true, json: true },
+  });
+
+  out.mockRestore();
+  expect(code).toBe(0);
+  expect(JSON.parse(output).files).toContain('schemas/built.json');
+  await expect(
+    readFile(join(cwd, 'schemas/built.json'), 'utf8'),
+  ).rejects.toThrow();
+});
+
+test('an artifact path escaping the working directory is refused with exit 2', async () => {
+  const cwd = await exampleFixture('vtk-run-');
+  const project = await loadProject(cwd);
+  const out = silence();
+  const err = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+  const code = await runContributed({
+    project,
+    command: {
+      name: 'demo escape',
+      description: 'x',
+      run: () => ({ files: [{ path: '../outside.json', content: 'x' }] }),
+    },
+    args: {},
+    options: {},
+  });
+
+  out.mockRestore();
+  err.mockRestore();
+  expect(code).toBe(2);
+});
+
 test('a handler that throws exits 1 and writes nothing', async () => {
   const cwd = await exampleFixture('vtk-run-');
   const project = await loadProject(cwd);

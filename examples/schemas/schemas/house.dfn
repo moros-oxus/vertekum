@@ -1,0 +1,8 @@
+# The house vocabulary, DECLARED. `vertekum schema build` turns this into house.json —
+# the ~50 lines of JSON Schema this file's one expression used to be written as by hand.
+# Names and order only; what a granted name IS belongs to the token author and the DTCG
+# format schema.
+
+emphasis = subtle | bold
+
+root = color.text.[neutral | brand | success].<emphasis>

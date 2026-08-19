@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, isAbsolute, join, relative } from 'node:path';
 import type {
   CommandDescriptor,
   CommandResult,
@@ -98,6 +100,26 @@ export async function runContributed(input: {
 
   const files = mutated ? await saveProject(project, { dryRun }) : [];
 
+  // Declared file artifacts (ADR-0030 amendment): the handler names them, the runner writes them.
+  // Confined to the working directory — a path that resolves outside it is a contract violation.
+  for (const artifact of result?.files ?? []) {
+    const target = join(project.projectDir, artifact.path);
+    if (
+      isAbsolute(artifact.path) ||
+      relative(project.projectDir, target).startsWith('..')
+    ) {
+      process.stderr.write(
+        `refused: artifact path escapes the working directory: ${artifact.path}\n`,
+      );
+      return 2;
+    }
+    if (!dryRun) {
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, artifact.content);
+    }
+    files.push(artifact.path);
+  }
+
   if (json) {
     process.stdout.write(
       `${JSON.stringify(
@@ -139,7 +161,11 @@ export function attachCommands(program: Command, project: Project): void {
       const key = trail.join(' ');
       let next = parents.get(key);
       if (!next) {
-        next = parent.command(segment).description(`${segment} commands`);
+        // Reuse a command the host already declared (e.g. `schema` exists for `schema eject`) —
+        // a duplicate sibling would shadow it and strand its subcommands.
+        next =
+          parent.commands.find((c) => c.name() === segment) ??
+          parent.command(segment).description(`${segment} commands`);
         parents.set(key, next);
       }
       parent = next;

@@ -30,6 +30,12 @@ export interface CommandContext {
 export interface CommandResult {
   summary?: string;
   data?: unknown;
+  /**
+   * File artifacts the command produces (ADR-0030 amendment). Handlers never touch the
+   * filesystem — they DECLARE files here, paths relative to the working directory, and the runner
+   * owns writing them, which is what keeps `--dry-run` and `--json` true for every command.
+   */
+  files?: Array<{ path: string; content: string }>;
 }
 
 /**

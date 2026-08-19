@@ -73,8 +73,9 @@ Follow `docs/conventions/` for both human- and agent-written code.
   A plain-Node spec enforces this; vitest cannot, since it loads CSS through Vite. (ADR-0029)
   `cli.ts` holds contributed CLI commands, registered from `api.ts` by direct import (no thunk —
   it has no React or CSS to defer). A handler mutates `project.document` and returns a
-  `CommandResult`; it never prints and never writes files — the runner owns persistence,
-  `--dry-run` and `--json`. (ADR-0030 amendment)
+  `CommandResult`; it never prints and never writes files — file artifacts are declared on the
+  result (`files`) and the runner owns persistence, `--dry-run` and `--json`. (ADR-0030
+  amendments)
 
 - **Headless boot stays headless** — nothing reachable from `api.ts`/core may import React,
   CSS, or a `ui` module. `packages/workbench/cli/scripts/assert-headless.mjs` enforces this

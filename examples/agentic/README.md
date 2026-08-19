@@ -47,7 +47,7 @@ colour vocabulary to `text*.json`, so the semantic layer is a closed set of name
 would step outside it refuses before anything is written:
 
 ```bash
-$ vertekum token add color.text.bland.subtle '"#000000"' --type color --set text
+$ vertekum token add color.text.bland.subtle '#000000' --type color --set text
 refused — this change would introduce 1 error(s):
   error  vocabulary/unevaluatedProperties  /color/text 'bland' is not permitted — allowed: accent, brand, code, danger, …  (text.json)
 ```

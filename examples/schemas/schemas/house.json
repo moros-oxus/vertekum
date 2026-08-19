@@ -1,8 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "example:house",
-  "title": "A hand-written house vocabulary",
-  "description": "color.text.[neutral|brand|success].[subtle|bold] — names and order only; what a granted name IS belongs to the token author and the DTCG format schema.",
+  "$comment": "built by @vertekum/schema-builder from house.dfn — do not hand-edit; remove this comment to take ownership",
   "$defs": {
     "emphasis": {
       "type": "object",
@@ -10,17 +8,23 @@
         "subtle": {
           "type": "object",
           "properties": {},
-          "patternProperties": { "^\\$": true },
+          "patternProperties": {
+            "^\\$": true
+          },
           "unevaluatedProperties": false
         },
         "bold": {
           "type": "object",
           "properties": {},
-          "patternProperties": { "^\\$": true },
+          "patternProperties": {
+            "^\\$": true
+          },
           "unevaluatedProperties": false
         }
       },
-      "patternProperties": { "^\\$": true },
+      "patternProperties": {
+        "^\\$": true
+      },
       "unevaluatedProperties": false
     }
   },
@@ -32,18 +36,30 @@
         "text": {
           "type": "object",
           "properties": {
-            "neutral": { "$ref": "#/$defs/emphasis" },
-            "brand": { "$ref": "#/$defs/emphasis" },
-            "success": { "$ref": "#/$defs/emphasis" }
+            "neutral": {
+              "$ref": "#/$defs/emphasis"
+            },
+            "brand": {
+              "$ref": "#/$defs/emphasis"
+            },
+            "success": {
+              "$ref": "#/$defs/emphasis"
+            }
           },
-          "patternProperties": { "^\\$": true },
+          "patternProperties": {
+            "^\\$": true
+          },
           "unevaluatedProperties": false
         }
       },
-      "patternProperties": { "^\\$": true },
+      "patternProperties": {
+        "^\\$": true
+      },
       "unevaluatedProperties": false
     }
   },
-  "patternProperties": { "^\\$": true },
+  "patternProperties": {
+    "^\\$": true
+  },
   "unevaluatedProperties": false
 }

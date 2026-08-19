@@ -4,7 +4,8 @@ Three routes to a token vocabulary, in one project. Schemas are **files**, named
 `vertekum.config.ts` rather than registered by an extension.
 
 ```
-schemas/house.json         hand-written
+schemas/house.dfn          the house vocabulary, declared as grammar
+schemas/house.json         built from it by `vertekum schema build`
 schemas/color.json         extends a packaged schema by $ref
 schemas/dtcg-tokens.json   ejected from @vertekum/schema-dtcg
 ```
@@ -21,13 +22,24 @@ consume, not every raw value behind them.
 Mixing sources is just more entries. Nothing stops one set using Atlassian's colour, another using
 Primer's spacing, and a third using something internal.
 
-## Route 1 — a hand-written schema
+## Route 1 — a schema declared and built
 
-`schemas/house.json` closes `color.text.[neutral|brand|success].[subtle|bold]` and nothing else.
-Ordinary JSON Schema 2020-12; no Vertekum concepts in it at all.
+`schemas/house.dfn` declares the whole vocabulary in one expression:
+
+```dfn
+emphasis = subtle | bold
+
+root = color.text.[neutral | brand | success].<emphasis>
+```
+
+`vertekum schema build` (contributed by `@vertekum/schema-builder`) materializes it as
+`schemas/house.json` — ordinary JSON Schema 2020-12, no Vertekum concepts in it at all, and
+the only thing binding and `check` ever see. The built file carries a `$comment` stamp;
+hand-edit it and remove the stamp to take ownership, and `schema build` will leave it alone.
+`schema build --check` fails when a built file is stale — the CI guard.
 
 ```
-$ vertekum token add color.text.bland.subtle '"#000"' --set house
+$ vertekum token add color.text.bland.subtle '#000' --set house
 refused — this change would introduce 1 error(s):
   error  vocabulary/unevaluatedProperties  /color/text 'bland' is not permitted — allowed: neutral, brand, success
 ```
@@ -45,8 +57,8 @@ An upstream Atlaskit change no longer flows into the copy — that is the trade 
 and re-apply the edit (the diff is one position).
 
 ```
-$ vertekum token add color.text.marketing '"#0052CC"' --set semantic   # ours — accepted
-$ vertekum token add color.text.bland '"#000"' --set semantic          # refused
+$ vertekum token add color.text.marketing '#0052CC' --set semantic   # ours — accepted
+$ vertekum token add color.text.bland '#000' --set semantic          # refused
 ```
 
 ## Route 3 — ejecting

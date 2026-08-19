@@ -11,6 +11,7 @@
   "devDependencies": {
     "@vertekum/cli": "workspace:*",
     "@vertekum/core": "workspace:*",
-    "@vertekum/schema-atlassian": "workspace:*"
+    "@vertekum/schema-atlassian": "workspace:*",
+    "@vertekum/schema-builder": "workspace:*"
   }
 }

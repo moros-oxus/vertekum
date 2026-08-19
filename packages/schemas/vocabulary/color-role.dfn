@@ -1,0 +1,7 @@
+# color-role — the semantic color roles: what a color MEANS in an interface, not what it
+# looks like. Derived from the Atlassian Design System's color vocabulary: the roles common
+# across its text, background, icon, and border aspects. State names (disabled, selected,
+# inverse), structural names (accent, input, code), and emphasis names (subtle, subtlest,
+# bold) are deliberately excluded — they modify a role; they are not one.
+
+color-role = brand | danger | discovery | information | neutral | success | warning

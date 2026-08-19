@@ -1,4 +1,5 @@
 import { defineConfig } from '@vertekum/core';
+import { schemaBuilderExtension } from '@vertekum/schema-builder';
 
 /**
  * Three routes to a token vocabulary, in one project.
@@ -12,12 +13,17 @@ import { defineConfig } from '@vertekum/core';
 export default defineConfig({
   collection: './tokens',
 
+  // The builder contributes `vertekum schema build`: house.json below is BUILT from
+  // schemas/house.dfn — declared as one grammar line, materialized as ordinary JSON Schema.
+  extensions: [schemaBuilderExtension],
+
   schemas: [
     {
       from: './schemas',
       domain: 'vocabulary',
       use: {
-        // ROUTE 1 — a schema written by hand, for a set with a vocabulary of its own.
+        // ROUTE 1 — a schema DECLARED as grammar (schemas/house.dfn) and built by
+        // `vertekum schema build`, for a set with a vocabulary of its own.
         'house.json': 'house.json',
 
         // ROUTE 2 — Atlassian's colour vocabulary, ejected and edited: one position added at

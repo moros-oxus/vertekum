@@ -18,6 +18,7 @@ const API_SURFACES = [
   'packages/extensions/tokens/src/api.ts',
   'packages/extensions/release/src/api.ts',
   'packages/extensions/export/src/api.ts',
+  'packages/schemas/builder/src/api.ts',
 ];
 
 test('extension api surfaces load in plain Node', async () => {

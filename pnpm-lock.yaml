@@ -86,6 +86,9 @@ importers:
       '@vertekum/schema-atlassian':
         specifier: workspace:*
         version: link:../../packages/schemas/atlassian
+      '@vertekum/schema-builder':
+        specifier: workspace:*
+        version: link:../../packages/schemas/builder
 
   examples/unabridged:
     devDependencies:
@@ -317,6 +320,19 @@ importers:
         specifier: ^3.0.5
         version: 3.2.6(@types/node@24.13.2)(jsdom@29.1.1)(tsx@4.22.5)(yaml@2.9.0)
 
+  packages/schemas/builder:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../workbench/core
+      '@vertekum/schema-vocabulary':
+        specifier: workspace:*
+        version: link:../vocabulary
+
   packages/schemas/dtcg:
     devDependencies:
       ajv:
@@ -328,6 +344,8 @@ importers:
       vitest:
         specifier: ^3.0.5
         version: 3.2.6(@types/node@24.13.2)(jsdom@29.1.1)(tsx@4.22.5)(yaml@2.9.0)
+
+  packages/schemas/vocabulary: {}
 
   packages/ui-system/primitives:
     devDependencies:
