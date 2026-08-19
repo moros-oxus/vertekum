@@ -41,7 +41,7 @@ hand-edit it and remove the stamp to take ownership, and `schema build` will lea
 ```
 $ vertekum token add color.text.bland.subtle '#000' --set house
 refused — this change would introduce 1 error(s):
-  error  vocabulary/unevaluatedProperties  /color/text 'bland' is not permitted — allowed: neutral, brand, success
+  error  vocabulary/unevaluatedProperties  /color/text 'bland' is not permitted — allowed: neutral, brand, success  (house.json)
 ```
 
 ## Route 2 — extending a published vocabulary
