@@ -7,7 +7,7 @@ from the command line. No browser and no UI load unless asked for.
 
 | Verb | What it does |
 | --- | --- |
-| `vertekum init` | scaffold a project: config, seed tokens, agent skill (`--force`, `--no-skill`) |
+| `vertekum init` | scaffold a project: config, seed tokens, agent skills (`--force`, `--no-skill`; `--skill` refreshes the skills alone) |
 | `vertekum check` | run every registered validator and report diagnostics |
 | `vertekum build` | run the configured export targets and write their files (`--target <id…>`, `--dry-run`, `--no-check`) |
 | `vertekum describe` | print the live inventory: extensions, exporters and their option schemas, validators, commands (`--with-ui` adds routes) |

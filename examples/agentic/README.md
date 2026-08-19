@@ -11,7 +11,7 @@ tokens/core.json                            primitives — raw values, unconstra
 tokens/text.json                            the semantic layer — held to a vocabulary
 tokens/text-light.json  text-dark.json      per-theme overrides of that layer
 tokens/default.resolver.json                how those sets compose
-.claude/skills/vertekum-tokens/             the agent's instructions
+.claude/skills/vertekum/                    the agent's instructions (tokens + release workflows)
 ```
 
 ## The loop

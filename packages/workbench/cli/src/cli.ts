@@ -40,16 +40,25 @@ export function createProgram(project: Project | undefined): Command {
   program
     .command('init')
     .description(
-      'scaffold a Vertekum project: config, seed tokens, agent skill',
+      'scaffold a Vertekum project: config, seed tokens, agent skills',
     )
     .option('--force', 'overwrite an existing vertekum.config.ts')
-    .option('--no-skill', 'skip writing the agent skill')
+    .option('--skill', 'refresh only the agent skills (touches nothing else)')
+    .option('--no-skill', 'skip writing the agent skills')
     .option('--cwd <dir>', 'directory to initialize')
     .action(async (options) => {
+      // commander folds --skill/--no-skill into one boolean: true = refresh-only,
+      // false = skip skills, undefined = full scaffold including skills.
+      if (options.skill === true && options.force) {
+        process.stderr.write('--skill refreshes skills only; drop --force.\n');
+        process.exitCode = 2;
+        return;
+      }
       process.exitCode = await runInit({
         dir: options.cwd ?? process.cwd(),
         force: options.force,
         skill: options.skill,
+        skillOnly: options.skill === true,
       });
     });
 
