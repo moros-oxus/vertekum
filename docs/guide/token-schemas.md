@@ -71,6 +71,31 @@ vertekum schema eject @vertekum/schema-atlassian/color.json ./schemas/color.json
 A vocabulary governs names and order only: what a granted name IS — group, token, `$root` base
 value — belongs to the token author, validated by the format schema binding in parallel.
 
+## Declaring a vocabulary as grammar
+
+Hand-writing the names-and-order shape is mechanical; `@vertekum/schema-builder` (an
+extension) adds a definition language for it. A `.dfn` module states the vocabulary in one
+expression, and `vertekum schema build` materializes the JSON Schema file the `schemas`
+config binds — the built file is ordinary schema, and nothing outside the build step ever
+learns `.dfn` exists:
+
+```dfn
+emphasis = subtle | bold
+
+root = color.text.[neutral | brand | success].<emphasis>
+```
+
+Packages that ship their grammar (the Atlassian preset does) let you eject the *source*
+instead of the artifact — edits stay one-line grammar edits with a rebuild:
+
+```bash
+vertekum schema eject @vertekum/schema-atlassian/color.dfn ./schemas/color.dfn
+vertekum schema build
+```
+
+The language reference — imports, pragmas, optional slots, pick/omit set modifiers, open
+sets, ranges — lives in the `@vertekum/schema-builder` README.
+
 ## Dialects
 
 Every binding is validated under the dialect its schema declares — `validateFiles` picks the
