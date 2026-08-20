@@ -58,8 +58,11 @@ function definition(node: TreeNode, defs: Set<string>): Schema {
 export interface EmitOptions {
   /** The module filename for the provenance stamp, e.g. `house.dfn`. */
   moduleFile: string;
+  /** From the module's pragmas: `id "…"`, `title "…"`, `description "…"`, `scope "…"`. */
+  id?: string;
   title?: string;
   description?: string;
+  scope?: 'document' | 'branch';
 }
 
 export function emit(tree: TreeNode, options: EmitOptions): string {
@@ -71,8 +74,9 @@ export function emit(tree: TreeNode, options: EmitOptions): string {
 
   const document: Schema = {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $comment: stamp(options.moduleFile),
   };
+  if (options.id) document.$id = options.id;
+  document.$comment = stamp(options.moduleFile);
   if (options.title) document.title = options.title;
   if (options.description) document.description = options.description;
 
@@ -96,7 +100,11 @@ export function emit(tree: TreeNode, options: EmitOptions): string {
   document.type = root.type;
   document.properties = root.properties;
   document.patternProperties = root.patternProperties;
-  document.unevaluatedProperties = root.unevaluatedProperties;
+  // `scope "branch"`: govern only the named top-level branches — the document root stays
+  // unsealed so sibling vocabularies can bind over the same files. Default seals.
+  if (options.scope !== 'branch') {
+    document.unevaluatedProperties = root.unevaluatedProperties;
+  }
 
   return `${JSON.stringify(document, null, 2)}\n`;
 }

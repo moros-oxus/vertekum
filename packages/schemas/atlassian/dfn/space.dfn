@@ -1,0 +1,9 @@
+id "vertekum://schema-atlassian/space.json"
+title "Atlassian Design System — space"
+description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
+scope "branch"
+
+root = space.[
+    [0 | 025 | 050 | 075 | 100 | 1000 | 150 | 200 | 250 | 300 | 400 | 500 | 600 | 800]
+  | negative.[025 | 050 | 075 | 100 | 150 | 200 | 250 | 300 | 400]
+  ]

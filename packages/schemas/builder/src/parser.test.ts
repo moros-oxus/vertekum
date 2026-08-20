@@ -31,11 +31,25 @@ test('the contrived color module parses: use, fragments, root with refs and ?', 
     steps: [
       { term: { kind: 'name', value: 'color' }, optional: false },
       {
-        term: { kind: 'ref', name: 'property', imported: false, open: false },
+        term: {
+          kind: 'ref',
+          name: 'property',
+          imported: false,
+          open: false,
+          pick: [],
+          omit: [],
+        },
         optional: false,
       },
       {
-        term: { kind: 'ref', name: 'conspicuity', imported: true, open: false },
+        term: {
+          kind: 'ref',
+          name: 'conspicuity',
+          imported: true,
+          open: false,
+          pick: [],
+          omit: [],
+        },
         optional: true,
       },
     ],
@@ -70,7 +84,46 @@ test('open refs, ranges, and kebab identifiers lex without collision', () => {
     name: 'color-role',
     imported: false,
     open: true,
+    pick: [],
+    omit: [],
   });
+});
+
+test('pragmas: ident-then-string is metadata; nothing is reserved', () => {
+  const module = parse(
+    [
+      'id "vertekum://schema-atlassian/color.json"',
+      'title "Atlassian Design System — color"',
+      'description "Token path vocabulary."',
+      'title = a | b',
+      'root = x.<title>',
+      '',
+    ].join('\n'),
+  );
+  expect(module.meta).toEqual({
+    id: 'vertekum://schema-atlassian/color.json',
+    title: 'Atlassian Design System — color',
+    description: 'Token path vocabulary.',
+  });
+  expect(module.productions.has('title')).toBe(true);
+
+  expect(() => parse('author "me"\n')).toThrowError(/unknown pragma 'author'/);
+  expect(() => parse('id "a"\nid "b"\n')).toThrowError(/duplicate pragma/);
+});
+
+test('an indented line continues the statement above it', () => {
+  const module = parse(
+    [
+      'root = color.[',
+      '    text.[subtle | bold]',
+      '  | background',
+      '  ]',
+      'other = a',
+      '',
+    ].join('\n'),
+  );
+  expect(module.root).toBeDefined();
+  expect(module.productions.has('other')).toBe(true);
 });
 
 test('errors carry positions', () => {

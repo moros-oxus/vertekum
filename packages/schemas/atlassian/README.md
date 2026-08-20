@@ -18,24 +18,33 @@ schemas deliberately do not police them.
 
 Ten files, one variant each:
 
-| file | names |
-| --- | --- |
-| `color.json` | 430 |
-| `motion.json` | 62 |
-| `font.json` · `space.json` | 23 each |
-| `elevation.json` | 18 |
-| `radius.json` | 8 |
-| `border.json` | 3 |
-| `opacity.json` | 2 |
-| `utility.json` | 1 |
-| `atlassian.json` | all 570 |
+| file | shipped names | grants |
+| --- | --- | --- |
+| `color.json` | 430 | the documented grammar (generative) |
+| `motion.json` | 62 | paradigms + component shapes (generative) |
+| `elevation.json` | 18 | layer × kind × state (generative) |
+| `font.json` · `space.json` | 23 each | exactly what ships |
+| `radius.json` | 8 | exactly what ships |
+| `border.json` | 3 | exactly what ships |
+| `opacity.json` | 2 | exactly what ships |
+| `utility.json` | 1 | exactly what ships |
+| `atlassian.json` | all 570 | the union of the nine |
+
+**Generative aspects grant the system's grammar, not just its current catalogue.** Color follows
+the documented anatomy — `color.<property>.<role>.<emphasis>.<state>` — so a combination the
+rules permit (say, a background role at an emphasis Atlassian has not yet minted) validates,
+while a name outside the grammar still refuses. The grantable-but-unshipped surplus is pinned by
+test to an exact per-aspect count, so it only ever changes as a reviewed edit.
 
 **Aspects seal their branch and leave the root open**, so several can validate the same files
 together without refusing each other's branches — the cost is that no aspect refuses an unknown
 *top-level* branch. `atlassian.json` is the wholesale schema that seals the root, for adopting the
 system entire.
 
-Every file is self-contained: no `$refs`, nothing to resolve.
+Every file is self-contained: any `$ref` is internal (`#/$defs/…`), nothing external to
+resolve. The schemas live in `lib/`, their definition sources in `dfn/` — but specifiers stay
+flat: `@vertekum/schema-atlassian/color.json` and `@vertekum/schema-atlassian/color.dfn` both
+resolve through the package's exports map, no folder in the path.
 
 ```
 $ my-validator tokens.json --schema color.json
@@ -67,8 +76,36 @@ and re-apply the edit.
 
 ## Derivation
 
-The vocabulary is derived, not hand-written. `src/vocabulary.json` holds the sorted name list —
-the reviewed artifact; the ten schemas are mechanical projections of it.
+The vocabulary is derived, then curated. Three layers:
+
+- `src/vocabulary.json` — the sorted name list transcribed from `@atlaskit/tokens`: the review
+  artifact for upstream changes.
+- `dfn/*.dfn` — the **source**: each aspect declared as a grammar module
+  (built with `@vertekum/schema-builder`, a devDependency). One expression states names and
+  order; shared name-sets are named denotations:
+
+  ```dfn
+  property = background | text | icon | border
+  color-role = brand | danger | discovery | information | neutral | success | warning
+  emphasis = subtlest | subtler | subtle | bold | bolder | boldest
+  interaction = hovered | pressed
+
+  root = color.[
+      <property>.<role>?.<emphasis>?.<interaction>?
+    | <code>
+    | …
+    ]
+  ```
+
+  The root reads as the syntagm; `?` collapses an unused slot (`neutral.hovered` skips
+  emphasis); forks are their own named productions. Set modifiers derive narrowed sets in
+  place: `<emphasis [bold, bolder, boldest]>` picks members, `<direction ![left]>` omits one.
+
+  A definition module is importable too: `use "@vertekum/schema-atlassian/color.dfn"` exposes
+  its denotations, and `<@interaction>` pulls just the one you reference.
+- `lib/*.json` — the built schemas (`npm run build`). Each carries a `$comment` stamp naming its
+  module; the artifacts are regenerated, never hand-edited, and the test suite fails when they
+  are stale.
 
 570 of Atlassian's 585 names ship. Omitted, with reasons recorded in `scripts/derive.ts`:
 
@@ -82,9 +119,11 @@ Also deliberately absent: `$type` per branch — a judgement the source artifact
 From this package's directory:
 
 ```bash
-npm run derive              # re-derive from @atlaskit/tokens (a devDependency)
+npm run derive                # re-derive from @atlaskit/tokens (a devDependency)
 git diff src/vocabulary.json  # the review artifact: added and removed names
-npm test                    # the schemas must still enforce what they claim
+# apply the additions/removals to the dfn/ modules — a reviewed grammar edit
+npm run build                 # regenerate lib/ from dfn/
+npm test                      # parity: built schemas grant exactly the vocabulary
 ```
 
 Read the diff before committing: removing a name starts refusing tokens a consuming project may

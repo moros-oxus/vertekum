@@ -1,0 +1,42 @@
+id "vertekum://schema-atlassian/color.json"
+title "Atlassian Design System — color"
+description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
+scope "branch"
+
+# The documented syntagm (atlassian.design/foundations/color): color.<property>.<role>.<emphasis>.<state>.
+# The root reads as that syntagm; a slot collapses when unused (`?`). Co-meronyms that fork from it
+# (code sub-vocabularies, chart, link, …) are their own named productions, kept as simple as possible.
+# The schema grants the GRAMMAR — combinations the system's rules permit — not merely today's catalogue.
+
+property = background | text | icon | border
+color-role = brand | danger | discovery | information | neutral | success | warning
+special-role = disabled | input | inverse | selected
+accent-color = blue | gray | green | lime | magenta | orange | purple | red | teal | yellow
+emphasis = subtlest | subtler | subtle | bold | bolder | boldest
+interaction = hovered | pressed
+
+role = [<color-role> | <special-role> | accent.<accent-color>]
+
+root = color.[
+    <property>.<role>?.<emphasis>?.<interaction>?
+  | <code>
+  | <chart>
+  | <inverse-on>
+  | border.[bold | code | focused]
+  | blanket.[danger | selected]
+  | interaction.<interaction>
+  | link.visited?.pressed?
+  | skeleton.subtle?
+  ]
+
+# Atlassian's own enumerative sub-vocabularies for code blocks.
+code = [
+    background.code.[[added | removed].[highlight | line] | default | gutter | highlight]
+  | text.code.[accent.[1 | 2] | comments | default | functions | gutter | keywords | numbers | operators | strings | tags]
+  ]
+
+chart-emphasis = <emphasis [bold, bolder, boldest]>
+chart = chart.[[<accent-color> | <color-role>].<chart-emphasis>?.hovered? | categorical.1-8/1.hovered?]
+
+# warning content on inverse (bold) surfaces — the one role that takes an inverse marker.
+inverse-on = [text | icon].warning.inverse

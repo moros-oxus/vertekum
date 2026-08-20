@@ -23,13 +23,19 @@ export interface ResolvedModule {
  */
 function resolveSpecifier(spec: string, fromDir: string): string {
   if (spec.startsWith('.')) return resolve(fromDir, spec);
-  const segments = spec.split('/');
-  const packageEnd = spec.startsWith('@') ? 2 : 1;
-  const packageName = segments.slice(0, packageEnd).join('/');
-  const rest = segments.slice(packageEnd).join('/');
   const require = createRequire(join(fromDir, 'noop.js'));
-  const packageJson = require.resolve(`${packageName}/package.json`);
-  return join(dirname(packageJson), rest);
+  // Exports-aware first: a package may remap flat specifiers into folders
+  // (`"./*.dfn": "./dfn/*.dfn"`). Root-join second, for content packages with no map.
+  try {
+    return require.resolve(spec);
+  } catch {
+    const segments = spec.split('/');
+    const packageEnd = spec.startsWith('@') ? 2 : 1;
+    const packageName = segments.slice(0, packageEnd).join('/');
+    const rest = segments.slice(packageEnd).join('/');
+    const packageJson = require.resolve(`${packageName}/package.json`);
+    return join(dirname(packageJson), rest);
+  }
 }
 
 /** Parse a module file and, recursively, everything it `use`s. A cycle is an authoring error. */

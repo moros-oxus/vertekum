@@ -1,4 +1,4 @@
-import type { Alt, Module, Node, Path, Step } from './ast';
+import type { Alt, Module, ModuleMeta, Node, Path, Step } from './ast';
 import { DfnError } from './error';
 import { type Token, tokenize } from './tokenizer';
 
@@ -24,6 +24,10 @@ class Parser {
     return this.tokens[this.index];
   }
 
+  private at(offset: number): Token | undefined {
+    return this.tokens[this.index + offset];
+  }
+
   private next(): Token {
     return this.tokens[this.index++];
   }
@@ -47,6 +51,7 @@ class Parser {
   module(): Module {
     const uses: string[] = [];
     const productions = new Map<string, Node>();
+    const meta: ModuleMeta = {};
     let root: Node | undefined;
 
     this.skipNewlines();
@@ -55,6 +60,43 @@ class Parser {
       if (token.kind === 'use') {
         this.next();
         uses.push(this.expect('string', 'a quoted specifier').value);
+      } else if (token.kind === 'ident' && this.at(1)?.kind === 'string') {
+        // `<ident> "<string>"` (no `=`) is a PRAGMA — document metadata, not a production, so
+        // nothing is reserved: `title = a | b` still declares a production named title.
+        const name = this.next();
+        const value = this.next().value;
+        if (
+          name.value !== 'id' &&
+          name.value !== 'title' &&
+          name.value !== 'description' &&
+          name.value !== 'scope'
+        ) {
+          throw new DfnError(
+            `unknown pragma '${name.value}' — id, title, description, and scope exist`,
+            name.line,
+            name.column,
+          );
+        }
+        const key = name.value as keyof ModuleMeta;
+        if (meta[key] !== undefined) {
+          throw new DfnError(
+            `duplicate pragma '${name.value}'`,
+            name.line,
+            name.column,
+          );
+        }
+        if (key === 'scope') {
+          if (value !== 'document' && value !== 'branch') {
+            throw new DfnError(
+              `scope is "document" or "branch", not "${value}"`,
+              name.line,
+              name.column,
+            );
+          }
+          meta.scope = value;
+        } else {
+          meta[key] = value;
+        }
       } else if (token.kind === 'ident') {
         const name = this.next();
         this.expect('equals', "'='");
@@ -89,7 +131,7 @@ class Parser {
       this.skipNewlines();
     }
 
-    return { uses, productions, root };
+    return { uses, productions, root, meta };
   }
 
   /** `a | b | c` — a single option collapses to itself. */
@@ -151,10 +193,32 @@ class Parser {
         const imported = this.peek().kind === 'at';
         if (imported) this.next();
         const name = this.expect('ident', 'a production name');
+        // Set modifiers: `[a, b]` picks only the listed members; `![a, b]` omits them.
+        const pick: string[] = [];
+        const omit: string[] = [];
+        const negated = this.peek().kind === 'bang';
+        if (negated) this.next();
+        if (this.peek().kind === 'lbracket') {
+          const into = negated ? omit : pick;
+          this.next();
+          into.push(this.expect('ident', 'a member name').value);
+          while (this.peek().kind === 'comma') {
+            this.next();
+            into.push(this.expect('ident', 'a member name').value);
+          }
+          this.expect('rbracket', "']'");
+        } else if (negated) {
+          const bad = this.peek();
+          throw new DfnError(
+            "'!' must be followed by a [list]",
+            bad.line,
+            bad.column,
+          );
+        }
         const open = this.peek().kind === 'star';
         if (open) this.next();
         this.expect('rangle', "'>'");
-        return { kind: 'ref', name: name.value, imported, open };
+        return { kind: 'ref', name: name.value, imported, open, pick, omit };
       }
       case 'lbracket': {
         const node = this.alternation();

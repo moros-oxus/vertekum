@@ -1,0 +1,15 @@
+id "vertekum://schema-atlassian/atlassian.json"
+title "Atlassian Design System — all branches"
+description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
+
+use "./border.dfn"
+use "./color.dfn"
+use "./elevation.dfn"
+use "./font.dfn"
+use "./motion.dfn"
+use "./opacity.dfn"
+use "./radius.dfn"
+use "./space.dfn"
+use "./utility.dfn"
+
+root = [<@border> | <@color> | <@elevation> | <@font> | <@motion> | <@opacity> | <@radius> | <@space> | <@utility>]

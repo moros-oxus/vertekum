@@ -1,0 +1,32 @@
+id "vertekum://schema-atlassian/motion.json"
+title "Atlassian Design System — motion"
+description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
+scope "branch"
+
+# Paradigms: components animate through <transition> (enter/exit); directional components add a
+# <direction>; keyframes run <io> (in/out). Durations and easings are the system's own scales.
+
+transition = enter | exit
+direction = bottom | left | right | top
+io = in | out
+interaction = hovered | pressed
+component = avatar | blanket | flag | label | modal | panel | spotlight
+duration = instant | xxshort | xshort | short | medium | long | xlong | xxlong
+
+root = motion.[
+    <component>.<transition>
+  | avatar.hovered
+  | flag.reposition
+  | button.<interaction>
+  | listitem.[<interaction> | selected]
+  | popup.<transition>.<direction>
+  | sidenav.<transition>.<direction [left, right]>
+  | duration.<duration>
+  | <easing>
+  | <keyframe>
+  ]
+
+easing = easing.[[in | out].[bold | practical] | inout.bold | spring]
+
+keyframe = keyframe.[fade.<io> | scale.<io>.[medium | small] | slide.<io>.<slide-direction>]
+slide-direction = [<direction ![left]>.short | left.[half | short]]

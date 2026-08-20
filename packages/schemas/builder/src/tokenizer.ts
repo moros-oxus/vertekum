@@ -23,6 +23,8 @@ export type TokenKind =
   | 'at'
   | 'star'
   | 'question'
+  | 'comma'
+  | 'bang'
   | 'newline'
   | 'eof';
 
@@ -48,6 +50,16 @@ export function tokenize(source: string): Token[] {
     let text = lines[i];
     const commentAt = text.indexOf('#');
     if (commentAt !== -1) text = text.slice(0, commentAt);
+
+    // Continuation by indentation: a line that starts with whitespace continues the statement
+    // above it, so a long expression can wrap without any continuation character.
+    if (
+      /^\s/.test(text) &&
+      text.trim().length > 0 &&
+      tokens[tokens.length - 1]?.kind === 'newline'
+    ) {
+      tokens.pop();
+    }
 
     let column = 1;
     while (text.length > 0) {
@@ -112,6 +124,8 @@ export function tokenize(source: string): Token[] {
         '@': 'at',
         '*': 'star',
         '?': 'question',
+        ',': 'comma',
+        '!': 'bang',
       };
       const kind = single[text[0]];
       if (!kind) throw new DfnError(`unexpected '${text[0]}'`, line, column);

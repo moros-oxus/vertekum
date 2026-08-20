@@ -35,7 +35,7 @@ export function buildModule(modulePath: string): {
   const moduleFile = basename(modulePath);
   return {
     target: join(dirname(modulePath), `${resolved.name}.json`),
-    content: emit(tree, { moduleFile }),
+    content: emit(tree, { moduleFile, ...resolved.module.meta }),
   };
 }
 

@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "vertekum://schema-atlassian/radius.json",
+  "$comment": "built by @vertekum/schema-builder from radius.dfn — do not hand-edit; remove this comment to take ownership",
   "title": "Atlassian Design System — radius",
   "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
   "type": "object",

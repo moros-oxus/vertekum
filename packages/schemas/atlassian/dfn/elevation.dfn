@@ -1,0 +1,14 @@
+id "vertekum://schema-atlassian/elevation.json"
+title "Atlassian Design System — elevation"
+description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
+scope "branch"
+
+# Syntagm: elevation.<layer>.<kind>.<state> — surfaces take interaction states; shadows do not.
+
+interaction = hovered | pressed
+surface-kind = container | overlay | raised | sunken
+
+root = elevation.[<surface> | <shadow>]
+
+surface = surface.<surface-kind>?.<interaction>?
+shadow = shadow.[overlay | raised | overflow.[perimeter | spread]?]

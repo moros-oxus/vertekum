@@ -310,6 +310,9 @@ importers:
       '@atlaskit/tokens':
         specifier: ^16.5.0
         version: 16.5.0(react@19.2.7)
+      '@vertekum/schema-builder':
+        specifier: workspace:*
+        version: link:../builder
       ajv:
         specifier: ^8.20.0
         version: 8.20.0

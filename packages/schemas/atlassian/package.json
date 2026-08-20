@@ -18,9 +18,8 @@
   "bugs": "https://github.com/moros-oxus/vertekum/issues",
   "files": [
     "CHANGELOG.md",
-    "*.json",
-    "!package.json",
-    "!tsconfig.json",
+    "dfn",
+    "lib",
     "src/vocabulary.json"
   ],
   "publishConfig": {
@@ -28,15 +27,19 @@
   },
   "type": "module",
   "exports": {
-    ".": "./atlassian.json",
-    "./*": "./*"
+    ".": "./lib/atlassian.json",
+    "./*.json": "./lib/*.json",
+    "./*.dfn": "./dfn/*.dfn",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "derive": "tsx scripts/derive.ts",
+    "build": "tsx scripts/build.ts",
     "test": "vitest run"
   },
   "devDependencies": {
     "@atlaskit/tokens": "^16.5.0",
+    "@vertekum/schema-builder": "workspace:*",
     "ajv": "^8.20.0",
     "tsx": "^4.22.5",
     "vitest": "^3.0.5"

@@ -1,0 +1,13 @@
+id "vertekum://schema-atlassian/font.json"
+title "Atlassian Design System — font"
+description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
+scope "branch"
+
+root = font.[
+    body.[large | small]
+  | code
+  | family.[[body | code | heading] | brand.[body | heading]]
+  | heading.[large | medium | small | xlarge | xsmall | xxlarge | xxsmall]
+  | metric.[large | medium | small]
+  | weight.[bold | medium | regular | semibold]
+  ]

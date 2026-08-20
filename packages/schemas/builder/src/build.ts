@@ -87,15 +87,25 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       return forest;
     }
     case 'path': {
-      // Steps expand right to left: each step becomes the tail of the one before it. `?` is
-      // parsed-and-preserved only (v1): the position shape already admits `$`-members everywhere.
+      // Steps expand right to left: each step becomes the tail of the one before it. An
+      // optional step (`?`) may be SKIPPED — its tail also attaches directly, so
+      // `<role>.<emphasis>?.<interaction>?` grants the whole slot-collapse lattice.
       let next = tail;
       for (let i = node.steps.length - 1; i > 0; i--) {
         const step = node.steps[i];
         const after = next;
-        next = () => evaluate(step.term, scope, after);
+        next = step.optional
+          ? () => {
+              const forest = evaluate(step.term, scope, after);
+              merge(forest, after());
+              return forest;
+            }
+          : () => evaluate(step.term, scope, after);
       }
-      return evaluate(node.steps[0].term, scope, next);
+      const first = node.steps[0];
+      const forest = evaluate(first.term, scope, next);
+      if (first.optional) merge(forest, next());
+      return forest;
     }
     case 'group': {
       const forest = evaluate(node.node, scope, tail);
@@ -112,8 +122,38 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       }
       const forest = evaluate(production, refScope, tail);
       if (!node.imported) scope.expanding.delete(node.name);
+      for (const omitted of node.omit) {
+        if (!forest.children.delete(omitted)) {
+          throw new DfnError(
+            `'<${node.name}>' has no member '${omitted}' to omit`,
+            1,
+            1,
+          );
+        }
+      }
+      if (node.pick.length > 0) {
+        for (const picked of node.pick) {
+          if (!forest.children.has(picked)) {
+            throw new DfnError(
+              `'<${node.name}>' has no member '${picked}' to pick`,
+              1,
+              1,
+            );
+          }
+        }
+        const keep = new Set(node.pick);
+        for (const name of [...forest.children.keys()]) {
+          if (!keep.has(name)) forest.children.delete(name);
+        }
+      }
       if (node.open) forest.open = true;
-      if (isNameSet(production) && isTerminal(tail())) {
+      // A modified set is a different set — it never shares the source denotation's $def.
+      if (
+        node.pick.length === 0 &&
+        node.omit.length === 0 &&
+        isNameSet(production) &&
+        isTerminal(tail())
+      ) {
         forest.denotation = node.name;
       }
       return forest;

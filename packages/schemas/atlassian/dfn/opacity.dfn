@@ -1,0 +1,6 @@
+id "vertekum://schema-atlassian/opacity.json"
+title "Atlassian Design System — opacity"
+description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
+scope "branch"
+
+root = opacity.[disabled | loading]

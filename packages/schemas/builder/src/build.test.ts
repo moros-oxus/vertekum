@@ -42,11 +42,11 @@ test('ranges enumerate inclusively and union with literals, deduped', () => {
   ]);
 });
 
-test('branches give branch-dependent shape; ? changes nothing in v1', () => {
+test('branches give branch-dependent shape', () => {
   const dir = fixture({
     'house.dfn': [
       'emphasis = subtle | bold',
-      'root = color.text.[neutral.<emphasis>? | brand | success]',
+      'root = color.text.[neutral.<emphasis> | brand | success]',
       '',
     ].join('\n'),
   });
@@ -58,6 +58,54 @@ test('branches give branch-dependent shape; ? changes nothing in v1', () => {
     'bold',
   ]);
   expect(names(text.children.get('brand') as TreeNode)).toEqual([]);
+});
+
+test('? skips a slot: the syntagm lattice collapses through optional steps', () => {
+  const dir = fixture({
+    'lattice.dfn': [
+      'role = brand | danger',
+      'emphasis = subtle | bold',
+      'root = color.<role>.<emphasis>?.hovered?',
+      '',
+    ].join('\n'),
+  });
+  const tree = build(resolveModule(join(dir, 'lattice.dfn')));
+  const brand = tree.children.get('color')?.children.get('brand') as TreeNode;
+  // role.<emphasis>.hovered, role.<emphasis>, role.hovered, role — all granted
+  expect(names(brand).sort()).toEqual(['bold', 'hovered', 'subtle']);
+  expect(names(brand.children.get('subtle') as TreeNode)).toEqual(['hovered']);
+  expect(names(brand.children.get('hovered') as TreeNode)).toEqual([]);
+});
+
+test('set modifiers: ![…] omits, […] picks; a non-member in either is an error', () => {
+  const dir = fixture({
+    'sets.dfn': [
+      'color-role = brand | danger | discovery | information | neutral | success | warning',
+      'root = color.[background.<color-role ![brand, neutral]>.subtle | chart.<color-role [brand, neutral]>]',
+      '',
+    ].join('\n'),
+    'typo.dfn': [
+      'role = brand | neutral',
+      'root = color.<role [brnad]>',
+      '',
+    ].join('\n'),
+  });
+  const tree = build(resolveModule(join(dir, 'sets.dfn')));
+  const color = tree.children.get('color') as TreeNode;
+  expect(names(color.children.get('background') as TreeNode).sort()).toEqual([
+    'danger',
+    'discovery',
+    'information',
+    'success',
+    'warning',
+  ]);
+  expect(names(color.children.get('chart') as TreeNode).sort()).toEqual([
+    'brand',
+    'neutral',
+  ]);
+  expect(() => build(resolveModule(join(dir, 'typo.dfn')))).toThrowError(
+    /no member 'brnad'/,
+  );
 });
 
 test('imports resolve relatively; <@name> finds a production, module name finds a root', () => {
@@ -169,6 +217,65 @@ test('emission reproduces the hand-written house.json shape from three lines', (
   expect(text.properties.brand).toEqual({ $ref: '#/$defs/emphasis' });
   expect(text.patternProperties).toEqual({ '^\\$': true });
   expect(text.unevaluatedProperties).toBe(false);
+});
+
+test('pragmas surface in the emitted document, $id before the stamp', () => {
+  const dir = fixture({
+    'x.dfn': [
+      'id "vertekum://example/x.json"',
+      'title "X"',
+      'description "The x vocabulary."',
+      'root = x.a',
+      '',
+    ].join('\n'),
+  });
+  const resolved = resolveModule(join(dir, 'x.dfn'));
+  const json = emit(build(resolved), {
+    moduleFile: 'x.dfn',
+    ...resolved.module.meta,
+  });
+  const keys = Object.keys(JSON.parse(json));
+  expect(keys.slice(0, 5)).toEqual([
+    '$schema',
+    '$id',
+    '$comment',
+    'title',
+    'description',
+  ]);
+  expect(JSON.parse(json).$id).toBe('vertekum://example/x.json');
+});
+
+test('scope "branch" leaves the document root unsealed', () => {
+  const dir = fixture({
+    'aspect.dfn': ['scope "branch"', 'root = color.brand', ''].join('\n'),
+  });
+  const resolved = resolveModule(join(dir, 'aspect.dfn'));
+  const schema = JSON.parse(
+    emit(build(resolved), {
+      moduleFile: 'aspect.dfn',
+      ...resolved.module.meta,
+    }),
+  );
+  expect(schema.unevaluatedProperties).toBeUndefined();
+  expect(schema.patternProperties).toEqual({ '^\\$': true });
+  expect(schema.properties.color.unevaluatedProperties).toBe(false);
+});
+
+test('a package exports map remaps flat .dfn specifiers into folders', () => {
+  const dir = fixture({
+    'node_modules/fake-schemas/package.json': `${JSON.stringify({
+      name: 'fake-schemas',
+      version: '0.0.0',
+      exports: {
+        './*.dfn': './dfn/*.dfn',
+        './package.json': './package.json',
+      },
+    })}\n`,
+    'node_modules/fake-schemas/dfn/x.dfn': 'x = a | b\n',
+    'main.dfn': ['use "fake-schemas/x.dfn"', 'root = top.<@x>', ''].join('\n'),
+  });
+  const tree = build(resolveModule(join(dir, 'main.dfn')));
+  expect(names(tree.children.get('top') as TreeNode)).toEqual(['a', 'b']);
 });
 
 test('an open position emits additionalProperties with the shared tail, no closure', () => {
