@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { assertOpenSetsAreNameSets, build, type TreeNode } from './build';
 import { emit, isStamped } from './emit';
+import { parse } from './parser';
 import { resolveModule } from './resolve';
 
 function fixture(files: Record<string, string>): string {
@@ -106,6 +107,45 @@ test('set modifiers: ![…] omits, […] picks; a non-member in either is an err
   expect(() => build(resolveModule(join(dir, 'typo.dfn')))).toThrowError(
     /no member 'brnad'/,
   );
+});
+
+test('qualified refs resolve one import; unqualified collisions say how to qualify', () => {
+  const dir = fixture({
+    'warm.dfn': 'tone = red | orange\n',
+    'cool.dfn': 'tone = blue | teal\n',
+    'mix.dfn': [
+      'use "./warm.dfn"',
+      'use "./cool.dfn"',
+      'root = color.[warm.<@warm/tone> | cool.<@cool/tone>]',
+      '',
+    ].join('\n'),
+    'clash.dfn': [
+      'use "./warm.dfn"',
+      'use "./cool.dfn"',
+      'root = color.<@tone>',
+      '',
+    ].join('\n'),
+    'wrong.dfn': ['use "./warm.dfn"', 'root = color.<@warm/hue>', ''].join(
+      '\n',
+    ),
+  });
+  const tree = build(resolveModule(join(dir, 'mix.dfn')));
+  const color = tree.children.get('color') as TreeNode;
+  expect(names(color.children.get('warm') as TreeNode)).toEqual([
+    'red',
+    'orange',
+  ]);
+  expect(names(color.children.get('cool') as TreeNode)).toEqual([
+    'blue',
+    'teal',
+  ]);
+  expect(() => build(resolveModule(join(dir, 'clash.dfn')))).toThrowError(
+    /qualify it: <@module\/tone>/,
+  );
+  expect(() => build(resolveModule(join(dir, 'wrong.dfn')))).toThrowError(
+    /'warm' has no production 'hue'/,
+  );
+  expect(() => parse('root = <a/b>\n')).toThrowError(/write <@module\/name>/);
 });
 
 test('imports resolve relatively; <@name> finds a production, module name finds a root', () => {

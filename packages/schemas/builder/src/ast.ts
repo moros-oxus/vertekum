@@ -73,6 +73,8 @@ export interface Ref {
   kind: 'ref';
   name: string;
   imported: boolean;
+  /** `<@module/production>` — resolve `name` in this import alone (the collision resolver). */
+  from?: string;
   open: boolean;
   pick: string[];
   omit: string[];

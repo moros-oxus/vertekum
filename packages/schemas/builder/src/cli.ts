@@ -66,9 +66,17 @@ export const schemaBuildCommand: CommandDescriptor = {
 
     const files: Array<{ path: string; content: string }> = [];
     const skipped: string[] = [];
+    const fragments: string[] = [];
     const stale: string[] = [];
 
     for (const modulePath of modules) {
+      // A rootless module is a FRAGMENT — imports for other modules. The sweep skips it;
+      // naming one explicitly stays an error (buildModule throws), since silence there
+      // would hide a typo'd `root`.
+      if (!ctx.args.module && !resolveModule(modulePath).module.root) {
+        fragments.push(relative(projectDir, modulePath));
+        continue;
+      }
       const { target, content } = buildModule(modulePath);
       const existing = existsSync(target)
         ? readFileSync(target, 'utf8')
@@ -93,10 +101,11 @@ export const schemaBuildCommand: CommandDescriptor = {
     }
     const notes = [
       ctx.options.check === true
-        ? `${modules.length} module(s) current`
+        ? `${modules.length - fragments.length} module(s) current`
         : `built ${files.length} module(s)`,
+      ...fragments.map((f) => `${f} declares no root (a fragment) — skipped`),
       ...skipped.map((f) => `${f} has local edits (no stamp) — left as is`),
     ];
-    return { summary: notes.join('\n'), files, data: { skipped } };
+    return { summary: notes.join('\n'), files, data: { skipped, fragments } };
   },
 };

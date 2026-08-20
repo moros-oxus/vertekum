@@ -42,6 +42,22 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
     return { node: production, scope };
   }
 
+  // Qualified: `<@module/production>` looks in that import alone — the collision resolver.
+  if (ref.from) {
+    const imported = scope.module.imports.get(ref.from);
+    if (!imported) {
+      throw new DfnError(`no import named '${ref.from}'`, 1, 1);
+    }
+    const production = imported.module.productions.get(ref.name);
+    if (!production) {
+      throw new DfnError(`'${ref.from}' has no production '${ref.name}'`, 1, 1);
+    }
+    return {
+      node: production,
+      scope: { module: imported, expanding: new Set() },
+    };
+  }
+
   const hits: Array<{ node: Node; scope: Scope }> = [];
   for (const imported of scope.module.imports.values()) {
     const importedScope: Scope = { module: imported, expanding: new Set() };
@@ -55,7 +71,11 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
     throw new DfnError(`no import provides '<@${ref.name}>'`, 1, 1);
   }
   if (hits.length > 1) {
-    throw new DfnError(`'<@${ref.name}>' is ambiguous across imports`, 1, 1);
+    throw new DfnError(
+      `'<@${ref.name}>' is ambiguous across imports — qualify it: <@module/${ref.name}>`,
+      1,
+      1,
+    );
   }
   return hits[0];
 }

@@ -41,7 +41,9 @@ npx vertekum check                 # the built schema now governs your token nam
 
 `schema build` accepts a single module argument, defaults to every `.dfn` under
 `./schemas`, and supports `--dry-run` (list without writing), `--json`, and `--check`
-(verify built files are current; exit 1 when stale — the CI guard).
+(verify built files are current; exit 1 when stale — the CI guard). Only modules with a
+`root` build: the sweep skips fragment modules (denotation files that exist to be `use`d),
+while naming one explicitly is an error.
 
 ## The definition language
 
@@ -67,6 +69,7 @@ indented line continues the statement above it.
 | `[ … ]` | grouping; groups may hold full sub-paths (branches) |
 | `<name>` | reference a local production |
 | `<@name>` | reference an imported production; an imported module's *root* goes by its basename |
+| `<@module/name>` | qualified: that import's production alone — the resolver when two imports share a name |
 | `<name [a, b]>` | **pick** — only the listed members of the set |
 | `<name ![a, b]>` | **omit** — the set minus the listed members |
 | `<name*>` / `[a \| b *]` | **open set** — additions beyond the listed names are permitted, and every member (listed or added) takes the same tail |

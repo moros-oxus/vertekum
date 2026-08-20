@@ -38,6 +38,21 @@ test('--check exits 1 when a built file is stale; --dry-run withholds the fix', 
   expect(await readFile(path, 'utf8')).toBe(fresh);
 }, 60_000);
 
+test('the sweep skips fragment modules; naming one explicitly errors', async () => {
+  const cwd = await exampleFixture('vtk-sbuild-', 'schemas');
+  await writeFile(join(cwd, 'schemas/fragments.dfn'), 'tone = warm | cool\n');
+
+  const { stdout } = await run('node', [bin, 'schema', 'build'], { cwd });
+  expect(stdout).toContain('built 1 module(s)');
+  expect(stdout).toContain(
+    'fragments.dfn declares no root (a fragment) — skipped',
+  );
+
+  await expect(
+    run('node', [bin, 'schema', 'build', 'schemas/fragments.dfn'], { cwd }),
+  ).rejects.toMatchObject({ code: 1 });
+}, 60_000);
+
 test('a built file whose stamp was removed is never overwritten', async () => {
   const cwd = await exampleFixture('vtk-sbuild-', 'schemas');
   const path = join(cwd, HOUSE);

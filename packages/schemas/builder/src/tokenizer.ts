@@ -25,6 +25,7 @@ export type TokenKind =
   | 'question'
   | 'comma'
   | 'bang'
+  | 'slash'
   | 'newline'
   | 'eof';
 
@@ -126,6 +127,7 @@ export function tokenize(source: string): Token[] {
         '?': 'question',
         ',': 'comma',
         '!': 'bang',
+        '/': 'slash',
       };
       const kind = single[text[0]];
       if (!kind) throw new DfnError(`unexpected '${text[0]}'`, line, column);

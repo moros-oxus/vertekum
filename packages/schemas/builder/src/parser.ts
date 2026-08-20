@@ -192,7 +192,22 @@ class Parser {
       case 'langle': {
         const imported = this.peek().kind === 'at';
         if (imported) this.next();
-        const name = this.expect('ident', 'a production name');
+        let name = this.expect('ident', 'a production name');
+        // `<@module/production>` — qualified access to one import's production.
+        let from: string | undefined;
+        if (this.peek().kind === 'slash') {
+          if (!imported) {
+            const bad = this.peek();
+            throw new DfnError(
+              'a qualified reference is an import — write <@module/name>',
+              bad.line,
+              bad.column,
+            );
+          }
+          this.next();
+          from = name.value;
+          name = this.expect('ident', 'a production name');
+        }
         // Set modifiers: `[a, b]` picks only the listed members; `![a, b]` omits them.
         const pick: string[] = [];
         const omit: string[] = [];
@@ -218,7 +233,15 @@ class Parser {
         const open = this.peek().kind === 'star';
         if (open) this.next();
         this.expect('rangle', "'>'");
-        return { kind: 'ref', name: name.value, imported, open, pick, omit };
+        return {
+          kind: 'ref',
+          name: name.value,
+          imported,
+          from,
+          open,
+          pick,
+          omit,
+        };
       }
       case 'lbracket': {
         const node = this.alternation();
