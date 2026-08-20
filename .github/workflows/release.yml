@@ -9,6 +9,9 @@ concurrency: release-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
+  # npm Trusted Publishing: the job authenticates to the registry via an OIDC token
+  # exchange — no long-lived NPM_TOKEN secret — and npm attaches provenance automatically.
+  id-token: write
 
 jobs:
   release:
@@ -18,9 +21,16 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # Node 24 for its npm ≥ 11.5, the floor for trusted publishing; the gate below
+          # keeps parity with CI regardless of the version skew.
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The publish gate: a release must never ship from a state the suite would refuse.
+      # CI runs the same gate on its own workflow, but this job publishes — it verifies
+      # for itself rather than trusting a sibling workflow's timing.
+      - run: pnpm lint
+      - run: pnpm test
       # While changesets accumulate this maintains the "Version Packages" PR;
       # when that PR merges, it publishes the bumped packages instead.
       - uses: changesets/action@v1
@@ -29,4 +39,3 @@ jobs:
           publish: pnpm release:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

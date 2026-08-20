@@ -79,8 +79,14 @@ no changeset covers.
 
 Releasing is automated: on every push to `main`, the changesets GitHub action
 (`.github/workflows/release.yml`) maintains a **"Version Packages" PR** that previews all
-pending bumps and changelog lines; merging that PR publishes to npm (via the repo's
-`NPM_TOKEN` secret) and tags. The manual equivalent still works:
+pending bumps and changelog lines; merging that PR publishes to npm and tags. The job
+runs the full gate (`pnpm lint && pnpm test`) before touching the registry, and
+authenticates via **npm Trusted Publishing** (OIDC): each public package on npmjs.com
+registers this repository's `release.yml` as its trusted publisher, the job holds
+`id-token: write`, and no registry token exists anywhere — npm attaches provenance
+attestations automatically. Adding a new public package means registering the trusted
+publisher on npmjs.com for it (its FIRST publish must be manual — npm only allows
+trusted-publisher setup on an existing package). The manual equivalent still works:
 
 ```bash
 GITHUB_TOKEN=<read-only PAT> pnpm release:version
