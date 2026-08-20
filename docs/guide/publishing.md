@@ -7,11 +7,11 @@ Apache-2.0. The app, the server, the UI kit, and every UI-serving extension stay
 
 ## What ships
 
-Five packages, in this order (schemas and core have no workspace dependencies, the rest
-build on them):
+Six packages, in this order (the schema packages and core have no workspace dependencies,
+the rest build on them):
 
 1. `@vertekum/schema-dtcg`, `@vertekum/schema-atlassian`, `@vertekum/core`
-2. `@vertekum/cli`, `@vertekum/ext-export-terrazzo`
+2. `@vertekum/cli`, `@vertekum/ext-export-terrazzo`, `@vertekum/schema-builder`
 
 Everything else in `packages/*` is private, deliberately:
 
@@ -21,13 +21,15 @@ Everything else in `packages/*` is private, deliberately:
 - `ext-release` and `ext-stats` — headless-capable but serving the app today.
 - `ext-export-css` — headless, but its journey is not complete; it joins the public set
   when it is ready.
+- `@vertekum/schema-vocabulary` — the shared denotations dictionary, still a seed.
 - `@vertekum-ui/primitives` — not a library; Vertekum's own token collection (a `tokens/`
   dir and a `vertekum.config.ts`), the tool dogfooding itself.
 - Every `examples/*` package.
 
-Each public package carries its `license` field (`MIT` for the schema packages,
-`Apache-2.0` for the rest), its own `LICENSE` copy, a `README.md`, and
-`publishConfig.access: "public"` (npm rejects a scoped publish without it).
+Each public package carries its `license` field (`MIT` for the schema *content* packages,
+`Apache-2.0` for the rest, `@vertekum/schema-builder` included), its own `LICENSE` copy, a
+`README.md`, and `publishConfig.access: "public"` (npm rejects a scoped publish without
+it).
 
 ## The dependency shape
 
@@ -39,9 +41,9 @@ The public graph is a real DAG with no edge into a private package:
   installed, `vertekum dev` and the app-default extension merge work exactly as in this
   repository; without them, every other verb works, the system default degrades to the
   empty config (core builtins still validate), and `dev` exits `2` with one clear line.
-- Both exporters (`ext-export-terrazzo`, and the private `ext-export-css`) import and peer
-  on `@vertekum/core` directly — publishable extensions do not ride the app's
-  `vertekum/core` subpath (ADR-0029 amendment).
+- Both exporters (`ext-export-terrazzo`, and the private `ext-export-css`) and
+  `@vertekum/schema-builder` import and peer on `@vertekum/core` directly — publishable
+  extensions do not ride the app's `vertekum/core` subpath (ADR-0029 amendment).
 
 ## The packages ship raw TypeScript
 
@@ -71,7 +73,7 @@ Resolver composition no longer re-parses unchanged set files.
 
 They are written by hand as part of the change that warrants them (`.changeset/<slug>.md`;
 the AGENTS.md Versioning section is the authoring rule), and accumulate on `main` across
-merged branches. Only the five public packages participate — `privatePackages` is off, so
+merged branches. Only the six public packages participate — `privatePackages` is off, so
 private versions never churn. `@vertekum/core` and `@vertekum/cli` are **linked**: whenever
 either releases, both version together, so a core is never shipped that the cli was not
 versioned against. `pnpm changeset:status` lists public packages changed on a branch that

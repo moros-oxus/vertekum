@@ -2,13 +2,30 @@
   "name": "@vertekum/schema-builder",
   "version": "0.1.0",
   "description": "Declare token vocabularies as grammar; build them into JSON Schema files",
-  "license": "UNLICENSED",
-  "private": true,
+  "license": "Apache-2.0",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "schema",
+    "vocabulary",
+    "grammar"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moros-oxus/vertekum.git",
+    "directory": "packages/schemas/builder"
+  },
+  "homepage": "https://github.com/moros-oxus/vertekum",
+  "bugs": "https://github.com/moros-oxus/vertekum/issues",
   "files": [
+    "CHANGELOG.md",
     "src",
     "tsconfig.json",
     "!src/**/*.test.ts"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

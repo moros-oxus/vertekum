@@ -47,8 +47,8 @@ One changelog-ready sentence: what changed, from a consumer's point of view.
 
 Save as `.changeset/<kebab-slug>.md`. The public packages are `@vertekum/core`,
 `@vertekum/cli` (these two version linked), `@vertekum/schema-dtcg`,
-`@vertekum/schema-atlassian`, `@vertekum/ext-export-terrazzo` — changesets cannot name a
-private package. While 0.x: breaking → `minor`, everything else → `patch`. Docs, tests, and
+`@vertekum/schema-atlassian`, `@vertekum/schema-builder`,
+`@vertekum/ext-export-terrazzo` — changesets cannot name a private package. While 0.x: breaking → `minor`, everything else → `patch`. Docs, tests, and
 private-only changes need no changeset.
 
 On arcs touching public packages, run `pnpm changeset:status` before calling the work done —
