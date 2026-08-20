@@ -39,3 +39,25 @@ jobs:
           publish: pnpm release:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # `changeset publish` creates the release tags in this checkout, but the action only
+      # pushes them (and creates GitHub releases) when it can parse the publish output — which
+      # pnpm's spinner UI defeats. These fallbacks are deterministic instead of parsed: push
+      # whatever release tags point at HEAD, then create a GitHub release for any pushed tag
+      # that lacks one, with the package CHANGELOG section as its body. Both are no-ops on
+      # pushes that publish nothing.
+      - name: Push release tags
+        run: git push origin --tags
+      - name: Ensure GitHub releases exist for new tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for tag in $(git tag --points-at HEAD); do
+            gh release view "$tag" --json tagName >/dev/null 2>&1 && continue
+            name="${tag%@*}"; version="${tag##*@}"
+            dir=$(pnpm --filter "$name" exec pwd 2>/dev/null | tail -1)
+            notes="Patch release."
+            if [ -n "$dir" ] && [ -f "$dir/CHANGELOG.md" ]; then
+              notes=$(awk -v v="## $version" 'index($0,v)==1{f=1;next} /^## /{f=0} f' "$dir/CHANGELOG.md")
+            fi
+            gh release create "$tag" --title "$tag" --notes "$notes"
+          done
