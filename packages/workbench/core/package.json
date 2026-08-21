@@ -18,6 +18,7 @@
   "bugs": "https://github.com/moros-oxus/vertekum/issues",
   "files": [
     "CHANGELOG.md",
+    "docs",
     "src",
     "tsconfig.json",
     "!src/**/*.test.ts",
