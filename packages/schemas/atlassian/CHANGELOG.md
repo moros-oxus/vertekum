@@ -1,5 +1,11 @@
 # @vertekum/schema-atlassian
 
+## 0.1.2
+
+### Patch Changes
+
+- [`9c0f093`](https://github.com/moros-oxus/vertekum/commit/9c0f093b5016c6c0ca9cb5b5fd48598718e698d9) Thanks [@tschemmer](https://github.com/tschemmer)! - The space vocabulary is declared with zero-padded scale ranges (`025-100/25 | 150-300/50 | 400-600/100`) instead of a hand-list; granted names are unchanged.
+
 ## 0.1.1
 
 ### Patch Changes
