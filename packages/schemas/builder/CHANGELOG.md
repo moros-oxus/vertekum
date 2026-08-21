@@ -1,5 +1,11 @@
 # @vertekum/schema-builder
 
+## 0.1.7
+
+### Patch Changes
+
+- [`880b288`](https://github.com/moros-oxus/vertekum/commit/880b288630455eaf629f0d458fb38b3eaf0222a6) Thanks [@tschemmer](https://github.com/tschemmer)! - Grammar errors are attributed to the module that contains them — a failure inside an imported module names that file, not the one being linted or built. Referencing a fragment by module name (`<@t-shirt>`) now explains that a fragment has no root and lists its productions to reference instead; a qualified miss lists what the import declares.
+
 ## 0.1.6
 
 ### Patch Changes
