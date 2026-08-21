@@ -49,6 +49,12 @@ export interface Token {
 
 const IDENT = /^[A-Za-z][A-Za-z0-9-]*/;
 const RANGE = /^(\d+)-(\d+)([*/])(\d+(?:\.\d+)?)(?:~(\d+))?/;
+/**
+ * A digit-leading NAME (`2xs`, `4k-display`): digits, then at least one letter. Tried after
+ * RANGE — so `100-300/50` stays numeric — and before NUMBER, so the whole word is one token
+ * rather than `2` + `xs`. Real design systems name t-shirt sizes this way.
+ */
+const WORD = /^\d+[A-Za-z][A-Za-z0-9-]*/;
 const NUMBER = /^\d+/;
 
 /** "Write the numbers as they appear": a leading zero declares the pad width. */
@@ -111,6 +117,11 @@ export function tokenize(source: string): Token[] {
         });
         column += range[0].length;
         text = text.slice(range[0].length);
+        continue;
+      }
+      const word = text.match(WORD);
+      if (word) {
+        push('ident', word[0]);
         continue;
       }
       const number = text.match(NUMBER);

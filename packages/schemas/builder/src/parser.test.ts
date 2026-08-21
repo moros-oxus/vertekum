@@ -166,3 +166,39 @@ test("a '*' trailing a closed reference gets the same hint", () => {
     "1:21 '*' marks a set open and sits inside the reference or group it opens",
   );
 });
+
+test('digit-leading names are single names, not number + identifier', () => {
+  const module = parse('xsmall = 2xs | 3xs | 4xs\n');
+  expect(module.productions.get('xsmall')).toMatchObject({
+    kind: 'alt',
+    options: [
+      { kind: 'name', value: '2xs' },
+      { kind: 'name', value: '3xs' },
+      { kind: 'name', value: '4xs' },
+    ],
+  });
+});
+
+test('digit-leading names work as pick/omit members and may carry hyphens', () => {
+  const module = parse(
+    'size = 2xs | 4k-display | small\nroot = t.<size [2xs, 4k-display]>\n',
+  );
+  expect(module.root).toMatchObject({
+    kind: 'path',
+    steps: [
+      { term: { kind: 'name', value: 't' } },
+      { term: { kind: 'ref', name: 'size', pick: ['2xs', '4k-display'] } },
+    ],
+  });
+});
+
+test('a digit-leading name beside a range keeps both meanings', () => {
+  const module = parse('scale = 2xs | 100-300/100\n');
+  expect(module.productions.get('scale')).toMatchObject({
+    kind: 'alt',
+    options: [
+      { kind: 'name', value: '2xs' },
+      { kind: 'range', min: 100, max: 300, step: 100 },
+    ],
+  });
+});

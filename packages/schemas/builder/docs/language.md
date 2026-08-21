@@ -29,9 +29,10 @@ root = color.[text | icon].<role>.<@emphasis>
   ```
 
 - **`#` starts a comment**, running to the end of the line.
-- **Identifiers** are `[A-Za-z][A-Za-z0-9-]*` — letters, digits, hyphens
-  (`color-role`). A term that starts with a digit is numeric: a bare number (`950`) or
-  a [scale expression](./scales.md) (`100-300/50`) — which is why hyphens inside names
+- **Identifiers** are letters, digits, and hyphens (`color-role`), and may start with
+  digits **when they contain a letter** (`2xs`, `4k-display`). A term that is purely
+  numeric keeps its numeric meaning: a bare number (`950`) or a
+  [scale expression](./scales.md) (`100-300/50`) — which is why hyphens inside names
   never collide with range syntax.
 - **Strings** (pragma and `use` arguments) are double-quoted.
 

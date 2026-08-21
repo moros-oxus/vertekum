@@ -52,6 +52,7 @@ test('the sample module tokenizes with the expected scopes', async () => {
     'emphasis = subtle | bold',
     'root = color.<@colors/role ![brand]>.<emphasis>?.16-64*1.25~4',
     '  | fallback.[a | b *]',
+    'xsmall = 2xs | 3xs | 950',
   ];
   let state = INITIAL;
   const perLine = lines.map((line) => {
@@ -104,5 +105,13 @@ test('the sample module tokenizes with the expected scopes', async () => {
   );
   expect(scopesFor(perLine[5], lines[5], '*')).toContain(
     'keyword.operator.open-set.dfn',
+  );
+  // A digit-leading name (`2xs`) is one static name — never a number + identifier —
+  // while a pure number keeps its numeric scope.
+  expect(scopesFor(perLine[6], lines[6], '2xs')).toContain(
+    'constant.language.name.dfn',
+  );
+  expect(scopesFor(perLine[6], lines[6], '950')).toContain(
+    'constant.numeric.dfn',
   );
 });

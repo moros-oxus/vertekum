@@ -61,7 +61,7 @@
       }
     },
     "production": {
-      "match": "^([A-Za-z][A-Za-z0-9-]*)\\s*(=)",
+      "match": "^(\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*)\\s*(=)",
       "captures": {
         "1": {
           "name": "entity.name.function.production.dfn"
@@ -127,7 +127,7 @@
       },
       "patterns": [
         {
-          "match": "([A-Za-z][A-Za-z0-9-]*)(/)([A-Za-z][A-Za-z0-9-]*)",
+          "match": "(\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*)(/)(\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*)",
           "captures": {
             "1": {
               "name": "entity.name.namespace.module.dfn"
@@ -145,7 +145,7 @@
         },
         {
           "name": "variable.other.reference.imported.dfn",
-          "match": "[A-Za-z][A-Za-z0-9-]*"
+          "match": "\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*"
         }
       ]
     },
@@ -171,7 +171,7 @@
         },
         {
           "name": "variable.other.reference.dfn",
-          "match": "[A-Za-z][A-Za-z0-9-]*"
+          "match": "\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*"
         }
       ]
     },
@@ -197,7 +197,7 @@
           "patterns": [
             {
               "name": "variable.parameter.member.dfn",
-              "match": "[A-Za-z][A-Za-z0-9-]*|\\d+"
+              "match": "\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*|\\d+"
             },
             {
               "name": "punctuation.separator.comma.dfn",
@@ -245,7 +245,7 @@
     },
     "name": {
       "name": "constant.language.name.dfn",
-      "match": "[A-Za-z][A-Za-z0-9-]*"
+      "match": "\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*"
     }
   }
 }
