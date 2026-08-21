@@ -1,5 +1,11 @@
 # @vertekum/schema-builder
 
+## 0.1.6
+
+### Patch Changes
+
+- [`2e9a56f`](https://github.com/moros-oxus/vertekum/commit/2e9a56f5cc52de26ee8768ae0035178ebe4d847e) Thanks [@tschemmer](https://github.com/tschemmer)! - Names may start with digits when they contain a letter (`2xs`, `4k-display`) — everywhere a name works, including pick/omit lists. Pure numbers and scale expressions keep their numeric meaning; the syntax highlighting follows suit.
+
 ## 0.1.5
 
 ### Patch Changes
