@@ -19,6 +19,7 @@
   "files": [
     "CHANGELOG.md",
     "bin",
+    "docs",
     "src",
     "loader.mjs",
     "tsconfig.json",
