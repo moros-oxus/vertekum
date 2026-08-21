@@ -18,13 +18,13 @@ import { defineConfig } from '@vertekum/core';
 import { schemaBuilderExtension } from '@vertekum/schema-builder';
 
 export default defineConfig({
-  collection: './tokens',
   extensions: [schemaBuilderExtension],
-  schemas: [{ from: './schemas', domain: 'vocabulary', use: { 'house.json': '*.json' } }],
+  // the BUILT schema (step 3) validating a token set from the collection
+  schemas: [{ from: './schemas', use: { 'color-schema.json': 'core-tokens.json' } }],
 });
 ```
 
-2. Declare the vocabulary — `schemas/house.dfn`:
+2. Declare the vocabulary — `schemas/color-schema.dfn`:
 
 ```dfn
 emphasis = subtle | bold
@@ -35,96 +35,42 @@ root = color.text.[neutral | brand | success].<emphasis>
 3. Build it, then check as usual:
 
 ```bash
-npx vertekum schema build          # writes schemas/house.json beside the module
+npx vertekum schema build          # writes schemas/color-schema.json beside the module
 npx vertekum check                 # the built schema now governs your token names
 ```
 
-`schema build` accepts a single module argument, defaults to every `.dfn` under
-`./schemas`, and supports `--dry-run` (list without writing), `--json`, and `--check`
-(verify built files are current; exit 1 when stale — the CI guard). Only modules with a
-`root` build: the sweep skips fragment modules (denotation files that exist to be `use`d),
-while naming one explicitly is an error.
-
-## The definition language
-
-A module is line-oriented: `#` comments, pragmas, `use` imports, and productions. An
-indented line continues the statement above it.
-
-### Statements
-
-| statement | meaning |
-| --- | --- |
-| `name = expression` | a **production**: a named fragment (a denotation, a branch, a whole subtree) |
-| `root = expression` | the reserved production `build` materializes; one per module |
-| `use "./other.dfn"` | import a module (relative path or package specifier) |
-| `use "./other.dfn" as x` | alias the import: `<@x>` is its root, `<@x/name>` qualifies into it — the resolver when two imports share a basename |
-| `id "…"` `title "…"` `description "…"` | pragmas: the built schema's `$id`, `title`, `description` |
-| `scope "branch"` | the schema governs only its named top-level branches — the document root stays unsealed so sibling vocabularies can bind over the same files (default: `"document"`, which seals it) |
-
-### Expressions
-
-| syntax | meaning |
-| --- | --- |
-| `a.b.c` | nesting — one name-tree level per step |
-| `a \| b` | alternation — the set of permitted names |
-| `[ … ]` | grouping; groups may hold full sub-paths (branches) |
-| `<name>` | reference a local production |
-| `<@name>` | reference an imported production; an imported module's *root* goes by its basename |
-| `<@module/name>` | qualified: that import's production alone — the resolver when two imports share a name |
-| `<name [a, b]>` | **pick** — only the listed members of the set |
-| `<name ![a, b]>` | **omit** — the set minus the listed members |
-| `<name*>` / `[a \| b *]` | **open set** — additions beyond the listed names are permitted, and every member (listed or added) takes the same tail |
-| `step?` | **optional slot** — the step may be skipped: `<role>.<emphasis>?.<state>?` grants `role`, `role.<emphasis>`, `role.<state>`, and the full path |
-| `100-900/100` | an additive scale, inclusive both ends, enumerated at build; a leading zero on a written endpoint (`025-100/25`) zero-pads every emitted name |
-| `16-64*1.25~4` | a geometric scale: `min-max*factor` (fractional ok), `~quantum` rounding each step to the nearest multiple; steps that collide onto an earlier name are a build error |
-
-Pick and omit validate every listed name against the set's members — a typo is a build
-error, and a modified set is a new set. Naming one derives a narrowed denotation:
+The grammar reads the way a design system talks: nesting is `.`, choice is `|`,
+denotations are named productions referenced as `<emphasis>`, scales are enumerated
+expressions (`100-900/100`, `16-64*1.25~4`), and `?` marks a slot as optional. One
+expression grants a whole syntagm:
 
 ```dfn
-use "./colors.dfn"
-
-limited-accents = <@accent-color [red, blue]>
+root = color.<property>.<role>?.<emphasis>?.<state>?
 ```
 
-### Style: the root reads as the syntagm
+## Documentation
 
-State the high-level shape in the root and let unused slots collapse; give forks their own
-named productions instead of nesting:
+- [The module](./docs/language.md) — statements, pragmas (`id`, `title`, `description`,
+  `scope`), comments and continuation, `root` and fragments.
+- [Expressions](./docs/expressions.md) — nesting, alternation, groups, references,
+  pick/omit, open sets, optional slots; the style that keeps a root readable.
+- [Scales](./docs/scales.md) — additive and geometric ranges, zero-padding,
+  quantization, the locked semantics.
+- [Modules and composition](./docs/modules.md) — `use` and aliasing, fragments,
+  aggregate roots, nested directories, shipping and ejecting grammar.
+- [`schema build`](./docs/build.md) — the command, the sweep, the ownership stamp, the
+  `--check` CI gate, programmatic use.
+- [What a build emits](./docs/emission.md) — the names-and-order schema shape, open
+  positions, `$defs`, scope; a complete dfn→JSON example.
 
-```dfn
-property = background | text | icon | border
-role = brand | danger | neutral | success | warning
-emphasis = subtle | bold
-state = hovered | pressed
+## Ownership in one paragraph
 
-root = color.[
-    <property>.<role>?.<emphasis>?.<state>?
-  | <code>
-  ]
+A built file lands beside its module (`color.dfn` → `color.json`) and carries a
+`$comment` stamp naming its source. `schema build` regenerates stamped files and
+**never overwrites a file whose stamp was removed** — deleting the stamp line is how
+you take ownership of the JSON and part ways with the grammar. Until then, the `.dfn`
+is the source of truth and `--check` keeps CI honest about rebuilds.
 
-code = text.code.[comments | keywords | strings]
-```
+## License
 
-## Built artifacts and ownership
-
-A built file lands beside its module (`house.dfn` → `house.json`) and carries a `$comment`
-stamp naming its source. The stamp is the ownership contract: `schema build` regenerates
-stamped files and **never overwrites a file whose stamp was removed** — hand-edit the JSON
-and delete the stamp to take ownership, and the builder leaves it alone from then on.
-
-## Ejecting grammar
-
-`vertekum schema eject` copies any resolvable file verbatim — including `.dfn` modules
-from packages that ship them:
-
-```bash
-npx vertekum schema eject @vertekum/schema-atlassian/color.dfn ./schemas/color.dfn
-npx vertekum schema build
-```
-
-Ejecting the grammar (rather than the built JSON) means your edits stay one-line grammar
-edits with a rebuild, instead of surgery on generated schema. Two notes: an ejected module
-that `use`s relative imports needs them ejected alongside it; and the config hint `eject`
-prints applies to schemas you bind directly — an ejected `.dfn` is not bound, its *built*
-`.json` is.
+Apache-2.0
