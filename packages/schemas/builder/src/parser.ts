@@ -133,6 +133,16 @@ class Parser {
           token.column,
         );
       }
+      // `<scale>*` — the open-set mark after a closed `>`/`]` lands here as a stray
+      // statement tail; name the fix rather than complaining about the line ending.
+      if (this.peek().kind === 'star') {
+        const star = this.peek();
+        throw new DfnError(
+          "'*' marks a set open and sits inside the reference or group it opens — <name*> or [a | b *]",
+          star.line,
+          star.column,
+        );
+      }
       if (this.peek().kind !== 'eof') this.expect('newline', 'end of line');
       this.skipNewlines();
     }
@@ -189,10 +199,11 @@ class Parser {
 
   private term(): Step['term'] {
     const token = this.next();
+    const at = { line: token.line, column: token.column };
     switch (token.kind) {
       case 'ident':
       case 'number':
-        return { kind: 'name', value: token.value };
+        return { kind: 'name', value: token.value, ...at };
       case 'range': {
         const payload = token.range as NonNullable<Token['range']>;
         const { min, max, mode, step, quantum, pad } = payload;
@@ -218,7 +229,7 @@ class Parser {
               token.column,
             );
           }
-          return { kind: 'range', min, max, mode: 'stepped', step, pad };
+          return { kind: 'range', min, max, mode: 'stepped', step, pad, ...at };
         }
         if (step <= 1) {
           throw new DfnError(
@@ -235,6 +246,7 @@ class Parser {
           step,
           quantum,
           pad,
+          ...at,
         };
       }
       case 'langle': {
@@ -289,6 +301,7 @@ class Parser {
           open,
           pick,
           omit,
+          ...at,
         };
       }
       case 'lbracket': {
@@ -296,8 +309,16 @@ class Parser {
         const open = this.peek().kind === 'star';
         if (open) this.next();
         this.expect('rbracket', "']'");
-        return { kind: 'group', node, open };
+        return { kind: 'group', node, open, ...at };
       }
+      case 'star':
+        // The most common misplacement: `color.*` or `a | *`. The mark exists — it just
+        // sits inside the set it opens, so say that instead of a bare grammar complaint.
+        throw new DfnError(
+          "'*' marks a set open and sits inside the reference or group it opens — <name*> or [a | b *]",
+          token.line,
+          token.column,
+        );
       default:
         throw new DfnError(
           `expected a term, got '${token.value || token.kind}'`,

@@ -38,7 +38,11 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
   if (!ref.imported) {
     const production = scope.module.module.productions.get(ref.name);
     if (!production) {
-      throw new DfnError(`unknown production '<${ref.name}>'`, 1, 1);
+      throw new DfnError(
+        `unknown production '<${ref.name}>'`,
+        ref.line,
+        ref.column,
+      );
     }
     return { node: production, scope };
   }
@@ -47,11 +51,15 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
   if (ref.from) {
     const imported = scope.module.imports.get(ref.from);
     if (!imported) {
-      throw new DfnError(`no import named '${ref.from}'`, 1, 1);
+      throw new DfnError(`no import named '${ref.from}'`, ref.line, ref.column);
     }
     const production = imported.module.productions.get(ref.name);
     if (!production) {
-      throw new DfnError(`'${ref.from}' has no production '${ref.name}'`, 1, 1);
+      throw new DfnError(
+        `'${ref.from}' has no production '${ref.name}'`,
+        ref.line,
+        ref.column,
+      );
     }
     return {
       node: production,
@@ -69,13 +77,17 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
     }
   }
   if (hits.length === 0) {
-    throw new DfnError(`no import provides '<@${ref.name}>'`, 1, 1);
+    throw new DfnError(
+      `no import provides '<@${ref.name}>'`,
+      ref.line,
+      ref.column,
+    );
   }
   if (hits.length > 1) {
     throw new DfnError(
       `'<@${ref.name}>' is ambiguous across imports — qualify it: <@module/${ref.name}>`,
-      1,
-      1,
+      ref.line,
+      ref.column,
     );
   }
   return hits[0];
@@ -118,15 +130,15 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       } catch (error) {
         throw new DfnError(
           error instanceof Error ? error.message : String(error),
-          1,
-          1,
+          node.line,
+          node.column,
         );
       }
       if (scale.collisions.length > 0) {
         throw new DfnError(
           `scale steps ${scale.collisions.join(', ')} quantize onto earlier names — the quantum is too coarse for the factor`,
-          1,
-          1,
+          node.line,
+          node.column,
         );
       }
       const forest = leaf();
@@ -172,7 +184,11 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       const { node: production, scope: refScope } = target(node, scope);
       if (!node.imported) {
         if (scope.expanding.has(node.name)) {
-          throw new DfnError(`'<${node.name}>' expands through itself`, 1, 1);
+          throw new DfnError(
+            `'<${node.name}>' expands through itself`,
+            node.line,
+            node.column,
+          );
         }
         scope.expanding.add(node.name);
       }
@@ -182,8 +198,8 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
         if (!forest.children.delete(omitted)) {
           throw new DfnError(
             `'<${node.name}>' has no member '${omitted}' to omit`,
-            1,
-            1,
+            node.line,
+            node.column,
           );
         }
       }
@@ -192,8 +208,8 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
           if (!forest.children.has(picked)) {
             throw new DfnError(
               `'<${node.name}>' has no member '${picked}' to pick`,
-              1,
-              1,
+              node.line,
+              node.column,
             );
           }
         }
@@ -256,8 +272,8 @@ export function build(resolved: ResolvedModule): TreeNode {
         if (owner && owner !== option.name) {
           throw new DfnError(
             `top-level '${name}' comes from both '${owner}' and '${option.name}'`,
-            1,
-            1,
+            option.line,
+            option.column,
           );
         }
         seen.set(name, option.name);
@@ -269,6 +285,24 @@ export function build(resolved: ResolvedModule): TreeNode {
   // Open markers on the root's own set have no parent position to attach to.
   tree.open = false;
   return tree;
+}
+
+/**
+ * Expand ONE production in isolation — the lint walk's unit. `build` stays root-only; this is what
+ * lets a fragment's productions (and a rooted module's unused ones) be validated at all. Seeding
+ * `expanding` with the production's own name makes direct self-reference a cycle, same as it is
+ * when reached from a root.
+ */
+export function evaluateProduction(
+  resolved: ResolvedModule,
+  name: string,
+): TreeNode {
+  const production = resolved.module.productions.get(name);
+  if (!production) {
+    throw new DfnError(`no production '${name}'`, 1, 1);
+  }
+  const scope: Scope = { module: resolved, expanding: new Set([name]) };
+  return evaluate(production, scope, leaf);
 }
 
 /**
@@ -294,7 +328,11 @@ export function assertOpenSetsAreNameSets(
       return;
     case 'group':
       if (node.open && !isNameSet(node.node)) {
-        throw new DfnError('* opens a set of names, not sub-paths', 1, 1);
+        throw new DfnError(
+          '* opens a set of names, not sub-paths',
+          node.line,
+          node.column,
+        );
       }
       assertOpenSetsAreNameSets(resolved, node.node, scope);
       return;
@@ -304,8 +342,8 @@ export function assertOpenSetsAreNameSets(
         if (!isNameSet(production)) {
           throw new DfnError(
             `'<${node.name}*>' opens a set, but the production is not name-only`,
-            1,
-            1,
+            node.line,
+            node.column,
           );
         }
       }

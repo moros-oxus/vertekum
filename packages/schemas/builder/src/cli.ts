@@ -1,8 +1,9 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { basename, dirname, join, relative } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative } from 'node:path';
 import type { CommandDescriptor, CommandResult } from '@vertekum/core';
 import { assertOpenSetsAreNameSets, build } from './build';
 import { emit, isStamped } from './emit';
+import { lintModule } from './lint';
 import { resolveModule } from './resolve';
 
 /**
@@ -43,6 +44,55 @@ export function buildModule(
     content: emit(tree, { moduleFile, ...resolved.module.meta }),
   };
 }
+
+/**
+ * `vertekum schema lint [module]`: validate the `.dfn` sources themselves. Where `build --check`
+ * asks "are the artifacts current?", lint asks "is the grammar sound?" — fragments included,
+ * every production evaluated, findings collected instead of aborting on the first. Findings exit
+ * `1` through a thrown error carrying the listing (the `build --check` staleness precedent).
+ */
+export const schemaLintCommand: CommandDescriptor = {
+  name: 'schema lint',
+  description:
+    'validate .dfn vocabulary modules — fragments included — without building',
+  args: [
+    {
+      name: 'module',
+      required: false,
+      description: "a .dfn file; default: every module under './schemas'",
+    },
+  ],
+  run(ctx): CommandResult {
+    const { projectDir } = ctx.project as ProjectDir;
+    const modules = ctx.args.module
+      ? [join(projectDir, ctx.args.module)]
+      : modulesUnder(join(projectDir, 'schemas'));
+    if (modules.length === 0) {
+      return { summary: 'no .dfn modules found' };
+    }
+
+    const project = (file: string) =>
+      isAbsolute(file) ? relative(projectDir, file) : file;
+    const diagnostics = modules.flatMap((modulePath) =>
+      lintModule(modulePath).map((d) => ({ ...d, file: project(d.file) })),
+    );
+
+    if (diagnostics.length > 0) {
+      throw new Error(
+        [
+          `${diagnostics.length} problem(s) in the .dfn modules:`,
+          ...diagnostics.map(
+            (d) => `  ${d.file}:${d.line}:${d.column} ${d.message}`,
+          ),
+        ].join('\n'),
+      );
+    }
+    return {
+      summary: `${modules.length} module(s) clean`,
+      data: { modules: modules.map(project) },
+    };
+  },
+};
 
 export const schemaBuildCommand: CommandDescriptor = {
   name: 'schema build',

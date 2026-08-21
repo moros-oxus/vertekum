@@ -62,6 +62,10 @@ stale built schemas: schemas/color.json — run `vertekum schema build`
 This is the CI guard: run it wherever the built schemas are committed, and a grammar
 edit that forgot its rebuild cannot land.
 
+`--check` asks "are the artifacts **current**?" — the complementary question, "is the
+grammar **sound**?" (including fragments a build never reaches), belongs to
+[`schema lint`](./lint.md); CI wants both.
+
 ## Programmatic use
 
 The pipeline is importable from `@vertekum/schema-builder/api` for tooling that wants

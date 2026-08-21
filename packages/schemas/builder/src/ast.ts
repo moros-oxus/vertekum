@@ -32,6 +32,15 @@ export interface ModuleMeta {
 
 export type Node = Alt | Path | Name | Range | Ref | Group;
 
+/**
+ * Where a node's source text begins. Carried on every node a later phase can fail on, so a build
+ * or lint error names the offending line rather than a placeholder.
+ */
+export interface Position {
+  line: number;
+  column: number;
+}
+
 /** `a | b | c` — set union of the options' name trees. */
 export interface Alt {
   kind: 'alt';
@@ -51,7 +60,7 @@ export interface Step {
 }
 
 /** A literal name segment — an identifier or a bare number. */
-export interface Name {
+export interface Name extends Position {
   kind: 'name';
   value: string;
 }
@@ -62,7 +71,7 @@ export interface Name {
  * nearest multiple of `quantum` (`~4`). A leading zero on a written endpoint (`025`)
  * declares the zero-pad width for every emitted name.
  */
-export interface Range {
+export interface Range extends Position {
   kind: 'range';
   min: number;
   max: number;
@@ -78,7 +87,7 @@ export interface Range {
  * modifiers: `[a, b]` is PICK (only the listed members), `![a, b]` is OMIT (the set minus
  * them) — a modified reference is a new set.
  */
-export interface Ref {
+export interface Ref extends Position {
   kind: 'ref';
   name: string;
   imported: boolean;
@@ -90,7 +99,7 @@ export interface Ref {
 }
 
 /** `[ … ]`; `open` records a trailing `*` before the closing bracket. */
-export interface Group {
+export interface Group extends Position {
   kind: 'group';
   node: Node;
   open: boolean;

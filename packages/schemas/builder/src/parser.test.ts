@@ -3,7 +3,7 @@ import { parse } from './parser';
 
 test('a denotation is a plain alternation of names', () => {
   const module = parse('conspicuity = subtle | normal | bold\n');
-  expect(module.productions.get('conspicuity')).toEqual({
+  expect(module.productions.get('conspicuity')).toMatchObject({
     kind: 'alt',
     options: [
       { kind: 'name', value: 'subtle' },
@@ -28,7 +28,7 @@ test('the contrived color module parses: use, fragments, root with refs and ?', 
     { spec: './conspicuity.dfn', alias: undefined },
   ]);
   expect(module.productions.has('root')).toBe(false);
-  expect(module.root).toEqual({
+  expect(module.root).toMatchObject({
     kind: 'path',
     steps: [
       { term: { kind: 'name', value: 'color' }, optional: false },
@@ -71,7 +71,7 @@ test('open refs, ranges, and kebab identifiers lex without collision', () => {
   const module = parse(
     'weight = 50 | 100-300/50 | 300-900/100 | 950\nroot = font.<color-role*>.<weight>\n',
   );
-  expect(module.productions.get('weight')).toEqual({
+  expect(module.productions.get('weight')).toMatchObject({
     kind: 'alt',
     options: [
       { kind: 'name', value: '50' },
@@ -95,7 +95,7 @@ test('open refs, ranges, and kebab identifiers lex without collision', () => {
     ],
   });
   const steps = (module.root as { steps: Array<{ term: unknown }> }).steps;
-  expect(steps[1].term).toEqual({
+  expect(steps[1].term).toMatchObject({
     kind: 'ref',
     name: 'color-role',
     imported: false,
@@ -153,4 +153,16 @@ test('errors carry positions', () => {
   expect(() => parse('w = 100-300/2.5\n')).toThrowError(/whole-number step/);
   expect(() => parse('w = 16-64*1\n')).toThrowError(/greater than one/);
   expect(() => parse('use unquoted\n')).toThrowError(/quoted specifier/);
+});
+
+test("a bare '*' names the open-set placement instead of a grammar complaint", () => {
+  expect(() => parse('root = color.*\n')).toThrow(
+    "1:14 '*' marks a set open and sits inside the reference or group it opens — <name*> or [a | b *]",
+  );
+});
+
+test("a '*' trailing a closed reference gets the same hint", () => {
+  expect(() => parse('root = color.<scale>*\n')).toThrow(
+    "1:21 '*' marks a set open and sits inside the reference or group it opens",
+  );
 });

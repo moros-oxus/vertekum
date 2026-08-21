@@ -60,6 +60,8 @@ root = color.<property>.<role>?.<emphasis>?.<state>?
   aggregate roots, nested directories, shipping and ejecting grammar.
 - [`schema build`](./docs/build.md) — the command, the sweep, the ownership stamp, the
   `--check` CI gate, programmatic use.
+- [`schema lint`](./docs/lint.md) — validate the `.dfn` sources themselves: fragments
+  included, every production, findings collected with positions.
 - [What a build emits](./docs/emission.md) — the names-and-order schema shape, open
   positions, `$defs`, scope; a complete dfn→JSON example.
 

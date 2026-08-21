@@ -55,7 +55,17 @@ export function resolveModule(
   } catch {
     throw new DfnError(`cannot read ${absolute}`, 1, 1);
   }
-  const module = parse(source);
+  let module: Module;
+  try {
+    module = parse(source);
+  } catch (error) {
+    // Stamp the file: a sweep parses many modules, and `13:10 …` without a file name is
+    // exactly the kind of message this pipeline should never emit.
+    if (error instanceof DfnError && !error.file) {
+      throw new DfnError(error.detail, error.line, error.column, absolute);
+    }
+    throw error;
+  }
 
   const imports = new Map<string, ResolvedModule>();
   for (const { spec, alias } of module.uses) {
