@@ -1,5 +1,11 @@
 # @vertekum/schema-builder
 
+## 0.1.5
+
+### Patch Changes
+
+- [`ecb2e95`](https://github.com/moros-oxus/vertekum/commit/ecb2e95fa860fa1aed780b29222aa69d474d68fe) Thanks [@tschemmer](https://github.com/tschemmer)! - Adds `vertekum schema lint`: validate `.dfn` modules — fragments and unused productions included — with findings collected and positioned per file. Grammar errors now point at the offending source (file, line, column) instead of `1:1`, and a misplaced `*` explains where the open-set mark belongs.
+
 ## 0.1.4
 
 ### Patch Changes
