@@ -49,7 +49,7 @@ class Parser {
   }
 
   module(): Module {
-    const uses: string[] = [];
+    const uses: Array<{ spec: string; alias?: string }> = [];
     const productions = new Map<string, Node>();
     const meta: ModuleMeta = {};
     let root: Node | undefined;
@@ -59,7 +59,13 @@ class Parser {
       const token = this.peek();
       if (token.kind === 'use') {
         this.next();
-        uses.push(this.expect('string', 'a quoted specifier').value);
+        const spec = this.expect('string', 'a quoted specifier').value;
+        let alias: string | undefined;
+        if (this.peek().kind === 'ident' && this.peek().value === 'as') {
+          this.next();
+          alias = this.expect('ident', 'an import alias').value;
+        }
+        uses.push({ spec, alias });
       } else if (token.kind === 'ident' && this.at(1)?.kind === 'string') {
         // `<ident> "<string>"` (no `=`) is a PRAGMA — document metadata, not a production, so
         // nothing is reserved: `title = a | b` still declares a production named title.

@@ -93,9 +93,14 @@ test('every shipped name is granted; the generative surplus is the pinned count'
 });
 
 test('the committed artifacts are current: rebuilding every module reproduces them', () => {
-  for (const file of readdirSync(join(root, 'dfn')).sort()) {
-    if (!file.endsWith('.dfn')) continue;
-    const { content } = buildModule(join(root, 'dfn', file));
+  const modules = readdirSync(join(root, 'dfn'), {
+    recursive: true,
+    encoding: 'utf8',
+  })
+    .filter((f) => f.endsWith('.dfn'))
+    .sort();
+  for (const file of modules) {
+    const { content } = buildModule(join(root, 'dfn', file), file);
     const committed = readFileSync(
       join(root, 'lib', file.replace(/\.dfn$/, '.json')),
       'utf8',

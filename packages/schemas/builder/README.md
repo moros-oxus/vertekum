@@ -57,6 +57,7 @@ indented line continues the statement above it.
 | `name = expression` | a **production**: a named fragment (a denotation, a branch, a whole subtree) |
 | `root = expression` | the reserved production `build` materializes; one per module |
 | `use "./other.dfn"` | import a module (relative path or package specifier) |
+| `use "./other.dfn" as x` | alias the import: `<@x>` is its root, `<@x/name>` qualifies into it — the resolver when two imports share a basename |
 | `id "…"` `title "…"` `description "…"` | pragmas: the built schema's `$id`, `title`, `description` |
 | `scope "branch"` | the schema governs only its named top-level branches — the document root stays unsealed so sibling vocabularies can bind over the same files (default: `"document"`, which seals it) |
 

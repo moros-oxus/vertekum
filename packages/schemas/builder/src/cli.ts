@@ -25,14 +25,19 @@ function modulesUnder(dir: string): string[] {
     .map((f) => join(dir, f));
 }
 
-export function buildModule(modulePath: string): {
+export function buildModule(
+  modulePath: string,
+  /** The module name the provenance stamp records; default: the basename. Pass a relative
+   *  path when modules nest, so same-named modules stamp distinguishably. */
+  moduleLabel?: string,
+): {
   target: string;
   content: string;
 } {
   const resolved = resolveModule(modulePath);
   assertOpenSetsAreNameSets(resolved);
   const tree = build(resolved);
-  const moduleFile = basename(modulePath);
+  const moduleFile = moduleLabel ?? basename(modulePath);
   return {
     target: join(dirname(modulePath), `${resolved.name}.json`),
     content: emit(tree, { moduleFile, ...resolved.module.meta }),
@@ -77,7 +82,10 @@ export const schemaBuildCommand: CommandDescriptor = {
         fragments.push(relative(projectDir, modulePath));
         continue;
       }
-      const { target, content } = buildModule(modulePath);
+      const { target, content } = buildModule(
+        modulePath,
+        relative(projectDir, modulePath),
+      );
       const existing = existsSync(target)
         ? readFileSync(target, 'utf8')
         : undefined;

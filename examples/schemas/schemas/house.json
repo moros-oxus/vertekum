@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "built by @vertekum/schema-builder from house.dfn — do not hand-edit; remove this comment to take ownership",
+  "$comment": "built by @vertekum/schema-builder from schemas/house.dfn — do not hand-edit; remove this comment to take ownership",
   "$defs": {
     "emphasis": {
       "type": "object",

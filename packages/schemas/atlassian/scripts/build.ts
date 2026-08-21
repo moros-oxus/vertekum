@@ -11,10 +11,16 @@ import { buildModule } from '@vertekum/schema-builder/api';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 mkdirSync(join(root, 'lib'), { recursive: true });
 
-for (const file of readdirSync(join(root, 'dfn')).sort()) {
-  if (!file.endsWith('.dfn')) continue;
-  const { content } = buildModule(join(root, 'dfn', file));
+const modules = readdirSync(join(root, 'dfn'), {
+  recursive: true,
+  encoding: 'utf8',
+})
+  .filter((f) => f.endsWith('.dfn'))
+  .sort();
+for (const file of modules) {
+  const { content } = buildModule(join(root, 'dfn', file), file);
   const target = join(root, 'lib', file.replace(/\.dfn$/, '.json'));
+  mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, content);
   process.stdout.write(`lib/${file.replace(/\.dfn$/, '.json')}\n`);
 }

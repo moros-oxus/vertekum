@@ -58,13 +58,18 @@ export function resolveModule(
   const module = parse(source);
 
   const imports = new Map<string, ResolvedModule>();
-  for (const spec of module.uses) {
+  for (const { spec, alias } of module.uses) {
     const target = resolveSpecifier(spec, dirname(absolute));
     const resolved = resolveModule(target, inProgress);
-    if (imports.has(resolved.name)) {
-      throw new DfnError(`two imports share the name '${resolved.name}'`, 1, 1);
+    const key = alias ?? resolved.name;
+    if (imports.has(key)) {
+      throw new DfnError(
+        `two imports share the name '${key}' — alias one: use "…" as other-name`,
+        1,
+        1,
+      );
     }
-    imports.set(resolved.name, resolved);
+    imports.set(key, resolved);
   }
 
   inProgress.delete(absolute);

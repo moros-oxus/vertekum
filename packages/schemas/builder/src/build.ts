@@ -60,11 +60,11 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
   }
 
   const hits: Array<{ node: Node; scope: Scope }> = [];
-  for (const imported of scope.module.imports.values()) {
+  for (const [key, imported] of scope.module.imports) {
     const importedScope: Scope = { module: imported, expanding: new Set() };
     const production = imported.module.productions.get(ref.name);
     if (production) hits.push({ node: production, scope: importedScope });
-    if (imported.name === ref.name && imported.module.root) {
+    if (key === ref.name && imported.module.root) {
       hits.push({ node: imported.module.root, scope: importedScope });
     }
   }

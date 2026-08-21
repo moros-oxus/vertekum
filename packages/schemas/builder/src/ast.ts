@@ -7,8 +7,8 @@
 
 /** A parsed module: imports, named productions, and the reserved `root` (absent in fragments). */
 export interface Module {
-  /** `use "<specifier>"` statements, in order: relative paths or package specifiers. */
-  uses: string[];
+  /** `use "<specifier>" [as <alias>]` statements, in order. */
+  uses: Array<{ spec: string; alias?: string }>;
   /** Productions by name. `root` is never stored here. */
   productions: Map<string, Node>;
   /** The reserved `root` production, when declared. */

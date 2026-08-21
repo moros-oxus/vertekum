@@ -142,6 +142,34 @@ test('set modifiers: ![…] omits, […] picks; a non-member in either is an err
   );
 });
 
+test('use…as aliases an import: <@alias> is its root, <@alias/name> qualifies into it', () => {
+  const dir = fixture({
+    'palette/color.dfn': 'tone = light | dark\nroot = palette.<tone>\n',
+    'color.dfn': [
+      'use "./palette/color.dfn" as palette',
+      'root = color.[<@palette> | <@palette/tone>]',
+      '',
+    ].join('\n'),
+    'clash/color.dfn': 'x = a\n',
+    'unaliased.dfn': [
+      'use "./color.dfn"',
+      'use "./clash/color.dfn"',
+      'root = z.<@x>',
+      '',
+    ].join('\n'),
+  });
+  const tree = build(resolveModule(join(dir, 'color.dfn')));
+  const color = tree.children.get('color') as TreeNode;
+  expect(names(color.children.get('palette') as TreeNode)).toEqual([
+    'light',
+    'dark',
+  ]);
+  expect(names(color).sort()).toEqual(['dark', 'light', 'palette']);
+  expect(() => resolveModule(join(dir, 'unaliased.dfn'))).toThrowError(
+    /alias one: use "…" as other-name/,
+  );
+});
+
 test('qualified refs resolve one import; unqualified collisions say how to qualify', () => {
   const dir = fixture({
     'warm.dfn': 'tone = red | orange\n',

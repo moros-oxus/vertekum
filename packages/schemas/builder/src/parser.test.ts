@@ -24,7 +24,9 @@ test('the contrived color module parses: use, fragments, root with refs and ?', 
       '',
     ].join('\n'),
   );
-  expect(module.uses).toEqual(['./conspicuity.dfn']);
+  expect(module.uses).toEqual([
+    { spec: './conspicuity.dfn', alias: undefined },
+  ]);
   expect(module.productions.has('root')).toBe(false);
   expect(module.root).toEqual({
     kind: 'path',
