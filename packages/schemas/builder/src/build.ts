@@ -33,8 +33,19 @@ interface Scope {
   expanding: Set<string>;
 }
 
+/** The `<@key/name>, …` listing a miss suggests — an error should name the fix, not just the gap. */
+function productionsOf(key: string, imported: ResolvedModule): string {
+  return [...imported.module.productions.keys()]
+    .map((p) => `<@${key}/${p}>`)
+    .join(', ');
+}
+
 /** Find what `<name>` / `<@name>` means in this scope. Imported roots go by module name. */
 function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
+  // Every error here names the module whose TEXT holds the ref — `scope.module` — so a
+  // failure inside an imported production's body is attributed to that file, not to
+  // whichever module the walk started from.
+  const file = scope.module.path;
   if (!ref.imported) {
     const production = scope.module.module.productions.get(ref.name);
     if (!production) {
@@ -42,6 +53,7 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
         `unknown production '<${ref.name}>'`,
         ref.line,
         ref.column,
+        file,
       );
     }
     return { node: production, scope };
@@ -51,14 +63,20 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
   if (ref.from) {
     const imported = scope.module.imports.get(ref.from);
     if (!imported) {
-      throw new DfnError(`no import named '${ref.from}'`, ref.line, ref.column);
+      throw new DfnError(
+        `no import named '${ref.from}'`,
+        ref.line,
+        ref.column,
+        file,
+      );
     }
     const production = imported.module.productions.get(ref.name);
     if (!production) {
       throw new DfnError(
-        `'${ref.from}' has no production '${ref.name}'`,
+        `'${ref.from}' has no production '${ref.name}' — it declares: ${productionsOf(ref.from, imported)}`,
         ref.line,
         ref.column,
+        file,
       );
     }
     return {
@@ -77,10 +95,22 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
     }
   }
   if (hits.length === 0) {
+    // The near-miss that reads as a missing `use`: the import EXISTS under this key, but
+    // `<@key>` means its root and a fragment has none. Say so, and name the real forms.
+    const fragment = scope.module.imports.get(ref.name);
+    if (fragment) {
+      throw new DfnError(
+        `'${ref.name}' is imported, but it declares no root (a fragment) — reference one of its productions: ${productionsOf(ref.name, fragment)}`,
+        ref.line,
+        ref.column,
+        file,
+      );
+    }
     throw new DfnError(
       `no import provides '<@${ref.name}>'`,
       ref.line,
       ref.column,
+      file,
     );
   }
   if (hits.length > 1) {
@@ -88,6 +118,7 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
       `'<@${ref.name}>' is ambiguous across imports — qualify it: <@module/${ref.name}>`,
       ref.line,
       ref.column,
+      file,
     );
   }
   return hits[0];
@@ -132,6 +163,7 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
           error instanceof Error ? error.message : String(error),
           node.line,
           node.column,
+          scope.module.path,
         );
       }
       if (scale.collisions.length > 0) {
@@ -139,6 +171,7 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
           `scale steps ${scale.collisions.join(', ')} quantize onto earlier names — the quantum is too coarse for the factor`,
           node.line,
           node.column,
+          scope.module.path,
         );
       }
       const forest = leaf();
@@ -188,6 +221,7 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
             `'<${node.name}>' expands through itself`,
             node.line,
             node.column,
+            scope.module.path,
           );
         }
         scope.expanding.add(node.name);
@@ -200,6 +234,7 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
             `'<${node.name}>' has no member '${omitted}' to omit`,
             node.line,
             node.column,
+            scope.module.path,
           );
         }
       }
@@ -210,6 +245,7 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
               `'<${node.name}>' has no member '${picked}' to pick`,
               node.line,
               node.column,
+              scope.module.path,
             );
           }
         }
@@ -254,7 +290,12 @@ function isTerminal(node: TreeNode): boolean {
 export function build(resolved: ResolvedModule): TreeNode {
   const root = resolved.module.root;
   if (!root) {
-    throw new DfnError(`${resolved.name}.dfn declares no root`, 1, 1);
+    throw new DfnError(
+      `${resolved.name}.dfn declares no root`,
+      1,
+      1,
+      resolved.path,
+    );
   }
   const scope: Scope = { module: resolved, expanding: new Set() };
 
@@ -274,6 +315,7 @@ export function build(resolved: ResolvedModule): TreeNode {
             `top-level '${name}' comes from both '${owner}' and '${option.name}'`,
             option.line,
             option.column,
+            resolved.path,
           );
         }
         seen.set(name, option.name);
@@ -332,6 +374,7 @@ export function assertOpenSetsAreNameSets(
           '* opens a set of names, not sub-paths',
           node.line,
           node.column,
+          scope.module.path,
         );
       }
       assertOpenSetsAreNameSets(resolved, node.node, scope);
@@ -344,6 +387,7 @@ export function assertOpenSetsAreNameSets(
             `'<${node.name}*>' opens a set, but the production is not name-only`,
             node.line,
             node.column,
+            scope.module.path,
           );
         }
       }

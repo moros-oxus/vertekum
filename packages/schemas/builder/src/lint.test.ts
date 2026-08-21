@@ -85,3 +85,42 @@ test('a parse error in an imported fragment is attributed to that file', () => {
   expect(diagnostics[0].file).toBe(join(dir, 'broken.dfn'));
   expect(diagnostics[0].message).toContain("'*' marks a set open");
 });
+
+test('an evaluation error inside an imported module is attributed to that file', () => {
+  const dir = fixture({
+    'primitives.dfn': 'use "./common/size.dfn"\n\nroot = t.<@size>\n',
+    'common/size.dfn': '# size\n\n\n\nsize = a | <@t-shirt/sm>\n',
+  });
+  const diagnostics = lintModule(join(dir, 'primitives.dfn'));
+  expect(diagnostics).toHaveLength(1);
+  expect(diagnostics[0].file).toBe(join(dir, 'common/size.dfn'));
+  expect(diagnostics[0].line).toBe(5);
+  expect(diagnostics[0].message).toContain("no import named 't-shirt'");
+});
+
+test('referencing a fragment by module name explains the fix and lists its productions', () => {
+  const dir = fixture({
+    'border.dfn':
+      'use "./t-shirt.dfn"\n\nborder-scale = <@t-shirt [sm, md]>\nroot = border.<border-scale>\n',
+    't-shirt.dfn': 'size = sm | md | lg\nscale = 1 | 2\n',
+  });
+  const diagnostics = lintModule(join(dir, 'border.dfn'));
+  expect(diagnostics).toHaveLength(1);
+  expect(diagnostics[0].file).toBe(join(dir, 'border.dfn'));
+  expect(diagnostics[0].line).toBe(3);
+  expect(diagnostics[0].column).toBe(16);
+  expect(diagnostics[0].message).toBe(
+    "'t-shirt' is imported, but it declares no root (a fragment) — reference one of its productions: <@t-shirt/size>, <@t-shirt/scale>",
+  );
+});
+
+test('a qualified miss lists what the import declares', () => {
+  const dir = fixture({
+    'border.dfn': 'use "./t-shirt.dfn"\n\nroot = border.<@t-shirt/sizes>\n',
+    't-shirt.dfn': 'size = sm | md | lg\n',
+  });
+  const diagnostics = lintModule(join(dir, 'border.dfn'));
+  expect(diagnostics[0].message).toBe(
+    "'t-shirt' has no production 'sizes' — it declares: <@t-shirt/size>",
+  );
+});
