@@ -48,3 +48,4 @@ CLAUDE.local.md
 
 # CLI e2e fixtures (throwaway copies of examples/default; removed per test)
 examples/*/.e2e-*
+*.vsix

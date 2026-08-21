@@ -1,0 +1,144 @@
+{
+  "name": "vertekum-dfn",
+  "displayName": "Vertekum DFN",
+  "description": "Syntax highlighting for .dfn vocabulary definition files",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "publisher": "vertekum",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moros-oxus/vertekum.git",
+    "directory": "packages/tooling/vscode-dfn"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "dfn",
+        "aliases": [
+          "DFN",
+          "dfn"
+        ],
+        "extensions": [
+          ".dfn"
+        ],
+        "configuration": "./syntaxes/dfn.language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "dfn",
+        "scopeName": "source.dfn",
+        "path": "./syntaxes/dfn.tmLanguage.json"
+      }
+    ],
+    "configurationDefaults": {
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "scope": "keyword.other.pragma.dfn",
+            "settings": {
+              "foreground": "#9D7CD8"
+            }
+          },
+          {
+            "scope": "keyword.control.import.dfn",
+            "settings": {
+              "foreground": "#C678DD"
+            }
+          },
+          {
+            "scope": "keyword.control.root.dfn",
+            "settings": {
+              "foreground": "#C678DD"
+            }
+          },
+          {
+            "scope": [
+              "keyword.operator.assignment.dfn",
+              "keyword.operator.dfn",
+              "punctuation.definition.reference.begin.dfn",
+              "punctuation.definition.reference.end.dfn",
+              "punctuation.separator.qualified.dfn",
+              "punctuation.definition.modifier.begin.dfn",
+              "punctuation.definition.modifier.end.dfn",
+              "punctuation.separator.comma.dfn",
+              "punctuation.definition.group.begin.dfn",
+              "punctuation.definition.group.end.dfn"
+            ],
+            "settings": {
+              "foreground": "#8FA1B3"
+            }
+          },
+          {
+            "scope": "entity.name.function.production.dfn",
+            "settings": {
+              "foreground": "#C99A3C"
+            }
+          },
+          {
+            "scope": "constant.language.name.dfn",
+            "settings": {
+              "foreground": "#5B9BD5"
+            }
+          },
+          {
+            "scope": "variable.other.reference.dfn",
+            "settings": {
+              "foreground": "#C99A3C"
+            }
+          },
+          {
+            "scope": "entity.name.namespace.module.dfn",
+            "settings": {
+              "foreground": "#DCDCAA"
+            }
+          },
+          {
+            "scope": "variable.parameter.member.dfn",
+            "settings": {
+              "foreground": "#56B6C2",
+              "fontStyle": "italic"
+            }
+          },
+          {
+            "scope": "punctuation.definition.imported.dfn",
+            "settings": {
+              "foreground": "#DCDCAA"
+            }
+          },
+          {
+            "scope": "variable.other.reference.imported.dfn",
+            "settings": {
+              "foreground": "#DCDCAA"
+            }
+          },
+          {
+            "scope": [
+              "keyword.operator.optional.dfn",
+              "keyword.operator.omit.dfn",
+              "keyword.operator.open-set.dfn"
+            ],
+            "settings": {
+              "foreground": "#EE9550"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "scripts": {
+    "sync": "node scripts/sync.mjs",
+    "package": "pnpm sync && pnpm dlx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.0.0"
+  }
+}

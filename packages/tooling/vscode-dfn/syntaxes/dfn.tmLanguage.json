@@ -1,0 +1,251 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "DFN",
+  "scopeName": "source.dfn",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#pragma"
+    },
+    {
+      "include": "#use"
+    },
+    {
+      "include": "#root"
+    },
+    {
+      "include": "#production"
+    },
+    {
+      "include": "#expression"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.number-sign.dfn",
+      "match": "#.*$"
+    },
+    "string": {
+      "name": "string.quoted.double.dfn",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": []
+    },
+    "pragma": {
+      "match": "^(id|title|description|scope)\\s+(?=\")",
+      "captures": {
+        "1": {
+          "name": "keyword.other.pragma.dfn"
+        }
+      }
+    },
+    "use": {
+      "match": "^(use)\\s+(?=\")",
+      "captures": {
+        "1": {
+          "name": "keyword.control.import.dfn"
+        }
+      }
+    },
+    "root": {
+      "match": "^(root)\\s*(=)",
+      "captures": {
+        "1": {
+          "name": "keyword.control.root.dfn"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.dfn"
+        }
+      }
+    },
+    "production": {
+      "match": "^([A-Za-z][A-Za-z0-9-]*)\\s*(=)",
+      "captures": {
+        "1": {
+          "name": "entity.name.function.production.dfn"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.dfn"
+        }
+      }
+    },
+    "expression": {
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#reference"
+        },
+        {
+          "include": "#range"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#group"
+        },
+        {
+          "include": "#name"
+        }
+      ]
+    },
+    "reference": {
+      "patterns": [
+        {
+          "include": "#reference-imported"
+        },
+        {
+          "include": "#reference-local"
+        }
+      ]
+    },
+    "reference-imported": {
+      "begin": "(<)(@)",
+      "end": "(\\*)?(>)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.reference.begin.dfn"
+        },
+        "2": {
+          "name": "punctuation.definition.imported.dfn"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.operator.open-set.dfn"
+        },
+        "2": {
+          "name": "punctuation.definition.reference.end.dfn"
+        }
+      },
+      "patterns": [
+        {
+          "match": "([A-Za-z][A-Za-z0-9-]*)(/)([A-Za-z][A-Za-z0-9-]*)",
+          "captures": {
+            "1": {
+              "name": "entity.name.namespace.module.dfn"
+            },
+            "2": {
+              "name": "punctuation.separator.qualified.dfn"
+            },
+            "3": {
+              "name": "variable.other.reference.imported.dfn"
+            }
+          }
+        },
+        {
+          "include": "#reference-modifiers"
+        },
+        {
+          "name": "variable.other.reference.imported.dfn",
+          "match": "[A-Za-z][A-Za-z0-9-]*"
+        }
+      ]
+    },
+    "reference-local": {
+      "begin": "(<)",
+      "end": "(\\*)?(>)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.reference.begin.dfn"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.operator.open-set.dfn"
+        },
+        "2": {
+          "name": "punctuation.definition.reference.end.dfn"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#reference-modifiers"
+        },
+        {
+          "name": "variable.other.reference.dfn",
+          "match": "[A-Za-z][A-Za-z0-9-]*"
+        }
+      ]
+    },
+    "reference-modifiers": {
+      "patterns": [
+        {
+          "name": "keyword.operator.omit.dfn",
+          "match": "!"
+        },
+        {
+          "begin": "\\[",
+          "end": "\\]",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.modifier.begin.dfn"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.modifier.end.dfn"
+            }
+          },
+          "patterns": [
+            {
+              "name": "variable.parameter.member.dfn",
+              "match": "[A-Za-z][A-Za-z0-9-]*|\\d+"
+            },
+            {
+              "name": "punctuation.separator.comma.dfn",
+              "match": ","
+            }
+          ]
+        }
+      ]
+    },
+    "range": {
+      "name": "constant.numeric.range.dfn",
+      "match": "\\d+-\\d+/\\d+"
+    },
+    "number": {
+      "name": "constant.numeric.dfn",
+      "match": "\\b\\d+\\b"
+    },
+    "operator": {
+      "patterns": [
+        {
+          "name": "keyword.operator.optional.dfn",
+          "match": "\\?"
+        },
+        {
+          "name": "keyword.operator.dfn",
+          "match": "[|.=]"
+        }
+      ]
+    },
+    "group": {
+      "patterns": [
+        {
+          "name": "punctuation.definition.group.begin.dfn",
+          "match": "\\["
+        },
+        {
+          "name": "keyword.operator.open-set.dfn",
+          "match": "\\*(?=\\s*\\])"
+        },
+        {
+          "name": "punctuation.definition.group.end.dfn",
+          "match": "\\]"
+        }
+      ]
+    },
+    "name": {
+      "name": "constant.language.name.dfn",
+      "match": "[A-Za-z][A-Za-z0-9-]*"
+    }
+  }
+}
