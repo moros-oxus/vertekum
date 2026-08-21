@@ -56,12 +56,21 @@ export interface Name {
   value: string;
 }
 
-/** `min-max/step` — an inclusive numeric name set, enumerated at build time. */
+/**
+ * A numeric name scale, enumerated at build time. `min-max/step` is additive;
+ * `min-max*factor` is geometric (fractional factors allowed), optionally quantized to the
+ * nearest multiple of `quantum` (`~4`). A leading zero on a written endpoint (`025`)
+ * declares the zero-pad width for every emitted name.
+ */
 export interface Range {
   kind: 'range';
   min: number;
   max: number;
+  mode: 'stepped' | 'multiplied';
+  /** The additive step, or the geometric factor. */
   step: number;
+  quantum?: number;
+  pad?: number;
 }
 
 /**

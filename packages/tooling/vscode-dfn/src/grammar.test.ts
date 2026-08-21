@@ -50,7 +50,7 @@ test('the sample module tokenizes with the expected scopes', async () => {
     'scope "branch"',
     'use "./colors.dfn"',
     'emphasis = subtle | bold',
-    'root = color.<@colors/role ![brand]>.<emphasis>?.100-900/100',
+    'root = color.<@colors/role ![brand]>.<emphasis>?.16-64*1.25~4',
     '  | fallback.[a | b *]',
   ];
   let state = INITIAL;
@@ -96,7 +96,7 @@ test('the sample module tokenizes with the expected scopes', async () => {
   expect(scopesFor(perLine[4], lines[4], '?')).toContain(
     'keyword.operator.optional.dfn',
   );
-  expect(scopesFor(perLine[4], lines[4], '100-900/100')).toContain(
+  expect(scopesFor(perLine[4], lines[4], '16-64*1.25~4')).toContain(
     'constant.numeric.range.dfn',
   );
   expect(scopesFor(perLine[5], lines[5], '|')).toContain(

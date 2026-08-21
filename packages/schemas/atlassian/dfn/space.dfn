@@ -3,7 +3,7 @@ title "Atlassian Design System — space"
 description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
 scope "branch"
 
-root = space.[
-    [0 | 025 | 050 | 075 | 100 | 1000 | 150 | 200 | 250 | 300 | 400 | 500 | 600 | 800]
-  | negative.[025 | 050 | 075 | 100 | 150 | 200 | 250 | 300 | 400]
-  ]
+# The spacing scale, as scale expressions: a leading zero pads the emitted names.
+scale = 0 | 025-100/25 | 150-300/50 | 400-600/100 | 800 | 1000
+
+root = space.[<scale> | negative.<scale ![0, 500, 600, 800, 1000]>]

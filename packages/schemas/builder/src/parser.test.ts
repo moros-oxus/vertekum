@@ -73,8 +73,22 @@ test('open refs, ranges, and kebab identifiers lex without collision', () => {
     kind: 'alt',
     options: [
       { kind: 'name', value: '50' },
-      { kind: 'range', min: 100, max: 300, step: 50 },
-      { kind: 'range', min: 300, max: 900, step: 100 },
+      {
+        kind: 'range',
+        min: 100,
+        max: 300,
+        mode: 'stepped',
+        step: 50,
+        pad: undefined,
+      },
+      {
+        kind: 'range',
+        min: 300,
+        max: 900,
+        mode: 'stepped',
+        step: 100,
+        pad: undefined,
+      },
       { kind: 'name', value: '950' },
     ],
   });
@@ -133,5 +147,8 @@ test('errors carry positions', () => {
   );
   expect(() => parse('root = a\nroot = b\n')).toThrowError(/one root/);
   expect(() => parse('w = 300-100/50\n')).toThrowError(/max >= min/);
+  expect(() => parse('w = 100-300/50~4\n')).toThrowError(/multiplied scales/);
+  expect(() => parse('w = 100-300/2.5\n')).toThrowError(/whole-number step/);
+  expect(() => parse('w = 16-64*1\n')).toThrowError(/greater than one/);
   expect(() => parse('use unquoted\n')).toThrowError(/quoted specifier/);
 });

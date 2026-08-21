@@ -168,6 +168,19 @@ class Parser {
     return { term, optional };
   }
 
+  /** A pick/omit list member: an identifier or a (possibly padded) number. */
+  private member(): string {
+    const token = this.next();
+    if (token.kind !== 'ident' && token.kind !== 'number') {
+      throw new DfnError(
+        `expected a member name, got '${token.value || token.kind}'`,
+        token.line,
+        token.column,
+      );
+    }
+    return token.value;
+  }
+
   private term(): Step['term'] {
     const token = this.next();
     switch (token.kind) {
@@ -175,19 +188,48 @@ class Parser {
       case 'number':
         return { kind: 'name', value: token.value };
       case 'range': {
-        const { min, max, step } = token.range as {
-          min: number;
-          max: number;
-          step: number;
-        };
-        if (step === 0 || max < min) {
+        const payload = token.range as NonNullable<Token['range']>;
+        const { min, max, mode, step, quantum, pad } = payload;
+        if (max < min) {
           throw new DfnError(
-            'range needs max >= min and a non-zero step',
+            'range needs max >= min',
             token.line,
             token.column,
           );
         }
-        return { kind: 'range', min, max, step };
+        if (mode === '/') {
+          if (quantum !== undefined) {
+            throw new DfnError(
+              '~quantum belongs to multiplied scales (min-max*factor~q)',
+              token.line,
+              token.column,
+            );
+          }
+          if (step === 0 || !Number.isInteger(step)) {
+            throw new DfnError(
+              'a stepped range needs a whole-number step greater than zero',
+              token.line,
+              token.column,
+            );
+          }
+          return { kind: 'range', min, max, mode: 'stepped', step, pad };
+        }
+        if (step <= 1) {
+          throw new DfnError(
+            'a multiplied range needs a factor greater than one',
+            token.line,
+            token.column,
+          );
+        }
+        return {
+          kind: 'range',
+          min,
+          max,
+          mode: 'multiplied',
+          step,
+          quantum,
+          pad,
+        };
       }
       case 'langle': {
         const imported = this.peek().kind === 'at';
@@ -216,10 +258,10 @@ class Parser {
         if (this.peek().kind === 'lbracket') {
           const into = negated ? omit : pick;
           this.next();
-          into.push(this.expect('ident', 'a member name').value);
+          into.push(this.member());
           while (this.peek().kind === 'comma') {
             this.next();
-            into.push(this.expect('ident', 'a member name').value);
+            into.push(this.member());
           }
           this.expect('rbracket', "']'");
         } else if (negated) {

@@ -92,6 +92,8 @@ export type { Target, TargetResult } from './export/target';
 export { runTargets, targetId } from './export/target';
 export type { Kernel } from './kernel';
 export { createKernel } from './kernel';
+export type { ScaleExpression, ScaleResult } from './scale/scale';
+export { evaluateScale } from './scale/scale';
 export { createCommandRegistry } from './shell/command-registry';
 export type {
   ConfigurableExtension,

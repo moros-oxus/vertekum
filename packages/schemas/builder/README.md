@@ -74,7 +74,8 @@ indented line continues the statement above it.
 | `<name ![a, b]>` | **omit** — the set minus the listed members |
 | `<name*>` / `[a \| b *]` | **open set** — additions beyond the listed names are permitted, and every member (listed or added) takes the same tail |
 | `step?` | **optional slot** — the step may be skipped: `<role>.<emphasis>?.<state>?` grants `role`, `role.<emphasis>`, `role.<state>`, and the full path |
-| `100-900/100` | a numeric range with step, inclusive both ends, enumerated at build |
+| `100-900/100` | an additive scale, inclusive both ends, enumerated at build; a leading zero on a written endpoint (`025-100/25`) zero-pads every emitted name |
+| `16-64*1.25~4` | a geometric scale: `min-max*factor` (fractional ok), `~quantum` rounding each step to the nearest multiple; steps that collide onto an earlier name are a build error |
 
 Pick and omit validate every listed name against the set's members — a typo is a build
 error, and a modified set is a new set. Naming one derives a narrowed denotation:

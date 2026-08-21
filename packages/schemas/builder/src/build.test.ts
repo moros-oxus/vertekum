@@ -43,6 +43,39 @@ test('ranges enumerate inclusively and union with literals, deduped', () => {
   ]);
 });
 
+test('scale terms: inferred padding, multiplied factors, quantization, collisions', () => {
+  const dir = fixture({
+    'pad.dfn': 'root = space.[0 | 025-100/25]\n',
+    'double.dfn': 'root = size.25-400*2\n',
+    'type.dfn': 'root = font.size.16-64*1.25~4\n',
+    'coarse.dfn': 'root = x.10-16*1.1~4\n',
+  });
+  expect(
+    names(
+      build(resolveModule(join(dir, 'pad.dfn'))).children.get(
+        'space',
+      ) as TreeNode,
+    ),
+  ).toEqual(['0', '025', '050', '075', '100']);
+  expect(
+    names(
+      build(resolveModule(join(dir, 'double.dfn'))).children.get(
+        'size',
+      ) as TreeNode,
+    ),
+  ).toEqual(['25', '50', '100', '200', '400']);
+  expect(
+    names(
+      build(resolveModule(join(dir, 'type.dfn')))
+        .children.get('font')
+        ?.children.get('size') as TreeNode,
+    ),
+  ).toEqual(['16', '20', '24', '32', '40', '48', '60']);
+  expect(() => build(resolveModule(join(dir, 'coarse.dfn')))).toThrowError(
+    /quantum is too coarse/,
+  );
+});
+
 test('branches give branch-dependent shape', () => {
   const dir = fixture({
     'house.dfn': [

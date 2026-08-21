@@ -31,16 +31,32 @@ export type TokenKind =
 
 export interface Token {
   kind: TokenKind;
-  /** Source text (for ident/number/string); ranges carry min/max/step instead. */
+  /** Source text (for ident/number/string); ranges carry their parsed payload instead. */
   value: string;
-  range?: { min: number; max: number; step: number };
+  range?: {
+    min: number;
+    max: number;
+    /** `/` = stepped (additive), `*` = multiplied (geometric). */
+    mode: '/' | '*';
+    step: number;
+    quantum?: number;
+    /** Pad width inferred from a leading zero on a written endpoint (`025` → 3). */
+    pad?: number;
+  };
   line: number;
   column: number;
 }
 
 const IDENT = /^[A-Za-z][A-Za-z0-9-]*/;
-const RANGE = /^(\d+)-(\d+)\/(\d+)/;
+const RANGE = /^(\d+)-(\d+)([*/])(\d+(?:\.\d+)?)(?:~(\d+))?/;
 const NUMBER = /^\d+/;
+
+/** "Write the numbers as they appear": a leading zero declares the pad width. */
+function padWidth(...literals: string[]): number | undefined {
+  const declared = literals.filter((l) => l.length > 1 && l.startsWith('0'));
+  if (declared.length === 0) return undefined;
+  return Math.max(...declared.map((l) => l.length));
+}
 
 export function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
@@ -85,7 +101,10 @@ export function tokenize(source: string): Token[] {
           range: {
             min: Number(range[1]),
             max: Number(range[2]),
-            step: Number(range[3]),
+            mode: range[3] as '/' | '*',
+            step: Number(range[4]),
+            quantum: range[5] ? Number(range[5]) : undefined,
+            pad: padWidth(range[1], range[2]),
           },
           line,
           column,

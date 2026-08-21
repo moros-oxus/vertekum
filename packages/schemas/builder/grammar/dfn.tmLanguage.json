@@ -209,7 +209,7 @@
     },
     "range": {
       "name": "constant.numeric.range.dfn",
-      "match": "\\d+-\\d+/\\d+"
+      "match": "\\d+-\\d+[*/]\\d+(?:\\.\\d+)?(?:~\\d+)?"
     },
     "number": {
       "name": "constant.numeric.dfn",

@@ -1,3 +1,4 @@
+import { evaluateScale } from '@vertekum/core';
 import type { Node, Ref } from './ast';
 import { DfnError } from './error';
 import type { ResolvedModule } from './resolve';
@@ -93,9 +94,44 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       return forest;
     }
     case 'range': {
+      // One authority for scale names (and, later, token values): core's evaluateScale.
+      let scale: ReturnType<typeof evaluateScale>;
+      try {
+        scale = evaluateScale(
+          node.mode === 'stepped'
+            ? {
+                kind: 'stepped',
+                min: node.min,
+                max: node.max,
+                step: node.step,
+                pad: node.pad,
+              }
+            : {
+                kind: 'multiplied',
+                min: node.min,
+                max: node.max,
+                factor: node.step,
+                quantum: node.quantum,
+                pad: node.pad,
+              },
+        );
+      } catch (error) {
+        throw new DfnError(
+          error instanceof Error ? error.message : String(error),
+          1,
+          1,
+        );
+      }
+      if (scale.collisions.length > 0) {
+        throw new DfnError(
+          `scale steps ${scale.collisions.join(', ')} quantize onto earlier names — the quantum is too coarse for the factor`,
+          1,
+          1,
+        );
+      }
       const forest = leaf();
-      for (let n = node.min; n <= node.max; n += node.step) {
-        forest.children.set(String(n), tail());
+      for (const name of scale.names) {
+        forest.children.set(name, tail());
       }
       return forest;
     }
