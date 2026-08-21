@@ -1,5 +1,11 @@
 # @vertekum/schema-builder
 
+## 0.1.3
+
+### Patch Changes
+
+- [`67ef6d9`](https://github.com/moros-oxus/vertekum/commit/67ef6d96ad209072df270adccaa7ee879edbc30e) Thanks [@tschemmer](https://github.com/tschemmer)! - The package now ships a TextMate grammar and language configuration for `.dfn` files under `grammar/` — the single source editor integrations and documentation highlighters (e.g. Shiki) consume.
+
 ## 0.1.2
 
 ### Patch Changes
