@@ -38,10 +38,13 @@ function toDiagnostic(file: string, error: unknown): DfnDiagnostic {
 }
 
 /** Lint one module. Returns every finding; an empty array means the grammar is sound. */
-export function lintModule(path: string): DfnDiagnostic[] {
+export function lintModule(
+  path: string,
+  sources?: Map<string, string>,
+): DfnDiagnostic[] {
   let resolved: ReturnType<typeof resolveModule>;
   try {
-    resolved = resolveModule(path);
+    resolved = resolveModule(path, new Set(), sources);
   } catch (error) {
     return [toDiagnostic(path, error)];
   }

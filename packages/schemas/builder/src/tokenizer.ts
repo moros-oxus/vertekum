@@ -78,6 +78,9 @@ function padWidth(...literals: string[]): number | undefined {
 export function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
   const lines = source.split('\n');
+  // Open `[` positions. A statement ends at the first newline at bracket depth 0, so while
+  // this stack is non-empty a group is a BLOCK — newlines inside it are insignificant.
+  const openBrackets: Array<{ line: number; column: number }> = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = i + 1;
@@ -194,10 +197,24 @@ export function tokenize(source: string): Token[] {
       };
       const kind = single[text[0]];
       if (!kind) throw new DfnError(`unexpected '${text[0]}'`, line, column);
+      if (kind === 'lbracket') openBrackets.push({ line, column });
+      if (kind === 'rbracket') openBrackets.pop();
       push(kind, text[0]);
     }
 
-    tokens.push({ kind: 'newline', value: '\n', line, column });
+    // Inside a block, a newline is not a statement boundary.
+    if (openBrackets.length === 0) {
+      tokens.push({ kind: 'newline', value: '\n', line, column });
+    }
+  }
+
+  const unclosed = openBrackets[0];
+  if (unclosed) {
+    throw new DfnError(
+      `unclosed '[' opened at ${unclosed.line}:${unclosed.column}`,
+      unclosed.line,
+      unclosed.column,
+    );
   }
 
   tokens.push({ kind: 'eof', value: '', line: lines.length + 1, column: 1 });

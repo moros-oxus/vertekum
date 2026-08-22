@@ -4,10 +4,10 @@ description "Token path vocabulary: which names may appear, in what order, and w
 scope "branch"
 
 root = font.[
-    body.[large | small]
+  body.[large | small]
   | code
   | family.[[body | code | heading] | brand.[body | heading]]
   | heading.[large | medium | small | xlarge | xsmall | xxlarge | xxsmall]
   | metric.[large | medium | small]
   | weight.[bold | medium | regular | semibold]
-  ]
+]

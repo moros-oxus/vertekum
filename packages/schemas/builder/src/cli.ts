@@ -3,6 +3,7 @@ import { basename, dirname, isAbsolute, join, relative } from 'node:path';
 import type { CommandDescriptor, CommandResult } from '@vertekum/core';
 import { assertOpenSetsAreNameSets, build } from './build';
 import { emit, isStamped } from './emit';
+import { fixSource, formatSource, resolveIndent } from './format';
 import { lintModule } from './lint';
 import { resolveModule } from './resolve';
 
@@ -17,6 +18,8 @@ import { resolveModule } from './resolve';
 /** The slice of the CLI's Project this command reads. */
 interface ProjectDir {
   projectDir: string;
+  /** The consumer's `format.indent`, when set — fmt honors it (JSON writes already do). */
+  indent?: string | number;
 }
 
 function modulesUnder(dir: string): string[] {
@@ -62,6 +65,12 @@ export const schemaLintCommand: CommandDescriptor = {
       description: "a .dfn file; default: every module under './schemas'",
     },
   ],
+  options: [
+    {
+      flag: '--fix',
+      description: "apply mechanical repairs (a misplaced '*') before linting",
+    },
+  ],
   run(ctx): CommandResult {
     const { projectDir } = ctx.project as ProjectDir;
     const modules = ctx.args.module
@@ -73,13 +82,41 @@ export const schemaLintCommand: CommandDescriptor = {
 
     const project = (file: string) =>
       isAbsolute(file) ? relative(projectDir, file) : file;
+
+    // --fix first: repaired content is linted IN MEMORY (the runner owns writing), so the
+    // remaining diagnostics describe the state the fix would leave on disk.
+    const files: Array<{ path: string; content: string }> = [];
+    const fixed: string[] = [];
+    const sources = new Map<string, string>();
+    if (ctx.options.fix === true) {
+      for (const modulePath of modules) {
+        if (!existsSync(modulePath)) continue;
+        const source = readFileSync(modulePath, 'utf8');
+        const result = fixSource(source);
+        if (result.fixes.length === 0) continue;
+        sources.set(modulePath, result.content);
+        files.push({ path: project(modulePath), content: result.content });
+        for (const fix of result.fixes) {
+          fixed.push(
+            `${project(modulePath)}:${fix.line}:${fix.column} ${fix.message}`,
+          );
+        }
+      }
+    }
+
     const diagnostics = modules.flatMap((modulePath) =>
-      lintModule(modulePath).map((d) => ({ ...d, file: project(d.file) })),
+      lintModule(modulePath, sources).map((d) => ({
+        ...d,
+        file: project(d.file),
+      })),
     );
 
     if (diagnostics.length > 0) {
       throw new Error(
         [
+          ...(fixed.length > 0
+            ? [`fixed ${fixed.length}:`, ...fixed.map((f) => `  ${f}`)]
+            : []),
           `${diagnostics.length} problem(s) in the .dfn modules:`,
           ...diagnostics.map(
             (d) => `  ${d.file}:${d.line}:${d.column} ${d.message}`,
@@ -87,10 +124,92 @@ export const schemaLintCommand: CommandDescriptor = {
         ].join('\n'),
       );
     }
+    const notes = [
+      ...(fixed.length > 0
+        ? [`fixed ${fixed.length} problem(s):`, ...fixed.map((f) => `  ${f}`)]
+        : []),
+      `${modules.length} module(s) clean`,
+    ];
     return {
-      summary: `${modules.length} module(s) clean`,
-      data: { modules: modules.map(project) },
+      summary: notes.join('\n'),
+      files,
+      data: { modules: modules.map(project), fixed },
     };
+  },
+};
+
+/**
+ * `vertekum schema fmt [module]`: canonical formatting for the `.dfn` sources — block indent
+ * from `format.indent`/.editorconfig, canonical spacing, hygiene. A module whose grammar cannot
+ * be lexed is skipped with a notice (broken grammar is lint's report — fmt never rewrites what
+ * it cannot read). `--check` verifies instead of writing: the CI gate.
+ */
+export const schemaFmtCommand: CommandDescriptor = {
+  name: 'schema fmt',
+  description: 'format .dfn vocabulary modules canonically',
+  args: [
+    {
+      name: 'module',
+      required: false,
+      description: "a .dfn file; default: every module under './schemas'",
+    },
+  ],
+  options: [
+    {
+      flag: '--check',
+      description: 'verify formatting; write nothing',
+    },
+  ],
+  run(ctx): CommandResult {
+    const { projectDir, indent } = ctx.project as ProjectDir;
+    const modules = ctx.args.module
+      ? [join(projectDir, ctx.args.module)]
+      : modulesUnder(join(projectDir, 'schemas'));
+    if (modules.length === 0) {
+      return { summary: 'no .dfn modules found', files: [] };
+    }
+
+    const project = (file: string) =>
+      isAbsolute(file) ? relative(projectDir, file) : file;
+    const files: Array<{ path: string; content: string }> = [];
+    const skipped: string[] = [];
+    const unformatted: string[] = [];
+
+    for (const modulePath of modules) {
+      const source = readFileSync(modulePath, 'utf8');
+      let formatted: string;
+      try {
+        formatted = formatSource(source, {
+          indent: resolveIndent(modulePath, indent),
+        });
+      } catch (error) {
+        skipped.push(
+          `${project(modulePath)} does not lex (${error instanceof Error ? error.message : String(error)}) — run \`vertekum schema lint\``,
+        );
+        continue;
+      }
+      if (formatted === source) continue;
+      if (ctx.options.check === true) {
+        unformatted.push(project(modulePath));
+        continue;
+      }
+      files.push({ path: project(modulePath), content: formatted });
+    }
+
+    if (unformatted.length > 0) {
+      throw new Error(
+        `unformatted .dfn modules: ${unformatted.join(', ')} — run \`vertekum schema fmt\``,
+      );
+    }
+    const notes = [
+      ctx.options.check === true
+        ? `${modules.length - skipped.length} module(s) formatted`
+        : files.length > 0
+          ? `formatted ${files.length} module(s)`
+          : `${modules.length - skipped.length} module(s) already formatted`,
+      ...skipped,
+    ];
+    return { summary: notes.join('\n'), files, data: { skipped } };
   },
 };
 

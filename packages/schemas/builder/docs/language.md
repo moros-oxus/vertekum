@@ -17,15 +17,17 @@ root = color.[text | icon].<role>.<@emphasis>
 
 ## Lexical rules
 
-- **Statements are lines.** One statement per line; a line that starts with whitespace
-  **continues** the statement above it, so a long expression wraps without any
-  continuation character:
+- **A statement ends at the first newline at bracket depth 0.** A `[` whose content
+  continues past its line opens a **block**, closed by its `]` — newlines inside are
+  insignificant, nesting is unbounded, and an unclosed `[` reports its opening
+  position. A line that starts with whitespace also continues the statement above it
+  (the unbracketed-wrap fallback).
 
   ```dfn
   root = color.[
-      <property>.<role>?.<emphasis>?
+    <property>.<role>?.<emphasis>?
     | <code>
-    ]
+  ]
   ```
 
 - **`#` starts a comment**, running to the end of the line.

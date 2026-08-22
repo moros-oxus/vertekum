@@ -42,6 +42,8 @@ function resolveSpecifier(spec: string, fromDir: string): string {
 export function resolveModule(
   path: string,
   inProgress: Set<string> = new Set(),
+  /** In-memory source overrides by absolute path — how `lint --fix` validates before writing. */
+  sources?: Map<string, string>,
 ): ResolvedModule {
   const absolute = resolve(path);
   if (inProgress.has(absolute)) {
@@ -50,10 +52,15 @@ export function resolveModule(
   inProgress.add(absolute);
 
   let source: string;
-  try {
-    source = readFileSync(absolute, 'utf8');
-  } catch {
-    throw new DfnError(`cannot read ${absolute}`, 1, 1);
+  const override = sources?.get(absolute);
+  if (override !== undefined) {
+    source = override;
+  } else {
+    try {
+      source = readFileSync(absolute, 'utf8');
+    } catch {
+      throw new DfnError(`cannot read ${absolute}`, 1, 1);
+    }
   }
   let module: Module;
   try {
@@ -70,7 +77,7 @@ export function resolveModule(
   const imports = new Map<string, ResolvedModule>();
   for (const { spec, alias } of module.uses) {
     const target = resolveSpecifier(spec, dirname(absolute));
-    const resolved = resolveModule(target, inProgress);
+    const resolved = resolveModule(target, inProgress, sources);
     const key = alias ?? resolved.name;
     if (imports.has(key)) {
       throw new DfnError(

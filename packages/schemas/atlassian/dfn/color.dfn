@@ -18,7 +18,7 @@ interaction = hovered | pressed
 role = [<color-role> | <special-role> | accent.<accent-color>]
 
 root = color.[
-    <property>.<role>?.<emphasis>?.<interaction>?
+  <property>.<role>?.<emphasis>?.<interaction>?
   | <code>
   | <chart>
   | <inverse-on>
@@ -27,13 +27,13 @@ root = color.[
   | interaction.<interaction>
   | link.visited?.pressed?
   | skeleton.subtle?
-  ]
+]
 
 # Atlassian's own enumerative sub-vocabularies for code blocks.
 code = [
-    background.code.[[added | removed].[highlight | line] | default | gutter | highlight]
+  background.code.[[added | removed].[highlight | line] | default | gutter | highlight]
   | text.code.[accent.[1 | 2] | comments | default | functions | gutter | keywords | numbers | operators | strings | tags]
-  ]
+]
 
 chart-emphasis = <emphasis [bold, bolder, boldest]>
 chart = chart.[[<accent-color> | <color-role>].<chart-emphasis>?.hovered? | categorical.1-8/1.hovered?]

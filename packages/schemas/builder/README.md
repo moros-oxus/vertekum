@@ -62,7 +62,10 @@ root = color.<property>.<role>?.<emphasis>?.<state>?
 - [`schema build`](./docs/build.md) — the command, the sweep, the ownership stamp, the
   `--check` CI gate, programmatic use.
 - [`schema lint`](./docs/lint.md) — validate the `.dfn` sources themselves: fragments
-  included, every production, findings collected with positions.
+  included, every production, findings collected with positions; `--fix` repairs the
+  mechanical ones.
+- [`schema fmt`](./docs/format.md) — canonical formatting: JS-literal blocks, indent
+  from `format.indent`/.editorconfig, `--check` for CI.
 - [What a build emits](./docs/emission.md) — the names-and-order schema shape, open
   positions, `$defs`, scope; a complete dfn→JSON example.
 

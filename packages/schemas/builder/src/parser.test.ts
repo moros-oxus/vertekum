@@ -233,3 +233,26 @@ test('a digit-leading affix is refused — the parenthesis boundary must stay re
   expect(() => parse('scale = (2-4)5x\n')).toThrow();
   expect(() => parse('scale = (2-4~3)\n')).toThrow(/multiplied scales/);
 });
+
+test('a block statement: newlines inside [ ] are insignificant, closer may dedent', () => {
+  const module = parse(
+    ['color = [', ' one', ' | two', ' | three', ']', ''].join('\n'),
+  );
+  expect(module.productions.get('color')).toMatchObject({
+    kind: 'group',
+    node: {
+      kind: 'alt',
+      options: [
+        { kind: 'name', value: 'one' },
+        { kind: 'name', value: 'two' },
+        { kind: 'name', value: 'three' },
+      ],
+    },
+  });
+});
+
+test("an unclosed '[' reports its opening position", () => {
+  expect(() => parse('root = color.[\n  one\n')).toThrow(
+    "unclosed '[' opened at 1:14",
+  );
+});

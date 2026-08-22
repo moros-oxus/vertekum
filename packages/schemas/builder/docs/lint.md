@@ -4,14 +4,16 @@ Validate the `.dfn` sources themselves — fragments included, every production 
 without building anything.
 
 ```bash
-# vertekum schema lint [module] [--json] [--cwd <dir>]
+# vertekum schema lint [module] [--fix] [--json] [--cwd <dir>]
 vertekum schema lint                        # every module under ./schemas
 vertekum schema lint schemas/color.dfn      # one module — fragment or rooted
+vertekum schema lint --fix                  # repair what is mechanical first
 ```
 
 | Argument / flag | What it does                                                                 |
 | --------------- | ----------------------------------------------------------------------------- |
 | `[module]`      | A `.dfn` file, relative to the working directory. Default: every module under `./schemas`, recursively — **fragments included**. |
+| `--fix`         | Apply mechanical repairs before linting (below).                               |
 | `--json`        | Machine-readable result.                                                       |
 | `--cwd <dir>`   | Project discovery starts here.                                                 |
 
@@ -39,6 +41,19 @@ Lint's contract is the source:
 
 Findings **collect**: one broken production does not hide the next, so a module with
 three mistakes is one lint run, not three.
+
+## `--fix`
+
+`--fix` applies the repairs that are **mechanical and unambiguous** — currently one:
+a trailing open-set mark relocates into the reference or group it opens (`<roles>*`
+→ `<roles*>`, `[a | b]*` → `[a | b *]`), printed through the
+[formatter](./format.md)'s emitter so the repaired line comes out canonical. Repairs
+that would guess intent are never applied — the bare `*` (`color.*`) stays a hinted
+diagnostic, because *which* set to open is yours to say.
+
+The fixed content is validated in memory before anything is written, and the runner
+persists it (`--dry-run` previews). Exit `0` when fixes clear everything; unfixable
+findings still exit `1`, listed after the applied fixes.
 
 ## Sound vs. current
 

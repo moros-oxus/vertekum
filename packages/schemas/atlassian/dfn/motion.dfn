@@ -14,7 +14,7 @@ component = avatar | blanket | flag | label | modal | panel | spotlight
 duration = instant | xxshort | xshort | short | medium | long | xlong | xxlong
 
 root = motion.[
-    <component>.<transition>
+  <component>.<transition>
   | avatar.hovered
   | flag.reposition
   | button.<interaction>
@@ -24,7 +24,7 @@ root = motion.[
   | duration.<duration>
   | <easing>
   | <keyframe>
-  ]
+]
 
 easing = easing.[[in | out].[bold | practical] | inout.bold | spring]
 
