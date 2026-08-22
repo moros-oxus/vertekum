@@ -27,8 +27,8 @@ importers:
         specifier: ^24.0.0
         version: 24.13.2
       hakoba:
-        specifier: ^0.2.1
-        version: 0.2.1
+        specifier: ^0.2.2
+        version: 0.2.2
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
@@ -64,7 +64,7 @@ importers:
         version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1)
       '@terrazzo/plugin-js':
         specifier: ^2.7.1
-        version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1(yaml-to-momoa@0.0.8))
+        version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1)
       '@vertekum/cli':
         specifier: workspace:*
         version: link:../../packages/workbench/cli
@@ -956,6 +956,10 @@ packages:
     resolution: {integrity: sha512-KWiFQpSAqEIyrTXko3hFNLeQvSK8zXlJQzhhxsyVn58WFRYXST99b3Nqnu+ttOtjds2Pl2grUHGpe2NzhPynuQ==}
     engines: {node: '>=18'}
 
+  '@humanwhocodes/momoa@3.3.12':
+    resolution: {integrity: sha512-xS9xl4ieqTqhSZfKV3YXj/htwJCUxbgvkTVaK1fkESgrOzvoVSOTRQeQ8tTLOZUS0Csi2xqtJQXgVTRH5OEbHQ==}
+    engines: {node: '>=18'}
+
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
@@ -1541,8 +1545,8 @@ packages:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
     engines: {node: '>= 6'}
 
-  hakoba@0.2.1:
-    resolution: {integrity: sha512-IqLwAcDIWxdANsApT02NXSq1xHgp1qxd4/GxdM4B+CBbSXdsROdFATGHCfIpDMco0+/1eQTEqdWgTFT4EoHEqg==}
+  hakoba@0.2.2:
+    resolution: {integrity: sha512-u6VbzByNmmbp3P5cC1M+r4vLy8uMwNQ3FOUHd+6O7GenhIUGbP8tqjf1Mf/zmp9TKj5Sza4Cx6mwUE4YL/sjqw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2532,6 +2536,8 @@ snapshots:
 
   '@humanwhocodes/momoa@3.3.10': {}
 
+  '@humanwhocodes/momoa@3.3.12': {}
+
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -2682,7 +2688,7 @@ snapshots:
     dependencies:
       '@clack/prompts': 0.9.1
       '@hono/node-server': 1.19.17(hono@4.13.0)
-      '@humanwhocodes/momoa': 3.3.10
+      '@humanwhocodes/momoa': 3.3.12
       '@terrazzo/parser': 2.7.1(yaml-to-momoa@0.0.8)
       '@terrazzo/token-tools': 2.7.1
       '@types/escodegen': 0.0.10
@@ -2724,7 +2730,7 @@ snapshots:
       '@terrazzo/parser': 2.7.1(yaml-to-momoa@0.0.8)
       '@terrazzo/token-tools': 2.7.1
 
-  '@terrazzo/plugin-js@2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1(yaml-to-momoa@0.0.8))':
+  '@terrazzo/plugin-js@2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1)':
     dependencies:
       '@terrazzo/cli': 0.10.5(hono@4.13.0)
       '@terrazzo/parser': 2.7.1(yaml-to-momoa@0.0.8)
@@ -3101,7 +3107,7 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
 
-  hakoba@0.2.1:
+  hakoba@0.2.2:
     dependencies:
       '@clack/prompts': 1.7.0
       chalk: 5.6.2
@@ -3562,7 +3568,7 @@ snapshots:
 
   yaml-to-momoa@0.0.8:
     dependencies:
-      '@humanwhocodes/momoa': 3.3.10
+      '@humanwhocodes/momoa': 3.3.12
       yaml: 2.9.0
 
   yaml@2.9.0: {}
