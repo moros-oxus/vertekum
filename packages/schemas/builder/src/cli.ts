@@ -20,6 +20,20 @@ interface ProjectDir {
   projectDir: string;
   /** The consumer's `format.indent`, when set — fmt honors it (JSON writes already do). */
   indent?: string | number;
+  /** The kernel's config store — where this extension's own settings slice lives. */
+  kernel?: { config: { get<T>(id: string): T } };
+}
+
+/** The extension's configured input/output pair, defaults included. */
+function settingsOf(ctx: { project: unknown }): {
+  source: string;
+  out?: string;
+} {
+  const kernel = (ctx.project as ProjectDir).kernel;
+  const slice = kernel?.config.get<{ source?: string; out?: string }>(
+    'vtk.schema-builder',
+  );
+  return { source: slice?.source ?? './schemas', out: slice?.out };
 }
 
 function modulesUnder(dir: string): string[] {
@@ -37,21 +51,20 @@ function modulesUnder(dir: string): string[] {
 function resolveModules(
   projectDir: string,
   arg: string | undefined,
-): { modules: string[]; explicitFile: boolean } {
+  sourceDefault: string,
+): { modules: string[]; explicitFile: boolean; root: string } {
   if (!arg) {
-    return {
-      modules: modulesUnder(join(projectDir, 'schemas')),
-      explicitFile: false,
-    };
+    const root = join(projectDir, sourceDefault);
+    return { modules: modulesUnder(root), explicitFile: false, root };
   }
   const target = join(projectDir, arg);
   if (!existsSync(target)) {
     throw new Error(`no such file or directory: ${arg}`);
   }
   if (statSync(target).isDirectory()) {
-    return { modules: modulesUnder(target), explicitFile: false };
+    return { modules: modulesUnder(target), explicitFile: false, root: target };
   }
-  return { modules: [target], explicitFile: true };
+  return { modules: [target], explicitFile: true, root: dirname(target) };
 }
 
 export function buildModule(
@@ -59,6 +72,8 @@ export function buildModule(
   /** The module name the provenance stamp records; default: the basename. Pass a relative
    *  path when modules nest, so same-named modules stamp distinguishably. */
   moduleLabel?: string,
+  /** Where the artifact lands; default: beside the module. */
+  targetDir?: string,
 ): {
   target: string;
   content: string;
@@ -68,7 +83,7 @@ export function buildModule(
   const tree = build(resolved);
   const moduleFile = moduleLabel ?? basename(modulePath);
   return {
-    target: join(dirname(modulePath), `${resolved.name}.json`),
+    target: join(targetDir ?? dirname(modulePath), `${resolved.name}.json`),
     content: emit(tree, { moduleFile, ...resolved.module.meta }),
   };
 }
@@ -99,7 +114,11 @@ export const schemaLintCommand: CommandDescriptor = {
   ],
   run(ctx): CommandResult {
     const { projectDir } = ctx.project as ProjectDir;
-    const { modules } = resolveModules(projectDir, ctx.args.module);
+    const { modules } = resolveModules(
+      projectDir,
+      ctx.args.module,
+      settingsOf(ctx).source,
+    );
     if (modules.length === 0) {
       return { summary: 'no .dfn modules found' };
     }
@@ -187,7 +206,11 @@ export const schemaFmtCommand: CommandDescriptor = {
   ],
   run(ctx): CommandResult {
     const { projectDir, indent } = ctx.project as ProjectDir;
-    const { modules } = resolveModules(projectDir, ctx.args.module);
+    const { modules } = resolveModules(
+      projectDir,
+      ctx.args.module,
+      settingsOf(ctx).source,
+    );
     if (modules.length === 0) {
       return { summary: 'no .dfn modules found', files: [] };
     }
@@ -244,7 +267,13 @@ export const schemaBuildCommand: CommandDescriptor = {
       name: 'module',
       required: false,
       description:
-        "a .dfn file or directory; default: every module under './schemas'",
+        "a .dfn file or directory; default: the configured source ('./schemas')",
+    },
+    {
+      name: 'out',
+      required: false,
+      description:
+        'output directory for this run; default: the configured out, else beside each module',
     },
   ],
   options: [
@@ -255,13 +284,33 @@ export const schemaBuildCommand: CommandDescriptor = {
   ],
   run(ctx): CommandResult {
     const { projectDir } = ctx.project as ProjectDir;
-    const { modules, explicitFile } = resolveModules(
+    const settings = settingsOf(ctx);
+    const { modules, explicitFile, root } = resolveModules(
       projectDir,
       ctx.args.module,
+      settings.source,
     );
     if (modules.length === 0) {
       return { summary: 'no .dfn modules found', files: [] };
     }
+
+    // Where a module's artifact lands: the positional `[out]` pairs with THIS invocation's
+    // module root; the configured `out` pairs with the configured `source`; a module outside
+    // its pair's root builds beside itself — input and output are a pair, not a redirect.
+    const outArg = ctx.args.out as string | undefined;
+    const outDir = outArg
+      ? join(projectDir, outArg)
+      : settings.out
+        ? join(projectDir, settings.out)
+        : undefined;
+    const pairRoot = outArg ? root : join(projectDir, settings.source);
+    const targetDirFor = (modulePath: string): string | undefined => {
+      if (!outDir) return undefined;
+      if (outArg && explicitFile) return outDir;
+      const within = relative(pairRoot, dirname(modulePath));
+      if (within.startsWith('..') || isAbsolute(within)) return undefined;
+      return join(outDir, within);
+    };
 
     const files: Array<{ path: string; content: string }> = [];
     const skipped: string[] = [];
@@ -279,6 +328,7 @@ export const schemaBuildCommand: CommandDescriptor = {
       const { target, content } = buildModule(
         modulePath,
         relative(projectDir, modulePath),
+        targetDirFor(modulePath),
       );
       const existing = existsSync(target)
         ? readFileSync(target, 'utf8')

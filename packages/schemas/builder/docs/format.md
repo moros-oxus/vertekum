@@ -13,7 +13,7 @@ vertekum schema fmt --check               # CI: verify formatting, write nothing
 
 | Argument / flag | What it does                                                                 |
 | --------------- | ----------------------------------------------------------------------------- |
-| `[module]`      | A `.dfn` file **or directory** (swept recursively), relative to the working directory. Default: every module under `./schemas` — fragments included. |
+| `[module]`      | A `.dfn` file **or directory** (swept recursively), relative to the working directory. Default: every module under the configured [`source`](./build.md#configuration) — fragments included. |
 | `--check`       | Verify formatting; write nothing. Unformatted files are an error (exit `1`).   |
 | `--dry-run`     | Report what would be rewritten without writing.                                |
 | `--json`        | Machine-readable result.                                                       |

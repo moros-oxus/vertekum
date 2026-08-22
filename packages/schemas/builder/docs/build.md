@@ -5,23 +5,46 @@ is contributed by this extension — it exists once `schemaBuilderExtension` is 
 project's config, and appears in `vertekum --help` and `vertekum describe` from then on.
 
 ```bash
-# vertekum schema build [module|directory] [--check] [--dry-run] [--json] [--cwd <dir>]
+# vertekum schema build [module|directory] [out] [--check] [--dry-run] [--json] [--cwd <dir>]
 vertekum schema build                       # every module under ./schemas
 vertekum schema build schemas/color.dfn     # one module
+vertekum schema build src/dfn src/schemas   # sweep a directory, mirror into an out dir
 vertekum schema build --check               # CI: verify nothing is stale
 ```
 
 | Argument / flag | What it does                                                                 |
 | --------------- | ----------------------------------------------------------------------------- |
-| `[module]`      | A `.dfn` file, or a directory swept with the same semantics as the default (below). |
+| `[module]`      | A `.dfn` file, or a directory swept with the same semantics as the default (below). Default: the configured [`source`](#configuration). |
+| `[out]`         | Output directory for this run — a directory `[module]` mirrors its structure into it; a file lands directly in it. Default: the configured [`out`](#configuration), else beside each module. |
 | `--check`       | Verify the built files on disk are current; write nothing.                    |
 | `--dry-run`     | Report what would be written without writing — owned by the runner, like every contributed command (see `@vertekum/cli`'s documentation). |
 | `--json`        | Machine-readable result (`files`, plus `skipped` and `fragments` under `data`). |
 | `--cwd <dir>`   | Project discovery starts here.                                                |
 
+## Configuration
+
+The input/output pair is declared once, on the extension:
+
+```ts
+extensions: [
+  schemaBuilderExtension({ source: './src/dfn', out: './src/schemas' }),
+],
+schemas: [{ from: './src/schemas', use: { 'color.json': '*-tokens.json' } }],
+```
+
+| Setting  | Default       | Meaning                                                        |
+| -------- | ------------- | --------------------------------------------------------------- |
+| `source` | `'./schemas'` | Where the `.dfn` modules live — the default sweep for `build`, [`lint`](./lint.md), and [`fmt`](./format.md). |
+| `out`    | — (beside)    | Where built `.json` files land, mirroring `source`'s structure. |
+
+Input and output are a **pair**, not a redirect: `out` maps modules under `source`
+(and a positional `[out]` maps modules under this invocation's `[module]` root); a
+module outside the pair's root builds beside itself. The stamp-ownership contract and
+`--check` follow the mapped target.
+
 ## The sweep
 
-With no argument, every `.dfn` under the project's `schemas/` directory builds —
+With no argument, every `.dfn` under the configured `source` builds —
 recursively, so nested module directories are included (`node_modules` is not).
 Modules without a `root` are **fragments**: the sweep skips them with a notice, while
 naming one explicitly is an error — see [modules](./modules.md#fragments).

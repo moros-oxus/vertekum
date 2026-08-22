@@ -13,7 +13,7 @@ vertekum schema lint --fix                  # repair what is mechanical first
 
 | Argument / flag | What it does                                                                 |
 | --------------- | ----------------------------------------------------------------------------- |
-| `[module]`      | A `.dfn` file **or directory** (swept recursively), relative to the working directory. Default: every module under `./schemas` — **fragments included**. |
+| `[module]`      | A `.dfn` file **or directory** (swept recursively), relative to the working directory. Default: every module under the configured [`source`](./build.md#configuration) — **fragments included**. |
 | `--fix`         | Apply mechanical repairs before linting (below).                               |
 | `--json`        | Machine-readable result.                                                       |
 | `--cwd <dir>`   | Project discovery starts here.                                                 |
