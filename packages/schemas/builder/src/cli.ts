@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative } from 'node:path';
 import type { CommandDescriptor, CommandResult } from '@vertekum/core';
 import { assertOpenSetsAreNameSets, build } from './build';
@@ -27,6 +27,31 @@ function modulesUnder(dir: string): string[] {
   return readdirSync(dir, { recursive: true, encoding: 'utf8' })
     .filter((f) => f.endsWith('.dfn') && !f.includes('node_modules'))
     .map((f) => join(dir, f));
+}
+
+/**
+ * What a command's `[module]` argument means: nothing → the default sweep (`./schemas`);
+ * a directory → sweep it; a file → that module alone (`explicitFile` — build's rootless
+ * error applies only there). A path that exists as neither is an error up front.
+ */
+function resolveModules(
+  projectDir: string,
+  arg: string | undefined,
+): { modules: string[]; explicitFile: boolean } {
+  if (!arg) {
+    return {
+      modules: modulesUnder(join(projectDir, 'schemas')),
+      explicitFile: false,
+    };
+  }
+  const target = join(projectDir, arg);
+  if (!existsSync(target)) {
+    throw new Error(`no such file or directory: ${arg}`);
+  }
+  if (statSync(target).isDirectory()) {
+    return { modules: modulesUnder(target), explicitFile: false };
+  }
+  return { modules: [target], explicitFile: true };
 }
 
 export function buildModule(
@@ -62,7 +87,8 @@ export const schemaLintCommand: CommandDescriptor = {
     {
       name: 'module',
       required: false,
-      description: "a .dfn file; default: every module under './schemas'",
+      description:
+        "a .dfn file or directory; default: every module under './schemas'",
     },
   ],
   options: [
@@ -73,9 +99,7 @@ export const schemaLintCommand: CommandDescriptor = {
   ],
   run(ctx): CommandResult {
     const { projectDir } = ctx.project as ProjectDir;
-    const modules = ctx.args.module
-      ? [join(projectDir, ctx.args.module)]
-      : modulesUnder(join(projectDir, 'schemas'));
+    const { modules } = resolveModules(projectDir, ctx.args.module);
     if (modules.length === 0) {
       return { summary: 'no .dfn modules found' };
     }
@@ -151,7 +175,8 @@ export const schemaFmtCommand: CommandDescriptor = {
     {
       name: 'module',
       required: false,
-      description: "a .dfn file; default: every module under './schemas'",
+      description:
+        "a .dfn file or directory; default: every module under './schemas'",
     },
   ],
   options: [
@@ -162,9 +187,7 @@ export const schemaFmtCommand: CommandDescriptor = {
   ],
   run(ctx): CommandResult {
     const { projectDir, indent } = ctx.project as ProjectDir;
-    const modules = ctx.args.module
-      ? [join(projectDir, ctx.args.module)]
-      : modulesUnder(join(projectDir, 'schemas'));
+    const { modules } = resolveModules(projectDir, ctx.args.module);
     if (modules.length === 0) {
       return { summary: 'no .dfn modules found', files: [] };
     }
@@ -220,7 +243,8 @@ export const schemaBuildCommand: CommandDescriptor = {
     {
       name: 'module',
       required: false,
-      description: "a .dfn file; default: every module under './schemas'",
+      description:
+        "a .dfn file or directory; default: every module under './schemas'",
     },
   ],
   options: [
@@ -231,9 +255,10 @@ export const schemaBuildCommand: CommandDescriptor = {
   ],
   run(ctx): CommandResult {
     const { projectDir } = ctx.project as ProjectDir;
-    const modules = ctx.args.module
-      ? [join(projectDir, ctx.args.module)]
-      : modulesUnder(join(projectDir, 'schemas'));
+    const { modules, explicitFile } = resolveModules(
+      projectDir,
+      ctx.args.module,
+    );
     if (modules.length === 0) {
       return { summary: 'no .dfn modules found', files: [] };
     }
@@ -247,7 +272,7 @@ export const schemaBuildCommand: CommandDescriptor = {
       // A rootless module is a FRAGMENT — imports for other modules. The sweep skips it;
       // naming one explicitly stays an error (buildModule throws), since silence there
       // would hide a typo'd `root`.
-      if (!ctx.args.module && !resolveModule(modulePath).module.root) {
+      if (!explicitFile && !resolveModule(modulePath).module.root) {
         fragments.push(relative(projectDir, modulePath));
         continue;
       }

@@ -5,7 +5,7 @@ is contributed by this extension — it exists once `schemaBuilderExtension` is 
 project's config, and appears in `vertekum --help` and `vertekum describe` from then on.
 
 ```bash
-# vertekum schema build [module] [--check] [--dry-run] [--json] [--cwd <dir>]
+# vertekum schema build [module|directory] [--check] [--dry-run] [--json] [--cwd <dir>]
 vertekum schema build                       # every module under ./schemas
 vertekum schema build schemas/color.dfn     # one module
 vertekum schema build --check               # CI: verify nothing is stale
@@ -13,7 +13,7 @@ vertekum schema build --check               # CI: verify nothing is stale
 
 | Argument / flag | What it does                                                                 |
 | --------------- | ----------------------------------------------------------------------------- |
-| `[module]`      | A `.dfn` file, relative to the working directory. Default: the sweep (below). |
+| `[module]`      | A `.dfn` file, or a directory swept with the same semantics as the default (below). |
 | `--check`       | Verify the built files on disk are current; write nothing.                    |
 | `--dry-run`     | Report what would be written without writing — owned by the runner, like every contributed command (see `@vertekum/cli`'s documentation). |
 | `--json`        | Machine-readable result (`files`, plus `skipped` and `fragments` under `data`). |

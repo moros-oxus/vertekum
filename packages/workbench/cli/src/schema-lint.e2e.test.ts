@@ -60,3 +60,26 @@ test('lint --json reports failure machine-readably', async () => {
   expect(payload.command).toBe('schema lint');
   expect(payload.error).toContain('schemas/scale.dfn:1:14');
 }, 60_000);
+
+test('a directory argument sweeps it — dfns outside ./schemas lint in place', async () => {
+  const cwd = await exampleFixture('vtk-slint-', 'schemas');
+  const { mkdir } = await import('node:fs/promises');
+  await mkdir(join(cwd, 'src/dfn'), { recursive: true });
+  await writeFile(
+    join(cwd, 'src/dfn/emphasis.dfn'),
+    'emphasis = subtle | bold\n',
+  );
+  await writeFile(join(cwd, 'src/dfn/broken.dfn'), 'tone = warm | <missing>\n');
+
+  const lint = run('node', [bin, 'schema', 'lint', 'src/dfn'], { cwd });
+  await expect(lint).rejects.toMatchObject({ code: 1 });
+  const { stderr } = (await lint.catch((e) => e)) as { stderr: string };
+  expect(stderr).toContain(
+    "src/dfn/broken.dfn:1:15 unknown production '<missing>'",
+  );
+
+  const missing = run('node', [bin, 'schema', 'lint', 'src/nowhere'], { cwd });
+  await expect(missing).rejects.toMatchObject({ code: 1 });
+  const bad = (await missing.catch((e) => e)) as { stderr: string };
+  expect(bad.stderr).toContain('no such file or directory: src/nowhere');
+}, 60_000);

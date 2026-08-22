@@ -76,3 +76,29 @@ test('lint --fix relocates a trailing star and reports the unfixable remainder',
     'roles = a | b\nopen = <roles*>\n',
   );
 }, 60_000);
+
+test('fmt and build take directory arguments with sweep semantics', async () => {
+  const cwd = await exampleFixture('vtk-sfmt-', 'schemas');
+  const { mkdir } = await import('node:fs/promises');
+  await mkdir(join(cwd, 'src/dfn'), { recursive: true });
+  await writeFile(
+    join(cwd, 'src/dfn/scruffy.dfn'),
+    'deno = a|b\nroot = t.<deno>\n',
+  );
+  await writeFile(join(cwd, 'src/dfn/frag.dfn'), 'tone = warm | cool\n');
+
+  const fmt = await run('node', [bin, 'schema', 'fmt', 'src/dfn'], { cwd });
+  expect(fmt.stdout).toContain('formatted 1 module(s)');
+  expect(await readFile(join(cwd, 'src/dfn/scruffy.dfn'), 'utf8')).toBe(
+    'deno = a | b\nroot = t.<deno>\n',
+  );
+
+  const build = await run('node', [bin, 'schema', 'build', 'src/dfn'], { cwd });
+  expect(build.stdout).toContain('built 1 module(s)');
+  expect(build.stdout).toContain(
+    'frag.dfn declares no root (a fragment) — skipped',
+  );
+  expect(await readFile(join(cwd, 'src/dfn/scruffy.json'), 'utf8')).toContain(
+    'src/dfn/scruffy.dfn',
+  );
+}, 60_000);

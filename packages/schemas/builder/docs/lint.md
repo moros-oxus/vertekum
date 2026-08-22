@@ -4,15 +4,16 @@ Validate the `.dfn` sources themselves — fragments included, every production 
 without building anything.
 
 ```bash
-# vertekum schema lint [module] [--fix] [--json] [--cwd <dir>]
+# vertekum schema lint [module|directory] [--fix] [--json] [--cwd <dir>]
 vertekum schema lint                        # every module under ./schemas
 vertekum schema lint schemas/color.dfn      # one module — fragment or rooted
+vertekum schema lint src/dfn                # sweep any directory
 vertekum schema lint --fix                  # repair what is mechanical first
 ```
 
 | Argument / flag | What it does                                                                 |
 | --------------- | ----------------------------------------------------------------------------- |
-| `[module]`      | A `.dfn` file, relative to the working directory. Default: every module under `./schemas`, recursively — **fragments included**. |
+| `[module]`      | A `.dfn` file **or directory** (swept recursively), relative to the working directory. Default: every module under `./schemas` — **fragments included**. |
 | `--fix`         | Apply mechanical repairs before linting (below).                               |
 | `--json`        | Machine-readable result.                                                       |
 | `--cwd <dir>`   | Project discovery starts here.                                                 |
