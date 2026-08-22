@@ -33,7 +33,8 @@ root = color.[text | icon].<role>.<@emphasis>
   digits **when they contain a letter** (`2xs`, `4k-display`). A term that is purely
   numeric keeps its numeric meaning: a bare number (`950`) or a
   [scale expression](./scales.md) (`100-300/50`) — which is why hyphens inside names
-  never collide with range syntax.
+  never collide with range syntax. A parenthesized formula with word affixes
+  (`(2-4)xs`) is one term; parentheses appear nowhere else in the grammar.
 - **Strings** (pragma and `use` arguments) are double-quoted.
 
 ## Statements

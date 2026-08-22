@@ -4,16 +4,32 @@
  * generate the values), so a name can never drift from the value it mirrors.
  */
 
+/**
+ * Affixes wrap the NAME only (`(2-4)xs` → names `2xs…4xs`); `values` stay numeric. The numeric
+ * series is the backbone every rule binds on — integrality, collisions, pad — and what a
+ * token-side materializer consumes as the value while the affixed string is the name.
+ */
+interface ScaleAffixes {
+  prefix?: string;
+  suffix?: string;
+}
+
 export type ScaleExpression =
-  | { kind: 'stepped'; min: number; max: number; step: number; pad?: number }
-  | {
+  | ({
+      kind: 'stepped';
+      min: number;
+      max: number;
+      step: number;
+      pad?: number;
+    } & ScaleAffixes)
+  | ({
       kind: 'multiplied';
       min: number;
       max: number;
       factor: number;
       quantum?: number;
       pad?: number;
-    };
+    } & ScaleAffixes);
 
 export interface ScaleResult {
   /** Formatted names, in generation order (zero-padded when `pad` is set). */
@@ -87,11 +103,10 @@ export function evaluateScale(expression: ScaleExpression): ScaleResult {
     }
     seen.add(value);
     values.push(value);
-    names.push(
-      expression.pad
-        ? String(value).padStart(expression.pad, '0')
-        : String(value),
-    );
+    const digits = expression.pad
+      ? String(value).padStart(expression.pad, '0')
+      : String(value);
+    names.push(`${expression.prefix ?? ''}${digits}${expression.suffix ?? ''}`);
   }
 
   return { names, values, collisions };

@@ -202,3 +202,34 @@ test('a digit-leading name beside a range keeps both meanings', () => {
     ],
   });
 });
+
+test('affixed scales: suffix, prefix, infix, and pad', () => {
+  const module = parse(
+    't-shirt = (2-4)xs | xs(2-4) | x(2-8/2)s | (02-08/2)xxl\n',
+  );
+  expect(module.productions.get('t-shirt')).toMatchObject({
+    kind: 'alt',
+    options: [
+      { kind: 'range', min: 2, max: 4, step: 1, suffix: 'xs' },
+      { kind: 'range', min: 2, max: 4, step: 1, prefix: 'xs' },
+      { kind: 'range', min: 2, max: 8, step: 2, prefix: 'x', suffix: 's' },
+      { kind: 'range', min: 2, max: 8, step: 2, pad: 2, suffix: 'xxl' },
+    ],
+  });
+});
+
+test('a bare range without a step is stepped by 1; parens alone are grouping', () => {
+  const module = parse('scale = 2-4 | (16-64*1.25~4)\n');
+  expect(module.productions.get('scale')).toMatchObject({
+    kind: 'alt',
+    options: [
+      { kind: 'range', min: 2, max: 4, mode: 'stepped', step: 1 },
+      { kind: 'range', min: 16, max: 64, mode: 'multiplied', quantum: 4 },
+    ],
+  });
+});
+
+test('a digit-leading affix is refused — the parenthesis boundary must stay readable', () => {
+  expect(() => parse('scale = (2-4)5x\n')).toThrow();
+  expect(() => parse('scale = (2-4~3)\n')).toThrow(/multiplied scales/);
+});

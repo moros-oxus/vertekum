@@ -15,7 +15,7 @@ production's `=` is one of these forms, freely composed.
 | [`<name ![a, b]>`](#pick-and-omit) | **omit** — the set minus the listed members           |
 | [`<name*>`, `[a \| b *]`](#open-sets) | **open set** — additions are permitted             |
 | [`step?`](#optional-slots) | **optional slot** — the step may be skipped                   |
-| [`100-900/100`, `16-64*1.25~4`](./scales.md) | a numeric scale, enumerated at build — see [scales](./scales.md) |
+| [`100-900/100`, `16-64*1.25~4`, `(2-4)xs`](./scales.md) | a numeric scale, enumerated at build, optionally affixed — see [scales](./scales.md) |
 
 ## Nesting
 

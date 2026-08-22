@@ -80,6 +80,9 @@
           "include": "#reference"
         },
         {
+          "include": "#affixed-range"
+        },
+        {
           "include": "#range"
         },
         {
@@ -209,7 +212,7 @@
     },
     "range": {
       "name": "constant.numeric.range.dfn",
-      "match": "\\d+-\\d+[*/]\\d+(?:\\.\\d+)?(?:~\\d+)?"
+      "match": "\\d+-\\d+(?:[*/]\\d+(?:\\.\\d+)?)?(?:~\\d+)?"
     },
     "number": {
       "name": "constant.numeric.dfn",
@@ -246,6 +249,26 @@
     "name": {
       "name": "constant.language.name.dfn",
       "match": "\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*"
+    },
+    "affixed-range": {
+      "match": "([A-Za-z][A-Za-z0-9-]*)?(\\()(\\d+-\\d+(?:[*/]\\d+(?:\\.\\d+)?)?(?:~\\d+)?)(\\))([A-Za-z][A-Za-z0-9-]*)?",
+      "captures": {
+        "1": {
+          "name": "constant.language.name.dfn"
+        },
+        "2": {
+          "name": "punctuation.definition.scale.begin.dfn"
+        },
+        "3": {
+          "name": "constant.numeric.range.dfn"
+        },
+        "4": {
+          "name": "punctuation.definition.scale.end.dfn"
+        },
+        "5": {
+          "name": "constant.language.name.dfn"
+        }
+      }
     }
   }
 }

@@ -206,7 +206,11 @@ class Parser {
         return { kind: 'name', value: token.value, ...at };
       case 'range': {
         const payload = token.range as NonNullable<Token['range']>;
-        const { min, max, mode, step, quantum, pad } = payload;
+        const { min, max, mode, step, quantum, pad, prefix, suffix } = payload;
+        const affixes = {
+          ...(prefix !== undefined ? { prefix } : {}),
+          ...(suffix !== undefined ? { suffix } : {}),
+        };
         if (max < min) {
           throw new DfnError(
             'range needs max >= min',
@@ -229,7 +233,16 @@ class Parser {
               token.column,
             );
           }
-          return { kind: 'range', min, max, mode: 'stepped', step, pad, ...at };
+          return {
+            kind: 'range',
+            min,
+            max,
+            mode: 'stepped',
+            step,
+            pad,
+            ...affixes,
+            ...at,
+          };
         }
         if (step <= 1) {
           throw new DfnError(
@@ -246,6 +259,7 @@ class Parser {
           step,
           quantum,
           pad,
+          ...affixes,
           ...at,
         };
       }

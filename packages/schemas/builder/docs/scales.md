@@ -1,22 +1,25 @@
 # Scale expressions
 
 A scale expression enumerates a numeric name set at build time — `100-900/100` instead
-of nine names by hand. Two modes:
+of nine names by hand. Two modes, plus word affixes around either:
 
 | Syntax                 | Mode                                                                  |
 | ---------------------- | --------------------------------------------------------------------- |
 | [`min-max/step`](#additive-scales)    | **additive** — arithmetic steps                        |
 | [`min-max*factor~quantum`](#geometric-scales) | **geometric** — a ratio, optionally quantized  |
+| [`(formula)xs`, `xs(formula)`, `x(formula)s`](#affixed-scales) | **affixed** — word fragments wrapping the names |
 
 Both are inclusive at both ends, and both enumerate **names** — every step must land on
 a whole number, because a token name cannot be `31.25`.
 
 ## Additive scales
 
-`min-max/step`: from `min`, adding `step`, up to and including `max`.
+`min-max/step`: from `min`, adding `step`, up to and including `max`. The step is
+optional — `2-4` means `2-4/1`.
 
 ```dfn
 scale = 100-900/100     # 100 200 300 400 500 600 700 800 900
+steps = 2-4             # 2 3 4
 ```
 
 Different regions of one scale are alternation:
@@ -58,6 +61,30 @@ type-scale = 16-64*1.25~4
 | 61.035…   | 48.828125  | **60**         |
 
 (The next raw step, 76.29…, exceeds 64 — the series ends.)
+
+## Affixed scales
+
+A parenthesized formula may carry word fragments on either or both ends, as **one
+term** — no whitespace between affix and parenthesis. The full formula grammar applies
+inside the parentheses:
+
+| Expression       | Names                          |
+| ---------------- | ------------------------------- |
+| `(2-4)xs`        | `2xs 3xs 4xs`                   |
+| `xs(2-4)`        | `xs2 xs3 xs4`                   |
+| `x(2-8/2)s`      | `x2s x4s x6s x8s`               |
+| `(02-08/2)xxl`   | `02xxl 04xxl 06xxl 08xxl`       |
+| `(16-64*1.25~4)` | `16 20 24 32 40 48 60` — bare parentheses are grouping only |
+
+An affix is a word fragment: letters first, then letters, digits, and hyphens. The
+affixes wrap the **name**; the numeric series underneath is unchanged — padding sits
+inside the affixes (`02xxl`, never `xxl02` from a suffix form), and every rule below
+(inclusive bounds, integrality, collisions) binds on the numbers exactly as if the
+affixes were not there. One formula per term — `(2-4)x(1-2)` is refused.
+
+```dfn
+t-shirt = (2-4)xs | xsmall | small | medium | large | x(2-8/2)l
+```
 
 ## The semantics, precisely
 

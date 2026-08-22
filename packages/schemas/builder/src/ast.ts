@@ -80,6 +80,9 @@ export interface Range extends Position {
   step: number;
   quantum?: number;
   pad?: number;
+  /** Name affixes from the parenthesized form (`(2-4)xs`); values stay numeric. */
+  prefix?: string;
+  suffix?: string;
 }
 
 /**

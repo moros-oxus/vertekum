@@ -397,3 +397,25 @@ test('an open position emits additionalProperties with the shared tail, no closu
   expect(color.additionalProperties.properties).toHaveProperty('subtle');
   expect(color.properties.primary.properties).toHaveProperty('bold');
 });
+
+test('affixed scales build the wrapped names', () => {
+  const dir = fixture({
+    't-shirt.dfn':
+      'root = size.[(2-4)xs | small | medium | large | x(2-8/2)l | (02-04/2)huge]\n',
+  });
+  const tree = build(resolveModule(join(dir, 't-shirt.dfn')));
+  expect(names(tree.children.get('size') as TreeNode)).toEqual([
+    '2xs',
+    '3xs',
+    '4xs',
+    'small',
+    'medium',
+    'large',
+    'x2l',
+    'x4l',
+    'x6l',
+    'x8l',
+    '02huge',
+    '04huge',
+  ]);
+});

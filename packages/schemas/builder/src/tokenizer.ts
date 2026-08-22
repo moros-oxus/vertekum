@@ -42,13 +42,24 @@ export interface Token {
     quantum?: number;
     /** Pad width inferred from a leading zero on a written endpoint (`025` → 3). */
     pad?: number;
+    /** Affixes from the parenthesized form: `x(2-8/2)s` → prefix `x`, suffix `s`. */
+    prefix?: string;
+    suffix?: string;
   };
   line: number;
   column: number;
 }
 
 const IDENT = /^[A-Za-z][A-Za-z0-9-]*/;
-const RANGE = /^(\d+)-(\d+)([*/])(\d+(?:\.\d+)?)(?:~(\d+))?/;
+/** The step is optional: `2-4` is an additive scale stepped by 1. */
+const RANGE = /^(\d+)-(\d+)(?:([*/])(\d+(?:\.\d+)?))?(?:~(\d+))?/;
+/**
+ * An AFFIXED scale: word fragments hugging a parenthesized formula, as ONE term —
+ * `(2-4)xs`, `xs(2-4)`, `x(2-8/2)s`. The parentheses are what make the affix
+ * boundaries readable, so a bare range never takes affixes.
+ */
+const AFFIXED =
+  /^([A-Za-z][A-Za-z0-9-]*)?\((\d+)-(\d+)(?:([*/])(\d+(?:\.\d+)?))?(?:~(\d+))?\)([A-Za-z][A-Za-z0-9-]*)?/;
 /**
  * A digit-leading NAME (`2xs`, `4k-display`): digits, then at least one letter. Tried after
  * RANGE — so `100-300/50` stays numeric — and before NUMBER, so the whole word is one token
@@ -99,6 +110,28 @@ export function tokenize(source: string): Token[] {
         text = text.slice(value.length);
       };
 
+      const affixed = text.match(AFFIXED);
+      if (affixed) {
+        tokens.push({
+          kind: 'range',
+          value: affixed[0],
+          range: {
+            min: Number(affixed[2]),
+            max: Number(affixed[3]),
+            mode: (affixed[4] ?? '/') as '/' | '*',
+            step: affixed[5] ? Number(affixed[5]) : 1,
+            quantum: affixed[6] ? Number(affixed[6]) : undefined,
+            pad: padWidth(affixed[2], affixed[3]),
+            prefix: affixed[1] || undefined,
+            suffix: affixed[7] || undefined,
+          },
+          line,
+          column,
+        });
+        column += affixed[0].length;
+        text = text.slice(affixed[0].length);
+        continue;
+      }
       const range = text.match(RANGE);
       if (range) {
         tokens.push({
@@ -107,8 +140,8 @@ export function tokenize(source: string): Token[] {
           range: {
             min: Number(range[1]),
             max: Number(range[2]),
-            mode: range[3] as '/' | '*',
-            step: Number(range[4]),
+            mode: (range[3] ?? '/') as '/' | '*',
+            step: range[4] ? Number(range[4]) : 1,
             quantum: range[5] ? Number(range[5]) : undefined,
             pad: padWidth(range[1], range[2]),
           },

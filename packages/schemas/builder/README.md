@@ -41,7 +41,8 @@ npx vertekum check                 # the built schema now governs your token nam
 
 The grammar reads the way a design system talks: nesting is `.`, choice is `|`,
 denotations are named productions referenced as `<emphasis>`, scales are enumerated
-expressions (`100-900/100`, `16-64*1.25~4`), and `?` marks a slot as optional. One
+expressions — plain (`100-900/100`, `16-64*1.25~4`) or affixed (`(2-4)xs` → `2xs 3xs
+4xs`) — and `?` marks a slot as optional. One
 expression grants a whole syntagm:
 
 ```dfn

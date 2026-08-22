@@ -76,3 +76,64 @@ test('a non-integral unquantized step is an error, and guards hold', () => {
     evaluateScale({ kind: 'stepped', min: 10, max: 1, step: 1 }),
   ).toThrowError(/max >= min/);
 });
+
+test('a suffix wraps every name; values stay numeric', () => {
+  const result = evaluateScale({
+    kind: 'stepped',
+    min: 2,
+    max: 4,
+    step: 1,
+    suffix: 'xs',
+  });
+  expect(result.names).toEqual(['2xs', '3xs', '4xs']);
+  expect(result.values).toEqual([2, 3, 4]);
+});
+
+test('prefix, infix (both), and pad compose', () => {
+  expect(
+    evaluateScale({ kind: 'stepped', min: 2, max: 4, step: 1, prefix: 'xs' })
+      .names,
+  ).toEqual(['xs2', 'xs3', 'xs4']);
+  expect(
+    evaluateScale({
+      kind: 'stepped',
+      min: 2,
+      max: 8,
+      step: 2,
+      prefix: 'x',
+      suffix: 's',
+    }).names,
+  ).toEqual(['x2s', 'x4s', 'x6s', 'x8s']);
+  // Pad applies to every name, inside the affixes.
+  expect(
+    evaluateScale({
+      kind: 'stepped',
+      min: 2,
+      max: 8,
+      step: 2,
+      pad: 2,
+      suffix: 'xxl',
+    }).names,
+  ).toEqual(['02xxl', '04xxl', '06xxl', '08xxl']);
+});
+
+test('affixes ride a quantized geometric scale unchanged', () => {
+  const result = evaluateScale({
+    kind: 'multiplied',
+    min: 16,
+    max: 64,
+    factor: 1.25,
+    quantum: 4,
+    suffix: 'px',
+  });
+  expect(result.names).toEqual([
+    '16px',
+    '20px',
+    '24px',
+    '32px',
+    '40px',
+    '48px',
+    '60px',
+  ]);
+  expect(result.values).toEqual([16, 20, 24, 32, 40, 48, 60]);
+});

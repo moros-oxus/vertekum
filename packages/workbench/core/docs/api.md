@@ -130,7 +130,13 @@ evaluateScale({ kind: 'stepped', min: 25, max: 100, step: 25, pad: 3 });
 
 evaluateScale({ kind: 'multiplied', min: 16, max: 64, factor: 1.25, quantum: 4 });
 // names: ['16', '20', '24', '32', '40', '48', '60'] — each raw step quantized to the nearest 4
+
+evaluateScale({ kind: 'stepped', min: 2, max: 8, step: 2, pad: 2, suffix: 'xxl' });
+// names: ['02xxl', '04xxl', '06xxl', '08xxl'], values: [2, 4, 6, 8]
 ```
+
+Optional `prefix` and `suffix` wrap each **name** (padding sits inside the affixes);
+`values` stay numeric, which is what lets a name like `2xs` mirror the value `2`.
 
 Bounds are inclusive and apply to the raw series; geometric compounding is raw-basis (the
 factor never applies to a rounded value); a quantized value may stand just past `max`.

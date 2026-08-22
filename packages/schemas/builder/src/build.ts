@@ -148,6 +148,8 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
                 max: node.max,
                 step: node.step,
                 pad: node.pad,
+                prefix: node.prefix,
+                suffix: node.suffix,
               }
             : {
                 kind: 'multiplied',
@@ -156,6 +158,8 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
                 factor: node.step,
                 quantum: node.quantum,
                 pad: node.pad,
+                prefix: node.prefix,
+                suffix: node.suffix,
               },
         );
       } catch (error) {

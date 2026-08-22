@@ -53,6 +53,7 @@ test('the sample module tokenizes with the expected scopes', async () => {
     'root = color.<@colors/role ![brand]>.<emphasis>?.16-64*1.25~4',
     '  | fallback.[a | b *]',
     'xsmall = 2xs | 3xs | 950',
+    't-shirt = (2-4)xs | x(2-8/2)l',
   ];
   let state = INITIAL;
   const perLine = lines.map((line) => {
@@ -113,5 +114,15 @@ test('the sample module tokenizes with the expected scopes', async () => {
   );
   expect(scopesFor(perLine[6], lines[6], '950')).toContain(
     'constant.numeric.dfn',
+  );
+  // An affixed scale: the numeric core keeps the range scope; the affix is a static name.
+  expect(scopesFor(perLine[7], lines[7], '2-4')).toContain(
+    'constant.numeric.range.dfn',
+  );
+  expect(scopesFor(perLine[7], lines[7], ')xs')).toContain(
+    'punctuation.definition.scale.end.dfn',
+  );
+  expect(scopesFor(perLine[7], lines[7], 'xs |')).toContain(
+    'constant.language.name.dfn',
   );
 });
