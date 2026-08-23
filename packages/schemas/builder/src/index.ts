@@ -14,6 +14,11 @@ import { activate } from './api';
 export const SchemaBuilderSettings = z.object({
   source: z.string().default('./schemas'),
   out: z.string().optional(),
+  /**
+   * Linked emission: an unmodified `<@module>` root embedding `$ref`s the child module's own
+   * artifact instead of inlining a copy. Default false — self-contained artifacts.
+   */
+  link: z.boolean().default(false),
 });
 
 export const schemaBuilderManifest = {

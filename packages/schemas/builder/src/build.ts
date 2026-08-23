@@ -12,6 +12,12 @@ export interface TreeNode {
   children: Map<string, TreeNode>;
   open: boolean;
   denotation?: string;
+  /**
+   * This subtree is verbatim one top-level branch of an imported module's own artifact —
+   * an unmodified `<@module>` root embedding with a terminal tail. Emission MAY replace it
+   * with a `$ref` into that artifact (linked mode); inline mode ignores the tag.
+   */
+  link?: { module: ResolvedModule; top: string };
 }
 
 const leaf = (): TreeNode => ({ children: new Map(), open: false });
@@ -19,6 +25,7 @@ const leaf = (): TreeNode => ({ children: new Map(), open: false });
 function merge(into: TreeNode, from: TreeNode): void {
   into.open = into.open || from.open;
   if (into.denotation !== from.denotation) into.denotation = undefined;
+  into.link = undefined;
   for (const [name, child] of from.children) {
     const existing = into.children.get(name);
     if (existing) merge(existing, child);
@@ -41,7 +48,10 @@ function productionsOf(key: string, imported: ResolvedModule): string {
 }
 
 /** Find what `<name>` / `<@name>` means in this scope. Imported roots go by module name. */
-function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
+function target(
+  ref: Ref,
+  scope: Scope,
+): { node: Node; scope: Scope; importedRoot?: ResolvedModule } {
   // Every error here names the module whose TEXT holds the ref — `scope.module` — so a
   // failure inside an imported production's body is attributed to that file, not to
   // whichever module the walk started from.
@@ -85,13 +95,21 @@ function target(ref: Ref, scope: Scope): { node: Node; scope: Scope } {
     };
   }
 
-  const hits: Array<{ node: Node; scope: Scope }> = [];
+  const hits: Array<{
+    node: Node;
+    scope: Scope;
+    importedRoot?: ResolvedModule;
+  }> = [];
   for (const [key, imported] of scope.module.imports) {
     const importedScope: Scope = { module: imported, expanding: new Set() };
     const production = imported.module.productions.get(ref.name);
     if (production) hits.push({ node: production, scope: importedScope });
     if (key === ref.name && imported.module.root) {
-      hits.push({ node: imported.module.root, scope: importedScope });
+      hits.push({
+        node: imported.module.root,
+        scope: importedScope,
+        importedRoot: imported,
+      });
     }
   }
   if (hits.length === 0) {
@@ -218,7 +236,11 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       return forest;
     }
     case 'ref': {
-      const { node: production, scope: refScope } = target(node, scope);
+      const {
+        node: production,
+        scope: refScope,
+        importedRoot,
+      } = target(node, scope);
       if (!node.imported) {
         if (scope.expanding.has(node.name)) {
           throw new DfnError(
@@ -259,14 +281,19 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
         }
       }
       if (node.open) forest.open = true;
+      const unmodified =
+        node.pick.length === 0 && node.omit.length === 0 && !node.open;
       // A modified set is a different set — it never shares the source denotation's $def.
-      if (
-        node.pick.length === 0 &&
-        node.omit.length === 0 &&
-        isNameSet(production) &&
-        isTerminal(tail())
-      ) {
+      if (unmodified && isNameSet(production) && isTerminal(tail())) {
         forest.denotation = node.name;
+      }
+      // An unmodified module-root embedding with a terminal tail is verbatim the child's own
+      // artifact content — tag each top-level branch as linkable. Tags are inert unless
+      // emission runs in linked mode, so inline artifacts stay byte-identical.
+      if (unmodified && importedRoot && isTerminal(tail())) {
+        for (const [top, child] of forest.children) {
+          child.link = { module: importedRoot, top };
+        }
       }
       return forest;
     }

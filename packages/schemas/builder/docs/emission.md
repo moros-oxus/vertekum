@@ -49,6 +49,26 @@ A terminal denotation referenced from **two or more** positions is emitted once 
 single-use denotation is inlined. A [picked or omitted](./expressions.md#pick-and-omit)
 set never shares the source's `$def`: a modified set is a different set.
 
+## Linked emission
+
+By default every artifact is **self-contained** — an embedded module's expansion is
+inlined, so a file validates and diffs alone. With `link: true` on the extension
+(see [build § configuration](./build.md#configuration)), an unmodified `<@module>`
+root embedding with nothing threaded beneath it is emitted as a reference into the
+child module's own artifact instead:
+
+```json
+"color": { "$ref": "./primitives/color.json#/properties/color" }
+```
+
+The property key stays local — the parent's seal is untouched — and the referenced
+subtree is semantically identical to the inline copy. What still inlines under
+`link: true`, for correctness: picked/omitted refs (a modified set is a new set),
+open refs, refs with a non-terminal tail (the tail threads through every leaf),
+production refs (fragments and productions have no artifact), and modules this
+project does not build (package imports). Binding validation resolves the linked
+pair offline; standalone validators need the referenced files registered.
+
 ## Document keys
 
 | Key                     | From                                                             |

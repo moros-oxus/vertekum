@@ -5,7 +5,7 @@ import { assertOpenSetsAreNameSets, build } from './build';
 import { emit, isStamped } from './emit';
 import { fixSource, formatSource, resolveIndent } from './format';
 import { lintModule } from './lint';
-import { resolveModule } from './resolve';
+import { type ResolvedModule, resolveModule } from './resolve';
 
 /**
  * `vertekum schema build [module]` (ADR-0030): expand `.dfn` modules and DECLARE the built JSON
@@ -28,12 +28,19 @@ interface ProjectDir {
 function settingsOf(ctx: { project: unknown }): {
   source: string;
   out?: string;
+  link: boolean;
 } {
   const kernel = (ctx.project as ProjectDir).kernel;
-  const slice = kernel?.config.get<{ source?: string; out?: string }>(
-    'vtk.schema-builder',
-  );
-  return { source: slice?.source ?? './schemas', out: slice?.out };
+  const slice = kernel?.config.get<{
+    source?: string;
+    out?: string;
+    link?: boolean;
+  }>('vtk.schema-builder');
+  return {
+    source: slice?.source ?? './schemas',
+    out: slice?.out,
+    link: slice?.link === true,
+  };
 }
 
 function modulesUnder(dir: string): string[] {
@@ -74,6 +81,8 @@ export function buildModule(
   moduleLabel?: string,
   /** Where the artifact lands; default: beside the module. */
   targetDir?: string,
+  /** Linked emission: resolve an embedded module to the artifact path its `$ref` should use. */
+  linkResolve?: (module: ResolvedModule) => string | undefined,
 ): {
   target: string;
   content: string;
@@ -84,7 +93,7 @@ export function buildModule(
   const moduleFile = moduleLabel ?? basename(modulePath);
   return {
     target: join(targetDir ?? dirname(modulePath), `${resolved.name}.json`),
-    content: emit(tree, { moduleFile, ...resolved.module.meta }),
+    content: emit(tree, { moduleFile, ...resolved.module.meta, linkResolve }),
   };
 }
 
@@ -325,10 +334,28 @@ export const schemaBuildCommand: CommandDescriptor = {
         fragments.push(relative(projectDir, modulePath));
         continue;
       }
+      const parentTargetDir = targetDirFor(modulePath) ?? dirname(modulePath);
+      // Linked mode: a child links only when THIS project builds it — its artifact must be
+      // computable through the same source/out mapping. Package modules inline.
+      const linkResolve = settings.link
+        ? (child: ResolvedModule): string | undefined => {
+            const within = relative(projectDir, child.path);
+            if (within.startsWith('..') || within.includes('node_modules')) {
+              return undefined;
+            }
+            const childDir = targetDirFor(child.path) ?? dirname(child.path);
+            const ref = relative(
+              parentTargetDir,
+              join(childDir, `${child.name}.json`),
+            );
+            return ref.startsWith('.') ? ref : `./${ref}`;
+          }
+        : undefined;
       const { target, content } = buildModule(
         modulePath,
         relative(projectDir, modulePath),
         targetDirFor(modulePath),
+        linkResolve,
       );
       const existing = existsSync(target)
         ? readFileSync(target, 'utf8')

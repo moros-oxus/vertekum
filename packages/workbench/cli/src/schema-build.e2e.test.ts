@@ -124,3 +124,88 @@ test('a positional [out] pairs with the invocation: directory mirrors, file land
   );
   expect(file.stdout).toContain('wrote src/flat/color.json');
 }, 60_000);
+
+test('link: true — parent $refs the child artifact, and check validates through the pair', async () => {
+  const cwd = await exampleFixture('vtk-sbuild-', 'schemas');
+  const { mkdir } = await import('node:fs/promises');
+  await writeFile(
+    join(cwd, 'vertekum.config.ts'),
+    [
+      "import { defineConfig } from '@vertekum/core';",
+      "import { schemaBuilderExtension } from '@vertekum/schema-builder';",
+      'export default defineConfig({',
+      "  collection: './tokens',",
+      '  extensions: [',
+      "    schemaBuilderExtension({ source: './src/dfn', out: './src/schemas', link: true }),",
+      '  ],',
+      "  schemas: [{ from: './src/schemas', domain: 'vocabulary', use: { 'primitives.json': '*' } }],",
+      '});',
+      '',
+    ].join('\n'),
+  );
+  await mkdir(join(cwd, 'src/dfn/primitives'), { recursive: true });
+  await writeFile(
+    join(cwd, 'src/dfn/primitives.dfn'),
+    'use "./primitives/color.dfn"\n\nroot = [<@color> | space.[100 | 200]]\n',
+  );
+  await writeFile(
+    join(cwd, 'src/dfn/primitives/color.dfn'),
+    'root = color.[base | subtle]\n',
+  );
+
+  await run('node', [bin, 'schema', 'build'], { cwd });
+  const parent = await readFile(
+    join(cwd, 'src/schemas/primitives.json'),
+    'utf8',
+  );
+  expect(parent).toContain(
+    '"$ref": "./primitives/color.json#/properties/color"',
+  );
+  expect(JSON.parse(parent).properties.color.properties).toBeUndefined();
+
+  const check = await run('node', [bin, 'schema', 'build', '--check'], { cwd });
+  expect(check.stdout).toContain('current');
+
+  // The loader resolves the linked pair: a granted name passes, an invented one is refused.
+  const { rm } = await import('node:fs/promises');
+  await rm(join(cwd, 'tokens'), { recursive: true, force: true });
+  await mkdir(join(cwd, 'tokens'), { recursive: true });
+  await writeFile(
+    join(cwd, 'tokens/core.json'),
+    JSON.stringify({
+      color: {
+        base: {
+          $type: 'color',
+          $value: {
+            colorSpace: 'srgb',
+            components: [0, 0, 0],
+            alpha: 1,
+            hex: '#000000',
+          },
+        },
+      },
+    }),
+  );
+  await run('node', [bin, 'check'], { cwd });
+
+  await writeFile(
+    join(cwd, 'tokens/core.json'),
+    JSON.stringify({
+      color: {
+        bogus: {
+          $type: 'color',
+          $value: {
+            colorSpace: 'srgb',
+            components: [0, 0, 0],
+            alpha: 1,
+            hex: '#000000',
+          },
+        },
+      },
+    }),
+  );
+  const bad = run('node', [bin, 'check'], { cwd });
+  await expect(bad).rejects.toMatchObject({ code: 1 });
+  const { stdout } = (await bad.catch((e) => e)) as { stdout: string };
+  expect(stdout).toContain("'bogus' is not permitted");
+}, 60_000);

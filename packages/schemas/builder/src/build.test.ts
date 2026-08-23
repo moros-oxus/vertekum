@@ -419,3 +419,48 @@ test('affixed scales build the wrapped names', () => {
     '04huge',
   ]);
 });
+
+test('linked emission: an unmodified root embedding $refs the child artifact', () => {
+  const dir = fixture({
+    'primitives.dfn':
+      'use "./primitives/color.dfn"\n\nroot = [<@color> | space.[100 | 200]]\n',
+    'primitives/color.dfn': 'root = color.[base | subtle]\n',
+  });
+  const resolved = resolveModule(join(dir, 'primitives.dfn'));
+  const linked = emit(build(resolved), {
+    moduleFile: 'primitives.dfn',
+    linkResolve: (child) => `./primitives/${child.name}.json`,
+  });
+  const parsed = JSON.parse(linked);
+  expect(parsed.properties.color).toEqual({
+    $ref: './primitives/color.json#/properties/color',
+  });
+  expect(parsed.properties.space.properties['100']).toBeDefined();
+
+  // Without linkResolve the same tree inlines — the tag is inert.
+  const inline = JSON.parse(
+    emit(build(resolveModule(join(dir, 'primitives.dfn'))), {
+      moduleFile: 'primitives.dfn',
+    }),
+  );
+  expect(inline.properties.color.properties.base).toBeDefined();
+});
+
+test('linked emission: modified, tailed, and production refs stay inline', () => {
+  const dir = fixture({
+    'parent.dfn': [
+      'use "./child.dfn"',
+      '',
+      'root = [t.<@child>.suffix | picked.<@child/size [sm]> | <@child ![color]>]',
+      '',
+    ].join('\n'),
+    'child.dfn': 'size = sm | md\nroot = [color.base | extra.thing]\n',
+  });
+  const linked = JSON.parse(
+    emit(build(resolveModule(join(dir, 'parent.dfn'))), {
+      moduleFile: 'parent.dfn',
+      linkResolve: () => './child.json',
+    }),
+  );
+  expect(JSON.stringify(linked)).not.toContain('child.json');
+});

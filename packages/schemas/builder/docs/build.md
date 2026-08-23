@@ -36,6 +36,7 @@ schemas: [{ from: './src/schemas', use: { 'color.json': '*-tokens.json' } }],
 | -------- | ------------- | --------------------------------------------------------------- |
 | `source` | `'./schemas'` | Where the `.dfn` modules live — the default sweep for `build`, [`lint`](./lint.md), and [`fmt`](./format.md). |
 | `out`    | — (beside)    | Where built `.json` files land, mirroring `source`'s structure. |
+| `link`   | `false`       | [Linked emission](./emission.md#linked-emission): root embeddings `$ref` the child's artifact instead of inlining a copy. |
 
 Input and output are a **pair**, not a redirect: `out` maps modules under `source`
 (and a positional `[out]` maps modules under this invocation's `[module]` root); a

@@ -1,4 +1,5 @@
 import type { TreeNode } from './build';
+import type { ResolvedModule } from './resolve';
 
 /**
  * Emit a name tree as the names-and-order JSON Schema shape shipped schemas use: every position
@@ -23,13 +24,26 @@ function countDenotations(node: TreeNode, counts: Map<string, number>): void {
   for (const child of node.children.values()) countDenotations(child, counts);
 }
 
-function position(node: TreeNode, defs: Set<string>): Schema {
+function position(
+  node: TreeNode,
+  defs: Set<string>,
+  linkResolve?: (module: ResolvedModule) => string | undefined,
+): Schema {
+  // Linked mode: this subtree is verbatim one top-level branch of the child module's own
+  // artifact — reference it there instead of duplicating it. The property KEY stays local
+  // in the parent, so the parent's seal is untouched.
+  if (node.link && linkResolve) {
+    const artifact = linkResolve(node.link.module);
+    if (artifact) {
+      return { $ref: `${artifact}#/properties/${node.link.top}` };
+    }
+  }
   if (node.denotation && defs.has(node.denotation)) {
     return { $ref: `#/$defs/${node.denotation}` };
   }
   const properties: Schema = {};
   for (const [name, child] of node.children) {
-    properties[name] = position(child, defs);
+    properties[name] = position(child, defs, linkResolve);
   }
   const schema: Schema = {
     type: 'object',
@@ -41,7 +55,7 @@ function position(node: TreeNode, defs: Set<string>): Schema {
     // it by construction (`*` is restricted to name-only sets), so the first child is the shape.
     const first = node.children.values().next().value as TreeNode | undefined;
     schema.additionalProperties = first
-      ? position(first, defs)
+      ? position(first, defs, linkResolve)
       : { type: 'object', patternProperties: { '^\\$': true } };
   } else {
     schema.unevaluatedProperties = false;
@@ -63,6 +77,12 @@ export interface EmitOptions {
   title?: string;
   description?: string;
   scope?: 'document' | 'branch';
+  /**
+   * Linked mode: the artifact path (relative, `./`-prefixed) another module's tagged
+   * embedding should `$ref`, or undefined to inline it (e.g. a package-provided module).
+   * Absent = inline everything — the default, byte-stable emission.
+   */
+  linkResolve?: (module: ResolvedModule) => string | undefined;
 }
 
 export function emit(tree: TreeNode, options: EmitOptions): string {
@@ -96,7 +116,7 @@ export function emit(tree: TreeNode, options: EmitOptions): string {
     document.$defs = defs;
   }
 
-  const root = position(tree, shared);
+  const root = position(tree, shared, options.linkResolve);
   document.type = root.type;
   document.properties = root.properties;
   document.patternProperties = root.patternProperties;
