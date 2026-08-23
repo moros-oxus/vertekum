@@ -38,18 +38,24 @@ test('--check exits 1 when a built file is stale; --dry-run withholds the fix', 
   expect(await readFile(path, 'utf8')).toBe(fresh);
 }, 60_000);
 
-test('the sweep skips fragment modules; naming one explicitly errors', async () => {
+test('a rootless module emits defs; scope "inline" is skipped and errors when named', async () => {
   const cwd = await exampleFixture('vtk-sbuild-', 'schemas');
   await writeFile(join(cwd, 'schemas/fragments.dfn'), 'tone = warm | cool\n');
-
-  const { stdout } = await run('node', [bin, 'schema', 'build'], { cwd });
-  expect(stdout).toContain('built 1 module(s)');
-  expect(stdout).toContain(
-    'fragments.dfn declares no root (a fragment) — skipped',
+  await writeFile(
+    join(cwd, 'schemas/helpers.dfn'),
+    'scope "inline"\nedge = soft | hard\n',
   );
 
+  const { stdout } = await run('node', [bin, 'schema', 'build'], { cwd });
+  expect(stdout).toContain('built 2 module(s)');
+  expect(stdout).toContain('helpers.dfn is scope "inline" — skipped');
+  const frag = JSON.parse(
+    await readFile(join(cwd, 'schemas/fragments.json'), 'utf8'),
+  );
+  expect(Object.keys(frag.$defs)).toContain('tone');
+
   await expect(
-    run('node', [bin, 'schema', 'build', 'schemas/fragments.dfn'], { cwd }),
+    run('node', [bin, 'schema', 'build', 'schemas/helpers.dfn'], { cwd }),
   ).rejects.toMatchObject({ code: 1 });
 }, 60_000);
 
@@ -74,7 +80,7 @@ test('configured source/out: builds mirror into out; lint sweeps source by defau
       "import { schemaBuilderExtension } from '@vertekum/schema-builder';",
       'export default defineConfig({',
       "  collection: './tokens',",
-      "  extensions: [schemaBuilderExtension({ source: './src/dfn', out: './src/schemas' })],",
+      "  extensions: [schemaBuilderExtension({ source: './src/dfn', out: './src/schemas', schemaId: 'https://example.org/schemas/' })],",
       '});',
       '',
     ].join('\n'),

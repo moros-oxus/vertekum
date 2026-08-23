@@ -9,12 +9,16 @@
 export interface Module {
   /** `use "<specifier>" [as <alias>]` statements, in order. */
   uses: Array<{ spec: string; alias?: string }>;
-  /** Productions by name. `root` is never stored here. */
+  /** Productions by name, declaration order. `root` is never stored here. */
   productions: Map<string, Node>;
+  /** Productions declared `:name = …` — invisible to importers, always inlined. */
+  private: Set<string>;
   /** The reserved `root` production, when declared. */
   root: Node | undefined;
-  /** Pragmas (`id "…"`, `title "…"`, `description "…"`) — document metadata for emission. */
+  /** Pragmas — document metadata and the file's nature. */
   meta: ModuleMeta;
+  /** Lint-surfaced notes recorded while parsing (deprecated forms), with positions. */
+  notes: Array<{ line: number; column: number; message: string }>;
 }
 
 /** The pragma statements a module may carry, each at most once. */
@@ -23,11 +27,17 @@ export interface ModuleMeta {
   title?: string;
   description?: string;
   /**
-   * `scope "branch"`: the schema governs only the top-level branches it names — the document
-   * root stays unsealed, so sibling vocabularies can bind over the same files. The default,
-   * `document`, seals the root: nothing beyond the granted names may exist.
+   * The file's NATURE. `document`: emitted, root required — consumers reference its
+   * top-level names. `def`: emitted, root optional — a pattern source; its root also
+   * lands as `$defs.<filename>`. `inline`: never emitted — expansion only. Absent:
+   * root → document, rootless → def.
    */
-  scope?: 'document' | 'branch';
+  scope?: 'document' | 'def' | 'inline';
+  /**
+   * `sealed "false"` leaves the document top unsealed so sibling vocabularies can bind
+   * over the same files. Default true. (`scope "branch"` parses as a deprecated alias.)
+   */
+  sealed?: boolean;
 }
 
 export type Node = Alt | Path | Name | Range | Ref | Group;

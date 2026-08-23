@@ -43,6 +43,11 @@ Lint's contract is the source:
 Findings **collect**: one broken production does not hide the next, so a module with
 three mistakes is one lint run, not three.
 
+Lint also reports **warnings** — non-failing (exit `0` when nothing else is wrong):
+an open set merging with closed siblings at one position (the whole position becomes
+open — restructure or accept it), and deprecated forms such as `scope "branch"`
+(write `sealed "false"`).
+
 ## `--fix`
 
 `--fix` applies the repairs that are **mechanical and unambiguous** — currently one:

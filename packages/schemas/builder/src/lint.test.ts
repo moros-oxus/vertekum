@@ -124,3 +124,25 @@ test('a qualified miss lists what the import declares', () => {
     "'t-shirt' has no production 'sizes' — it declares: <@t-shirt/size>",
   );
 });
+
+test('warnings: open-merge and the scope "branch" deprecation report without failing', () => {
+  const dir = fixture({
+    'color.dfn': [
+      'scope "branch"',
+      'alpha = [transparent *]',
+      'root = color.[red | blue | <alpha>].base',
+      '',
+    ].join('\n'),
+  });
+  const diagnostics = lintModule(join(dir, 'color.dfn'));
+  const warnings = diagnostics.filter((d) => d.severity === 'warning');
+  expect(diagnostics).toHaveLength(warnings.length);
+  expect(
+    warnings.some((w) => w.message.includes('scope "branch" is deprecated')),
+  ).toBe(true);
+  expect(
+    warnings.some((w) =>
+      w.message.includes('open set merges with closed siblings'),
+    ),
+  ).toBe(true);
+});

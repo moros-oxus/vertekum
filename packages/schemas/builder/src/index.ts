@@ -19,6 +19,11 @@ export const SchemaBuilderSettings = z.object({
    * artifact instead of inlining a copy. Default false — self-contained artifacts.
    */
   link: z.boolean().default(false),
+  /**
+   * Base URI for derived `$id`s: each artifact gets base + its artifact-relative path.
+   * A file's `id` pragma wins. Unset: no `$id` unless the pragma supplies one.
+   */
+  schemaId: z.string().optional(),
 });
 
 export const schemaBuilderManifest = {

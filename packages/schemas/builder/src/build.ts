@@ -1,3 +1,4 @@
+import { basename } from 'node:path';
 import { evaluateScale } from '@vertekum/core';
 import type { Node, Ref } from './ast';
 import { DfnError } from './error';
@@ -11,21 +12,39 @@ import type { ResolvedModule } from './resolve';
 export interface TreeNode {
   children: Map<string, TreeNode>;
   open: boolean;
-  denotation?: string;
   /**
-   * This subtree is verbatim one top-level branch of an imported module's own artifact —
-   * an unmodified `<@module>` root embedding with a terminal tail. Emission MAY replace it
-   * with a `$ref` into that artifact (linked mode); inline mode ignores the tag.
+   * PATTERNS whose full member sets landed at this position — unmodified terminal
+   * references to public productions (local or imported) or to an imported def-scope
+   * module's root. Emission deep-checks each against the position's children and, when
+   * intact, emits a `$ref` to the pattern's `$def` instead of expanding; a merge that
+   * grew a member drops the pattern back to expansion. Keyed collision-proof.
+   */
+  patterns?: Map<string, PatternRef>;
+  /**
+   * This subtree is verbatim one top-level branch of an imported DOCUMENT module's own
+   * artifact. Emission MAY replace it with a `$ref` into `…#/properties/<top>` (linked
+   * mode); inline mode ignores the tag.
    */
   link?: { module: ResolvedModule; top: string };
+}
+
+/** One pattern source: a production (local when `module` is absent) or a def-scope root. */
+export interface PatternRef {
+  name: string;
+  module?: ResolvedModule;
+  /** The pattern is the module's ROOT def (`$defs.<filename>`), not a production. */
+  root?: boolean;
 }
 
 const leaf = (): TreeNode => ({ children: new Map(), open: false });
 
 function merge(into: TreeNode, from: TreeNode): void {
   into.open = into.open || from.open;
-  if (into.denotation !== from.denotation) into.denotation = undefined;
   into.link = undefined;
+  if (from.patterns) {
+    into.patterns = into.patterns ?? new Map();
+    for (const [key, ref] of from.patterns) into.patterns.set(key, ref);
+  }
   for (const [name, child] of from.children) {
     const existing = into.children.get(name);
     if (existing) merge(existing, child);
@@ -38,11 +57,14 @@ interface Scope {
   module: ResolvedModule;
   /** Local productions currently expanding, for reference-cycle detection. */
   expanding: Set<string>;
+  /** Lint's warning sink (open-merge, …); absent in plain builds. */
+  warn?: (file: string, line: number, column: number, message: string) => void;
 }
 
 /** The `<@key/name>, …` listing a miss suggests — an error should name the fix, not just the gap. */
 function productionsOf(key: string, imported: ResolvedModule): string {
   return [...imported.module.productions.keys()]
+    .filter((p) => !imported.module.private.has(p))
     .map((p) => `<@${key}/${p}>`)
     .join(', ');
 }
@@ -81,6 +103,14 @@ function target(
       );
     }
     const production = imported.module.productions.get(ref.name);
+    if (production && imported.module.private.has(ref.name)) {
+      throw new DfnError(
+        `'${ref.name}' is private to ${basename(imported.path)} — its public productions: ${productionsOf(ref.from, imported)}`,
+        ref.line,
+        ref.column,
+        file,
+      );
+    }
     if (!production) {
       throw new DfnError(
         `'${ref.from}' has no production '${ref.name}' — it declares: ${productionsOf(ref.from, imported)}`,
@@ -91,7 +121,7 @@ function target(
     }
     return {
       node: production,
-      scope: { module: imported, expanding: new Set() },
+      scope: { module: imported, expanding: new Set(), warn: scope.warn },
     };
   }
 
@@ -101,9 +131,15 @@ function target(
     importedRoot?: ResolvedModule;
   }> = [];
   for (const [key, imported] of scope.module.imports) {
-    const importedScope: Scope = { module: imported, expanding: new Set() };
+    const importedScope: Scope = {
+      module: imported,
+      expanding: new Set(),
+      warn: scope.warn,
+    };
     const production = imported.module.productions.get(ref.name);
-    if (production) hits.push({ node: production, scope: importedScope });
+    if (production && !imported.module.private.has(ref.name)) {
+      hits.push({ node: production, scope: importedScope });
+    }
     if (key === ref.name && imported.module.root) {
       hits.push({
         node: imported.module.root,
@@ -204,9 +240,26 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
     }
     case 'alt': {
       const forest = leaf();
-      for (const option of node.options) {
-        merge(forest, evaluate(option, scope, tail));
+      const forests = node.options.map((option) => ({
+        option,
+        forest: evaluate(option, scope, tail),
+      }));
+      // Opening a subset of a position's set opens the WHOLE position — additions carry
+      // no mark of which family they claim. Legal, but never silent.
+      const open = forests.find((f) => f.forest.open);
+      const closed = forests.find(
+        (f) => !f.forest.open && f.forest.children.size > 0,
+      );
+      if (open && closed && scope.warn) {
+        const at = open.option as { line?: number; column?: number };
+        scope.warn(
+          scope.module.path,
+          at.line ?? 1,
+          at.column ?? 1,
+          'an open set merges with closed siblings here — the whole position becomes open (additions are permitted beside every member)',
+        );
       }
+      for (const f of forests) merge(forest, f.forest);
       return forest;
     }
     case 'path': {
@@ -283,16 +336,47 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       if (node.open) forest.open = true;
       const unmodified =
         node.pick.length === 0 && node.omit.length === 0 && !node.open;
-      // A modified set is a different set — it never shares the source denotation's $def.
-      if (unmodified && isNameSet(production) && isTerminal(tail())) {
-        forest.denotation = node.name;
-      }
-      // An unmodified module-root embedding with a terminal tail is verbatim the child's own
-      // artifact content — tag each top-level branch as linkable. Tags are inert unless
-      // emission runs in linked mode, so inline artifacts stay byte-identical.
-      if (unmodified && importedRoot && isTerminal(tail())) {
-        for (const [top, child] of forest.children) {
-          child.link = { module: importedRoot, top };
+      // A modified set is a different set — it never shares a pattern's $def; a tail
+      // forces expansion (a $ref cannot be parameterized). Tags are inert unless
+      // emission chooses to reference them.
+      if (unmodified && isTerminal(tail())) {
+        if (importedRoot) {
+          const nature =
+            importedRoot.module.meta.scope ??
+            (importedRoot.module.root ? 'document' : 'def');
+          if (nature === 'document') {
+            // Verbatim top-level branches of the child DOCUMENT's artifact.
+            for (const [top, child] of forest.children) {
+              child.link = { module: importedRoot, top };
+            }
+          } else if (nature === 'def') {
+            forest.patterns = forest.patterns ?? new Map();
+            forest.patterns.set(`@${importedRoot.path}//root`, {
+              name: importedRoot.name,
+              module: importedRoot,
+              root: true,
+            });
+          }
+          // inline nature: pure expansion, no tag.
+        } else if (!node.imported) {
+          if (!scope.module.module.private.has(node.name)) {
+            forest.patterns = forest.patterns ?? new Map();
+            forest.patterns.set(node.name, { name: node.name });
+          }
+        } else {
+          // An imported PRODUCTION (qualified or search-resolved): public by
+          // construction (target refuses privates). Pattern in the child's artifact
+          // unless the child is inline-natured.
+          const child = refScope.module;
+          const nature =
+            child.module.meta.scope ?? (child.module.root ? 'document' : 'def');
+          if (nature !== 'inline') {
+            forest.patterns = forest.patterns ?? new Map();
+            forest.patterns.set(`@${child.path}/${node.name}`, {
+              name: node.name,
+              module: child,
+            });
+          }
         }
       }
       return forest;
@@ -308,6 +392,9 @@ function isNameSet(node: Node): boolean {
       return true;
     case 'alt':
       return node.options.every(isNameSet);
+    case 'group':
+      // Decorative brackets do not change a set's nature.
+      return isNameSet(node.node);
     default:
       return false;
   }
@@ -318,7 +405,17 @@ function isTerminal(node: TreeNode): boolean {
 }
 
 /** Expand a module's root into its name tree. Fragments-only modules cannot build. */
-export function build(resolved: ResolvedModule): TreeNode {
+export function build(
+  resolved: ResolvedModule,
+  options: {
+    warn?: (
+      file: string,
+      line: number,
+      column: number,
+      message: string,
+    ) => void;
+  } = {},
+): TreeNode {
   const root = resolved.module.root;
   if (!root) {
     throw new DfnError(
@@ -328,7 +425,11 @@ export function build(resolved: ResolvedModule): TreeNode {
       resolved.path,
     );
   }
-  const scope: Scope = { module: resolved, expanding: new Set() };
+  const scope: Scope = {
+    module: resolved,
+    expanding: new Set(),
+    warn: options.warn,
+  };
 
   // An aggregate root unions imported roots; the same top-level name arriving from two different
   // module refs is a collision, not a merge — each module owns its top. `[a | b]` and `a | b`
@@ -369,12 +470,17 @@ export function build(resolved: ResolvedModule): TreeNode {
 export function evaluateProduction(
   resolved: ResolvedModule,
   name: string,
+  warn?: (file: string, line: number, column: number, message: string) => void,
 ): TreeNode {
   const production = resolved.module.productions.get(name);
   if (!production) {
     throw new DfnError(`no production '${name}'`, 1, 1);
   }
-  const scope: Scope = { module: resolved, expanding: new Set([name]) };
+  const scope: Scope = {
+    module: resolved,
+    expanding: new Set([name]),
+    warn,
+  };
   return evaluate(production, scope, leaf);
 }
 

@@ -18,7 +18,7 @@ const modules = readdirSync(join(root, 'dfn'), {
   .filter((f) => f.endsWith('.dfn'))
   .sort();
 for (const file of modules) {
-  const { content } = buildModule(join(root, 'dfn', file), file);
+  const { content } = buildModule(join(root, 'dfn', file), { label: file });
   const target = join(root, 'lib', file.replace(/\.dfn$/, '.json'));
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, content);

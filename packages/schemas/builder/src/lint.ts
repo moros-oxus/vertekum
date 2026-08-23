@@ -18,6 +18,8 @@ export interface DfnDiagnostic {
   line: number;
   column: number;
   message: string;
+  /** `error` blocks (exit 1); `warning` reports without failing. Absent = error. */
+  severity?: 'warning';
 }
 
 function toDiagnostic(file: string, error: unknown): DfnDiagnostic {
@@ -50,6 +52,18 @@ export function lintModule(
   }
 
   const out: DfnDiagnostic[] = [];
+  const warn = (
+    file: string,
+    line: number,
+    column: number,
+    message: string,
+  ): void => {
+    out.push({ file, line, column, message, severity: 'warning' });
+  };
+  // Deprecated forms the parser honored (e.g. `scope "branch"`) surface as warnings.
+  for (const note of resolved.module.notes) {
+    warn(resolved.path, note.line, note.column, note.message);
+  }
   const collect = (walk: () => void): void => {
     try {
       walk();
@@ -60,7 +74,7 @@ export function lintModule(
 
   for (const [name, node] of resolved.module.productions) {
     collect(() => {
-      evaluateProduction(resolved, name);
+      evaluateProduction(resolved, name, warn);
       assertOpenSetsAreNameSets(resolved, node);
     });
   }
@@ -68,7 +82,7 @@ export function lintModule(
     // `build` re-expands referenced productions, so a production's error can surface twice —
     // once from its own walk, once through the root. The dedupe below keeps one.
     collect(() => {
-      build(resolved);
+      build(resolved, { warn });
       assertOpenSetsAreNameSets(resolved);
     });
   }

@@ -13,14 +13,14 @@ test('schema lint passes a sound tree', async () => {
   expect(stdout).toContain('module(s) clean');
 }, 60_000);
 
-test('lint catches a broken fragment the build sweep never reaches', async () => {
+test('lint catches a broken inline module the build sweep never reaches', async () => {
   const cwd = await exampleFixture('vtk-slint-', 'schemas');
   await writeFile(
     join(cwd, 'schemas/fragments.dfn'),
-    'tone = warm | <missing>\n',
+    'scope "inline"\ntone = warm | <missing>\n',
   );
 
-  // The coverage difference, demonstrated: build has nothing to say about a fragment…
+  // The coverage difference, demonstrated: build never emits an inline module…
   const build = await run('node', [bin, 'schema', 'build', '--dry-run'], {
     cwd,
   });
@@ -31,7 +31,7 @@ test('lint catches a broken fragment the build sweep never reaches', async () =>
   await expect(lint).rejects.toMatchObject({ code: 1 });
   const { stderr } = (await lint.catch((e) => e)) as { stderr: string };
   expect(stderr).toContain(
-    "schemas/fragments.dfn:1:15 unknown production '<missing>'",
+    "schemas/fragments.dfn:2:15 unknown production '<missing>'",
   );
 }, 60_000);
 

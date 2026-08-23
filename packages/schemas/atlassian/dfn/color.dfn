@@ -1,7 +1,7 @@
 id "vertekum://schema-atlassian/color.json"
 title "Atlassian Design System — color"
 description "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema."
-scope "branch"
+sealed "false"
 
 # The documented syntagm (atlassian.design/foundations/color): color.<property>.<role>.<emphasis>.<state>.
 # The root reads as that syntagm; a slot collapses when unused (`?`). Co-meronyms that fork from it

@@ -1,8 +1,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative } from 'node:path';
 import type { CommandDescriptor, CommandResult } from '@vertekum/core';
-import { assertOpenSetsAreNameSets, build } from './build';
+import {
+  assertOpenSetsAreNameSets,
+  build,
+  evaluateProduction,
+  type PatternRef,
+  type TreeNode,
+} from './build';
 import { emit, isStamped } from './emit';
+import { DfnError } from './error';
 import { fixSource, formatSource, resolveIndent } from './format';
 import { lintModule } from './lint';
 import { type ResolvedModule, resolveModule } from './resolve';
@@ -29,17 +36,20 @@ function settingsOf(ctx: { project: unknown }): {
   source: string;
   out?: string;
   link: boolean;
+  schemaId?: string;
 } {
   const kernel = (ctx.project as ProjectDir).kernel;
   const slice = kernel?.config.get<{
     source?: string;
     out?: string;
     link?: boolean;
+    schemaId?: string;
   }>('vtk.schema-builder');
   return {
     source: slice?.source ?? './schemas',
     out: slice?.out,
     link: slice?.link === true,
+    schemaId: slice?.schemaId,
   };
 }
 
@@ -74,26 +84,101 @@ function resolveModules(
   return { modules: [target], explicitFile: true, root: dirname(target) };
 }
 
-export function buildModule(
-  modulePath: string,
+/** A module's NATURE: the `scope` pragma, defaulted by root presence. */
+export function natureOf(
+  resolved: ResolvedModule,
+): 'document' | 'def' | 'inline' {
+  return (
+    resolved.module.meta.scope ?? (resolved.module.root ? 'document' : 'def')
+  );
+}
+
+export interface BuildModuleOptions {
   /** The module name the provenance stamp records; default: the basename. Pass a relative
    *  path when modules nest, so same-named modules stamp distinguishably. */
-  moduleLabel?: string,
+  label?: string;
   /** Where the artifact lands; default: beside the module. */
-  targetDir?: string,
-  /** Linked emission: resolve an embedded module to the artifact path its `$ref` should use. */
-  linkResolve?: (module: ResolvedModule) => string | undefined,
+  targetDir?: string;
+  /** Derived `$id` for this artifact (configured base + path); the `id` pragma wins. */
+  schemaId?: string;
+  /** Linked emission: resolve a module to the artifact path a cross-file `$ref` should use. */
+  linkResolve?: (module: ResolvedModule) => string | undefined;
+}
+
+export function buildModule(
+  modulePath: string,
+  options: BuildModuleOptions = {},
 ): {
   target: string;
   content: string;
 } {
   const resolved = resolveModule(modulePath);
   assertOpenSetsAreNameSets(resolved);
-  const tree = build(resolved);
-  const moduleFile = moduleLabel ?? basename(modulePath);
+  const nature = natureOf(resolved);
+  if (nature === 'inline') {
+    throw new DfnError(
+      `${resolved.name}.dfn is scope "inline" — it is never emitted`,
+      1,
+      1,
+      resolved.path,
+    );
+  }
+  if (nature === 'document' && !resolved.module.root) {
+    throw new DfnError(
+      `scope "document" requires a root — ${resolved.name}.dfn declares none`,
+      1,
+      1,
+      resolved.path,
+    );
+  }
+
+  const tree = resolved.module.root ? build(resolved) : undefined;
+
+  // Public patterns in declaration order, bare-evaluated; plus a memoized provider for
+  // emission's deep-checks (covering cross-module patterns and def-scope roots).
+  const patterns = new Map<string, TreeNode>();
+  for (const name of resolved.module.productions.keys()) {
+    if (resolved.module.private.has(name)) continue;
+    patterns.set(name, evaluateProduction(resolved, name));
+  }
+  const bareMemo = new Map<string, TreeNode | undefined>();
+  const bare = (ref: PatternRef): TreeNode | undefined => {
+    const key = ref.module
+      ? `@${ref.module.path}/${ref.root ? '/root' : ref.name}`
+      : ref.name;
+    if (!bareMemo.has(key)) {
+      let value: TreeNode | undefined;
+      if (!ref.module) value = patterns.get(ref.name);
+      else if (ref.root) value = build(ref.module);
+      else value = evaluateProduction(ref.module, ref.name);
+      bareMemo.set(key, value);
+    }
+    return bareMemo.get(key);
+  };
+
+  const moduleFile = options.label ?? basename(modulePath);
+  const meta = resolved.module.meta;
   return {
-    target: join(targetDir ?? dirname(modulePath), `${resolved.name}.json`),
-    content: emit(tree, { moduleFile, ...resolved.module.meta, linkResolve }),
+    target: join(
+      options.targetDir ?? dirname(modulePath),
+      `${resolved.name}.json`,
+    ),
+    content: emit(tree, {
+      moduleFile,
+      id: meta.id,
+      schemaId: options.schemaId,
+      title: meta.title,
+      description: meta.description,
+      scopeKind: nature,
+      // A def file is pattern-natured: its body stays unsealed unless the author seals it,
+      // so consumers can whole-file-compose it. A document validates alone: sealed.
+      sealed: meta.sealed ?? nature === 'document',
+      patterns,
+      rootDefName:
+        nature === 'def' && resolved.module.root ? 'root' : undefined,
+      bare,
+      linkResolve: options.linkResolve,
+    }),
   };
 }
 
@@ -156,12 +241,16 @@ export const schemaLintCommand: CommandDescriptor = {
       }
     }
 
-    const diagnostics = modules.flatMap((modulePath) =>
+    const found = modules.flatMap((modulePath) =>
       lintModule(modulePath, sources).map((d) => ({
         ...d,
         file: project(d.file),
       })),
     );
+    const warningLine = (d: (typeof found)[number]) =>
+      `  ${d.file}:${d.line}:${d.column} warning: ${d.message}`;
+    const warnings = found.filter((d) => d.severity === 'warning');
+    const diagnostics = found.filter((d) => d.severity !== 'warning');
 
     if (diagnostics.length > 0) {
       throw new Error(
@@ -173,6 +262,7 @@ export const schemaLintCommand: CommandDescriptor = {
           ...diagnostics.map(
             (d) => `  ${d.file}:${d.line}:${d.column} ${d.message}`,
           ),
+          ...warnings.map(warningLine),
         ].join('\n'),
       );
     }
@@ -180,12 +270,13 @@ export const schemaLintCommand: CommandDescriptor = {
       ...(fixed.length > 0
         ? [`fixed ${fixed.length} problem(s):`, ...fixed.map((f) => `  ${f}`)]
         : []),
-      `${modules.length} module(s) clean`,
+      ...warnings.map(warningLine),
+      `${modules.length} module(s) clean${warnings.length > 0 ? `, ${warnings.length} warning(s)` : ''}`,
     ];
     return {
       summary: notes.join('\n'),
       files,
-      data: { modules: modules.map(project), fixed },
+      data: { modules: modules.map(project), fixed, warnings },
     };
   },
 };
@@ -327,12 +418,18 @@ export const schemaBuildCommand: CommandDescriptor = {
     const stale: string[] = [];
 
     for (const modulePath of modules) {
-      // A rootless module is a FRAGMENT — imports for other modules. The sweep skips it;
+      // A `scope "inline"` module is never emitted — the sweep skips it with a notice;
       // naming one explicitly stays an error (buildModule throws), since silence there
-      // would hide a typo'd `root`.
-      if (!explicitFile && !resolveModule(modulePath).module.root) {
-        fragments.push(relative(projectDir, modulePath));
-        continue;
+      // would hide the wrong pragma.
+      if (!explicitFile) {
+        const resolved = resolveModule(modulePath);
+        const nature =
+          resolved.module.meta.scope ??
+          (resolved.module.root ? 'document' : 'def');
+        if (nature === 'inline') {
+          fragments.push(relative(projectDir, modulePath));
+          continue;
+        }
       }
       const parentTargetDir = targetDirFor(modulePath) ?? dirname(modulePath);
       // Linked mode: a child links only when THIS project builds it — its artifact must be
@@ -351,12 +448,22 @@ export const schemaBuildCommand: CommandDescriptor = {
             return ref.startsWith('.') ? ref : `./${ref}`;
           }
         : undefined;
-      const { target, content } = buildModule(
-        modulePath,
-        relative(projectDir, modulePath),
-        targetDirFor(modulePath),
+      const derivedId = settings.schemaId
+        ? settings.schemaId.replace(/\/?$/, '/') +
+          relative(
+            outDir ?? join(projectDir, settings.source),
+            join(
+              parentTargetDir,
+              `${basename(modulePath).replace(/\.dfn$/, '')}.json`,
+            ),
+          )
+        : undefined;
+      const { target, content } = buildModule(modulePath, {
+        label: relative(projectDir, modulePath),
+        targetDir: targetDirFor(modulePath),
+        schemaId: derivedId,
         linkResolve,
-      );
+      });
       const existing = existsSync(target)
         ? readFileSync(target, 'utf8')
         : undefined;
@@ -382,7 +489,7 @@ export const schemaBuildCommand: CommandDescriptor = {
       ctx.options.check === true
         ? `${modules.length - fragments.length} module(s) current`
         : `built ${files.length} module(s)`,
-      ...fragments.map((f) => `${f} declares no root (a fragment) — skipped`),
+      ...fragments.map((f) => `${f} is scope "inline" — skipped`),
       ...skipped.map((f) => `${f} has local edits (no stamp) — left as is`),
     ];
     return { summary: notes.join('\n'), files, data: { skipped, fragments } };

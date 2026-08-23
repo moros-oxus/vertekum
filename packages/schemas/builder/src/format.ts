@@ -44,6 +44,7 @@ const TIGHT_AFTER = new Set([
   'slash',
   'bang',
   'lbracket',
+  'colon',
 ]);
 const TIGHT_BEFORE = new Set([
   'dot',

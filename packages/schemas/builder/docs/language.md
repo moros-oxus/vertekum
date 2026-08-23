@@ -43,17 +43,21 @@ root = color.[text | icon].<role>.<@emphasis>
 
 | Statement                | What it is                                                       |
 | ------------------------ | ----------------------------------------------------------------- |
-| [`name = expression`](#productions) | A **production**: a named fragment of the vocabulary.  |
-| [`root = expression`](#root)        | The reserved production a build materializes.          |
+| [`name = expression`](#productions) | A **public** production — a named export: importable (`<@mod/name>`) and emitted as a `$defs` pattern. |
+| [`:name = expression`](#productions) | A **private** production — inlined at use, invisible to importers. |
+| [`root = expression`](#root)        | The default export: the definitive syntagma.           |
 | [`use "…" [as name]`](#use)         | Import another module.                                 |
-| [`id` / `title` / `description` / `scope` `"…"`](#pragmas) | Document metadata pragmas.      |
+| [`id` / `title` / `description` / `scope` / `sealed` `"…"`](#pragmas) | Metadata and nature pragmas. |
 
 ### Productions
 
 `name = expression` binds a name to an expression — a denotation (a set of names), a
-branch, or a whole subtree. Productions exist to be referenced (`<name>`) from other
-productions or the root; an unreferenced production builds nothing on its own. A
-production may not expand through itself — a reference cycle is a build error.
+branch, or a whole subtree. A production is referenced as `<name>` locally and, when
+public, as `<@module/name>` by importers. Like JavaScript's exports: a plain
+declaration is a named export — it emits into the artifact's `$defs` as a PATTERN —
+while `:name = …` declares it **private**: usable locally, inlined wherever it
+appears, refused to importers, absent from the artifact. A production may not expand
+through itself — a reference cycle is a build error.
 
 ### `root`
 
@@ -74,23 +78,31 @@ forms, import accessors, and collision handling are [modules](./modules.md).
 
 A pragma is an identifier followed by a string, each usable at most once per module:
 
-| Pragma        | Value                        | Lands in the built schema as              |
+| Pragma        | Value                        | Meaning                                   |
 | ------------- | ---------------------------- | ----------------------------------------- |
-| `id`          | any string (usually a URI)   | `$id`                                     |
+| `id`          | any string (usually a URI)   | `$id` (wins over the configured [`schemaId`](./build.md#configuration) derivation) |
 | `title`       | any string                   | `title`                                   |
 | `description` | any string                   | `description`                             |
-| `scope`       | `"document"` \| `"branch"`   | whether the document root is sealed       |
+| `scope`       | `"document"` \| `"def"` \| `"inline"` | The file's NATURE — how it emits and how consumers reference it. |
+| `sealed`      | `"true"` (default) \| `"false"` | Whether the document top is sealed.    |
 
-`scope` is the one with semantics, and exactly two values:
+`scope` — the file's nature:
 
-| Value        | Meaning                                                                                       |
-| ------------ | ---------------------------------------------------------------------------------------------- |
-| `"document"` | Default. The schema **seals** the document root: nothing beyond the granted names may exist.   |
-| `"branch"`   | The schema governs only the top-level branches it names — the root stays **unsealed**, so sibling vocabularies (a colour module, a spacing module) can each bind over the same token files without rejecting each other's branches. |
+| Value        | Emitted? | root | Consumers reference                                    |
+| ------------ | -------- | ---- | ------------------------------------------------------- |
+| `"document"` | own file | **required** | its top-level names (`…#/properties/<name>`)     |
+| `"def"`      | own file | optional — also lands as `$defs.root` | the root as the **file itself** (`{ "$ref": "./color.json" }`); productions as `…#/$defs/<name>` |
+| `"inline"`   | never    | optional | expansion only — `:private` at file level          |
 
-A single whole-vocabulary schema wants the default; per-aspect schemas that co-validate
-one collection want `"branch"`. The exact effect on the emitted JSON is
-[emission](./emission.md#scope).
+Absent, the nature defaults from the root: root → `document`, rootless → `def`.
+
+`sealed` defaults by nature: a `document` seals (`"true"` — it validates alone), a
+`def` file does not (`"false"` — pattern-natured, so consumers can whole-file-compose
+it beside siblings); either can override. `sealed "false"` on a document lets
+per-aspect vocabularies bind over the same token files without rejecting each other's
+branches. (The historical `scope "branch"` still parses as an alias, with a lint
+deprecation warning.)
+The exact effect on the emitted JSON is [emission](./emission.md).
 
 ## Editor support
 

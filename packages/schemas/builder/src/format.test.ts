@@ -143,3 +143,7 @@ test('fixSource leaves the unfixable bare star and unlexable sources alone', () 
   const broken = 'a = "unterminated\n';
   expect(fixSource(broken)).toEqual({ content: broken, fixes: [] });
 });
+
+test('a private production formats with the colon tight to its name', () => {
+  expect(fmt(':  hidden = five | six\n')).toBe(':hidden = five | six\n');
+});

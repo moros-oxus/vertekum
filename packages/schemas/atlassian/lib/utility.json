@@ -4,6 +4,16 @@
   "$comment": "built by @vertekum/schema-builder from utility.dfn — do not hand-edit; remove this comment to take ownership",
   "title": "Atlassian Design System — utility",
   "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
+  "$defs": {
+    "terminal": {
+      "type": "object",
+      "properties": {},
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    }
+  },
   "type": "object",
   "properties": {
     "utility": {
@@ -16,12 +26,7 @@
               "type": "object",
               "properties": {
                 "current": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 }
               },
               "patternProperties": {

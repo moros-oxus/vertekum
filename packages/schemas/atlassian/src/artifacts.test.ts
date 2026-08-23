@@ -18,24 +18,34 @@ async function ajv() {
   return new Ajv({ allErrors: true, strict: false });
 }
 
-/** Every dotted name a schema grants, following `$defs` refs. */
+/** Every dotted name a schema grants, following `$defs` refs and `allOf` composition. */
 function granted(schema: Record<string, unknown>): Set<string> {
   const names = new Set<string>();
   const defs = (schema.$defs ?? {}) as Record<string, unknown>;
-  const walk = (node: unknown, prefix: string): void => {
-    let position = node as Record<string, unknown>;
+  const resolve = (node: unknown): Record<string, unknown> => {
+    const position = node as Record<string, unknown>;
     if (typeof position.$ref === 'string') {
-      position = defs[position.$ref.split('/').pop() as string] as Record<
+      return defs[position.$ref.split('/').pop() as string] as Record<
         string,
         unknown
       >;
     }
-    for (const [name, child] of Object.entries(
-      (position.properties ?? {}) as Record<string, unknown>,
-    )) {
-      const path = prefix ? `${prefix}.${name}` : name;
-      names.add(path);
-      walk(child, path);
+    return position;
+  };
+  const walk = (node: unknown, prefix: string): void => {
+    const position = resolve(node);
+    const layers = [
+      position,
+      ...((position.allOf ?? []) as unknown[]).map(resolve),
+    ];
+    for (const layer of layers) {
+      for (const [name, child] of Object.entries(
+        (layer.properties ?? {}) as Record<string, unknown>,
+      )) {
+        const path = prefix ? `${prefix}.${name}` : name;
+        names.add(path);
+        walk(child, path);
+      }
     }
   };
   walk(schema, '');
@@ -100,7 +110,7 @@ test('the committed artifacts are current: rebuilding every module reproduces th
     .filter((f) => f.endsWith('.dfn'))
     .sort();
   for (const file of modules) {
-    const { content } = buildModule(join(root, 'dfn', file), file);
+    const { content } = buildModule(join(root, 'dfn', file), { label: file });
     const committed = readFileSync(
       join(root, 'lib', file.replace(/\.dfn$/, '.json')),
       'utf8',

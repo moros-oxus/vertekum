@@ -34,7 +34,7 @@
       "patterns": []
     },
     "pragma": {
-      "match": "^(id|title|description|scope)\\s+(?=\")",
+      "match": "^(id|title|description|scope|sealed)\\s+(?=\")",
       "captures": {
         "1": {
           "name": "keyword.other.pragma.dfn"
@@ -61,12 +61,15 @@
       }
     },
     "production": {
-      "match": "^(\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*)\\s*(=)",
+      "match": "^(:)?(\\d+[A-Za-z][A-Za-z0-9-]*|[A-Za-z][A-Za-z0-9-]*)\\s*(=)",
       "captures": {
         "1": {
-          "name": "entity.name.function.production.dfn"
+          "name": "storage.modifier.private.dfn"
         },
         "2": {
+          "name": "entity.name.function.production.dfn"
+        },
+        "3": {
           "name": "keyword.operator.assignment.dfn"
         }
       }

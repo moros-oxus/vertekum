@@ -1,12 +1,18 @@
-import type { TreeNode } from './build';
+import type { PatternRef, TreeNode } from './build';
 import type { ResolvedModule } from './resolve';
 
 /**
- * Emit a name tree as the names-and-order JSON Schema shape shipped schemas use: every position
- * `type: object`, declared children under `properties`, `$`-members passing via
- * `patternProperties`, and closure via `unevaluatedProperties: false` — except open positions,
- * which route additions to the members' shared tail through `additionalProperties` instead.
- * Terminal denotation refs used more than once become `$defs`, matching the hand-written style.
+ * Emission — one content rule for every file:
+ *
+ * - PUBLIC productions emit as `$defs` PATTERNS: open at the top (`properties` +
+ *   `patternProperties`, no seal), sealed as normal inside. A pattern never seals —
+ *   sealing belongs to the positions that apply patterns.
+ * - `root` emits as the document's `properties` — the definitive syntagma, sealed per the
+ *   `sealed` pragma. In a def-scope file the root ALSO lands as `$defs.<filename>` and the
+ *   document body applies it by reference, so the file stands alone AND serves as a pattern.
+ * - A position that received a pattern's full member set references it (`allOf` of `$ref`s
+ *   with the seal above); a merge that grew a member drops back to expansion (deep-checked).
+ * - The empty sealed leaf emits once as `$defs.terminal`, referenced from every leaf.
  */
 
 export const STAMP_PREFIX = 'built by @vertekum/schema-builder from';
@@ -17,113 +23,211 @@ export function stamp(moduleFile: string): string {
 
 type Schema = Record<string, unknown>;
 
-function countDenotations(node: TreeNode, counts: Map<string, number>): void {
-  if (node.denotation) {
-    counts.set(node.denotation, (counts.get(node.denotation) ?? 0) + 1);
-  }
-  for (const child of node.children.values()) countDenotations(child, counts);
+const TERMINAL = 'terminal';
+const PATTERN_VALVE = { '^\\$': true };
+
+export interface EmitOptions {
+  /** The module filename for the provenance stamp, e.g. `color.dfn`. */
+  moduleFile: string;
+  /** Explicit `id` pragma; wins over `schemaId`. */
+  id?: string;
+  /** Derived `$id` (configured base + artifact path) when no pragma id. */
+  schemaId?: string;
+  title?: string;
+  description?: string;
+  /** The file's nature (inline never emits). */
+  scopeKind: 'document' | 'def';
+  /** The document top's seal (`sealed` pragma; default true). */
+  sealed: boolean;
+  /** Public patterns in declaration order: def name → bare tree. */
+  patterns: Map<string, TreeNode>;
+  /** def-scope with a root: the root's def name (the filename). */
+  rootDefName?: string;
+  /** Bare tree for a pattern reference; undefined = expand instead. */
+  bare?: (ref: PatternRef) => TreeNode | undefined;
+  /** Linked mode: the artifact path a cross-module `$ref` should use; undefined = inline. */
+  linkResolve?: (module: ResolvedModule) => string | undefined;
 }
 
-function position(
-  node: TreeNode,
-  defs: Set<string>,
-  linkResolve?: (module: ResolvedModule) => string | undefined,
-): Schema {
-  // Linked mode: this subtree is verbatim one top-level branch of the child module's own
-  // artifact — reference it there instead of duplicating it. The property KEY stays local
-  // in the parent, so the parent's seal is untouched.
-  if (node.link && linkResolve) {
-    const artifact = linkResolve(node.link.module);
+/** Structural equality of name trees — what "the pattern is still intact here" means. */
+function sameTree(a: TreeNode, b: TreeNode): boolean {
+  if (a.open !== b.open) return false;
+  if (a.children.size !== b.children.size) return false;
+  for (const [name, child] of a.children) {
+    const other = b.children.get(name);
+    if (!other || !sameTree(child, other)) return false;
+  }
+  return true;
+}
+
+interface Context {
+  options: EmitOptions;
+  /** Local def names that exist (patterns + rootDefName) — what `#/$defs/…` may target. */
+  localDefs: Set<string>;
+  /** Set when any leaf referenced `$defs.terminal` (decides whether it is emitted). */
+  usedTerminal: { value: boolean };
+  /** Suppress the terminal ref while emitting the terminal def's own body. */
+  inTerminal: boolean;
+}
+
+/** The `$ref` string for a pattern, or undefined when it must expand. */
+function refTargetOf(ref: PatternRef, ctx: Context): string | undefined {
+  if (!ref.module) {
+    return ctx.localDefs.has(ref.name) ? `#/$defs/${ref.name}` : undefined;
+  }
+  const artifact = ctx.options.linkResolve?.(ref.module);
+  if (!artifact) return undefined;
+  if (ref.root) {
+    // A def module's ROOT is referenced as the file itself — the file IS the pattern —
+    // UNLESS the author sealed the file: then the whole-file ref would drag the seal
+    // into the consumer's composition, so the pointer reaches the unsealed def instead.
+    const sealed = ref.module.module.meta.sealed ?? false;
+    return sealed ? `${artifact}#/$defs/root` : artifact;
+  }
+  return `${artifact}#/$defs/${ref.name}`;
+}
+
+/**
+ * Emit one position. `seal: false` only for a pattern def's own top — everything below
+ * seals as normal.
+ */
+function position(node: TreeNode, ctx: Context, seal: boolean): Schema {
+  // Linked document-child: verbatim top-level branch of a sealed artifact — bare ref.
+  if (node.link && ctx.options.linkResolve) {
+    const artifact = ctx.options.linkResolve(node.link.module);
     if (artifact) {
       return { $ref: `${artifact}#/properties/${node.link.top}` };
     }
   }
-  if (node.denotation && defs.has(node.denotation)) {
-    return { $ref: `#/$defs/${node.denotation}` };
+
+  // The empty sealed leaf, deduped: reference `$defs.terminal`.
+  if (
+    seal &&
+    !ctx.inTerminal &&
+    !node.open &&
+    node.children.size === 0 &&
+    ctx.localDefs.has(TERMINAL)
+  ) {
+    ctx.usedTerminal.value = true;
+    return { $ref: `#/$defs/${TERMINAL}` };
   }
+
+  // Patterns whose member sets are still intact here become `$ref`s; their members leave
+  // `properties`. Open positions always expand — additions need the members spelled out.
+  const refs: string[] = [];
+  const covered = new Set<string>();
+  if (node.patterns && !node.open) {
+    for (const ref of node.patterns.values()) {
+      const target = refTargetOf(ref, ctx);
+      const bare = ctx.options.bare?.(ref);
+      if (!target || !bare || bare.children.size === 0) continue;
+      let intact = true;
+      for (const [name, member] of bare.children) {
+        const mine = node.children.get(name);
+        if (!mine || !sameTree(member, mine)) {
+          intact = false;
+          break;
+        }
+      }
+      if (!intact) continue;
+      refs.push(target);
+      for (const name of bare.children.keys()) covered.add(name);
+    }
+  }
+
   const properties: Schema = {};
   for (const [name, child] of node.children) {
-    properties[name] = position(child, defs, linkResolve);
+    if (covered.has(name)) continue;
+    properties[name] = position(child, ctx, true);
   }
-  const schema: Schema = {
-    type: 'object',
-    properties,
-    patternProperties: { '^\\$': true },
-  };
+
+  const schema: Schema = {};
+  if (refs.length > 0) schema.allOf = refs.map(($ref) => ({ $ref }));
+  schema.type = 'object';
+  if (Object.keys(properties).length > 0 || refs.length === 0) {
+    schema.properties = properties;
+  }
+  schema.patternProperties = { ...PATTERN_VALVE };
   if (node.open) {
-    // Additions join the set: they take the same tail every listed member has. All members share
-    // it by construction (`*` is restricted to name-only sets), so the first child is the shape.
+    // Additions join the set: they take the same tail every listed member has.
     const first = node.children.values().next().value as TreeNode | undefined;
     schema.additionalProperties = first
-      ? position(first, defs, linkResolve)
-      : { type: 'object', patternProperties: { '^\\$': true } };
-  } else {
+      ? position(first, ctx, true)
+      : { type: 'object', patternProperties: { ...PATTERN_VALVE } };
+  } else if (seal) {
     schema.unevaluatedProperties = false;
   }
   return schema;
 }
 
-/** The $def body for a denotation node: its own position schema, never self-referential. */
-function definition(node: TreeNode, defs: Set<string>): Schema {
-  const bare: TreeNode = { ...node, denotation: undefined };
-  return position(bare, defs);
-}
+export function emit(tree: TreeNode | undefined, options: EmitOptions): string {
+  const localDefs = new Set<string>(options.patterns.keys());
+  if (options.rootDefName) localDefs.add(options.rootDefName);
+  // The terminal dedupe steps aside on the rare production named `terminal`.
+  const terminalAvailable = !localDefs.has(TERMINAL);
+  if (terminalAvailable) localDefs.add(TERMINAL);
 
-export interface EmitOptions {
-  /** The module filename for the provenance stamp, e.g. `house.dfn`. */
-  moduleFile: string;
-  /** From the module's pragmas: `id "…"`, `title "…"`, `description "…"`, `scope "…"`. */
-  id?: string;
-  title?: string;
-  description?: string;
-  scope?: 'document' | 'branch';
-  /**
-   * Linked mode: the artifact path (relative, `./`-prefixed) another module's tagged
-   * embedding should `$ref`, or undefined to inline it (e.g. a package-provided module).
-   * Absent = inline everything — the default, byte-stable emission.
-   */
-  linkResolve?: (module: ResolvedModule) => string | undefined;
-}
+  const ctx: Context = {
+    options,
+    localDefs,
+    usedTerminal: { value: false },
+    inTerminal: false,
+  };
 
-export function emit(tree: TreeNode, options: EmitOptions): string {
-  const counts = new Map<string, number>();
-  countDenotations(tree, counts);
-  const shared = new Set(
-    [...counts.entries()].filter(([, n]) => n >= 2).map(([name]) => name),
-  );
+  // Bodies first — they decide whether `$defs.terminal` is needed at all.
+  const defBodies = new Map<string, Schema>();
+  for (const [name, bare] of options.patterns) {
+    defBodies.set(name, position(bare, ctx, false));
+  }
+  if (options.rootDefName && tree) {
+    defBodies.set(options.rootDefName, position(tree, ctx, false));
+  }
+  const body: Schema | undefined =
+    options.scopeKind === 'document' && tree
+      ? position(tree, ctx, options.sealed)
+      : options.scopeKind === 'def' && options.rootDefName
+        ? {
+            type: 'object',
+            allOf: [{ $ref: `#/$defs/${options.rootDefName}` }],
+            patternProperties: { ...PATTERN_VALVE },
+            ...(options.sealed ? { unevaluatedProperties: false } : {}),
+          }
+        : undefined;
 
   const document: Schema = {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
   };
-  if (options.id) document.$id = options.id;
+  const id = options.id ?? options.schemaId;
+  if (id) document.$id = id;
   document.$comment = stamp(options.moduleFile);
   if (options.title) document.title = options.title;
   if (options.description) document.description = options.description;
 
-  if (shared.size > 0) {
+  if (defBodies.size > 0 || ctx.usedTerminal.value) {
     const defs: Schema = {};
-    const collect = (node: TreeNode): void => {
-      if (
-        node.denotation &&
-        shared.has(node.denotation) &&
-        !(node.denotation in defs)
-      ) {
-        defs[node.denotation] = definition(node, shared);
-      }
-      for (const child of node.children.values()) collect(child);
-    };
-    collect(tree);
+    if (ctx.usedTerminal.value && terminalAvailable) {
+      defs[TERMINAL] = {
+        type: 'object',
+        properties: {},
+        patternProperties: { ...PATTERN_VALVE },
+        unevaluatedProperties: false,
+      };
+    }
+    for (const [name, defBody] of defBodies) defs[name] = defBody;
     document.$defs = defs;
   }
 
-  const root = position(tree, shared, options.linkResolve);
-  document.type = root.type;
-  document.properties = root.properties;
-  document.patternProperties = root.patternProperties;
-  // `scope "branch"`: govern only the named top-level branches — the document root stays
-  // unsealed so sibling vocabularies can bind over the same files. Default seals.
-  if (options.scope !== 'branch') {
-    document.unevaluatedProperties = root.unevaluatedProperties;
+  if (body) {
+    if (body.allOf) document.allOf = body.allOf;
+    document.type = body.type;
+    if (body.properties) document.properties = body.properties;
+    document.patternProperties = body.patternProperties;
+    if (body.additionalProperties !== undefined) {
+      document.additionalProperties = body.additionalProperties;
+    }
+    if (body.unevaluatedProperties !== undefined) {
+      document.unevaluatedProperties = body.unevaluatedProperties;
+    }
   }
 
   return `${JSON.stringify(document, null, 2)}\n`;

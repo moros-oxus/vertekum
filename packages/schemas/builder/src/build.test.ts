@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { assertOpenSetsAreNameSets, build, type TreeNode } from './build';
-import { emit, isStamped } from './emit';
+import { buildModule } from './cli';
+import { isStamped } from './emit';
 import { parse } from './parser';
 import { resolveModule } from './resolve';
 
@@ -306,17 +307,25 @@ test('emission reproduces the hand-written house.json shape from three lines', (
       '',
     ].join('\n'),
   });
-  const resolved = resolveModule(join(dir, 'house.dfn'));
-  const json = emit(build(resolved), { moduleFile: 'house.dfn' });
+  const { content: json } = buildModule(join(dir, 'house.dfn'));
   const schema = JSON.parse(json);
 
   expect(isStamped(json)).toBe(true);
+  // A pattern def is OPEN at its top — sealing belongs to the positions that apply it.
   expect(schema.$defs.emphasis.properties).toHaveProperty('subtle');
-  expect(schema.$defs.emphasis.unevaluatedProperties).toBe(false);
+  expect(schema.$defs.emphasis.unevaluatedProperties).toBeUndefined();
+  expect(schema.$defs.emphasis.properties.subtle).toEqual({
+    $ref: '#/$defs/terminal',
+  });
+  expect(schema.$defs.terminal.unevaluatedProperties).toBe(false);
   const text = schema.properties.color.properties.text;
-  expect(text.properties.neutral).toEqual({ $ref: '#/$defs/emphasis' });
-  expect(text.properties.brand).toEqual({ $ref: '#/$defs/emphasis' });
-  expect(text.patternProperties).toEqual({ '^\\$': true });
+  expect(text.properties.neutral).toEqual({
+    allOf: [{ $ref: '#/$defs/emphasis' }],
+    type: 'object',
+    patternProperties: { '^\\$': true },
+    unevaluatedProperties: false,
+  });
+  expect(text.properties.brand.allOf).toEqual([{ $ref: '#/$defs/emphasis' }]);
   expect(text.unevaluatedProperties).toBe(false);
 });
 
@@ -330,11 +339,7 @@ test('pragmas surface in the emitted document, $id before the stamp', () => {
       '',
     ].join('\n'),
   });
-  const resolved = resolveModule(join(dir, 'x.dfn'));
-  const json = emit(build(resolved), {
-    moduleFile: 'x.dfn',
-    ...resolved.module.meta,
-  });
+  const { content: json } = buildModule(join(dir, 'x.dfn'));
   const keys = Object.keys(JSON.parse(json));
   expect(keys.slice(0, 5)).toEqual([
     '$schema',
@@ -346,20 +351,16 @@ test('pragmas surface in the emitted document, $id before the stamp', () => {
   expect(JSON.parse(json).$id).toBe('vertekum://example/x.json');
 });
 
-test('scope "branch" leaves the document root unsealed', () => {
-  const dir = fixture({
-    'aspect.dfn': ['scope "branch"', 'root = color.brand', ''].join('\n'),
-  });
-  const resolved = resolveModule(join(dir, 'aspect.dfn'));
-  const schema = JSON.parse(
-    emit(build(resolved), {
-      moduleFile: 'aspect.dfn',
-      ...resolved.module.meta,
-    }),
-  );
-  expect(schema.unevaluatedProperties).toBeUndefined();
-  expect(schema.patternProperties).toEqual({ '^\\$': true });
-  expect(schema.properties.color.unevaluatedProperties).toBe(false);
+test('sealed "false" leaves the document root unsealed; scope "branch" still parses as its alias', () => {
+  for (const pragma of ['sealed "false"', 'scope "branch"']) {
+    const dir = fixture({
+      'aspect.dfn': [pragma, 'root = color.brand', ''].join('\n'),
+    });
+    const schema = JSON.parse(buildModule(join(dir, 'aspect.dfn')).content);
+    expect(schema.unevaluatedProperties).toBeUndefined();
+    expect(schema.patternProperties).toEqual({ '^\\$': true });
+    expect(schema.properties.color.unevaluatedProperties).toBe(false);
+  }
 });
 
 test('a package exports map remaps flat .dfn specifiers into folders', () => {
@@ -387,11 +388,7 @@ test('an open position emits additionalProperties with the shared tail, no closu
       '',
     ].join('\n'),
   });
-  const schema = JSON.parse(
-    emit(build(resolveModule(join(dir, 'open.dfn'))), {
-      moduleFile: 'open.dfn',
-    }),
-  );
+  const schema = JSON.parse(buildModule(join(dir, 'open.dfn')).content);
   const color = schema.properties.color;
   expect(color.unevaluatedProperties).toBeUndefined();
   expect(color.additionalProperties.properties).toHaveProperty('subtle');
@@ -426,11 +423,9 @@ test('linked emission: an unmodified root embedding $refs the child artifact', (
       'use "./primitives/color.dfn"\n\nroot = [<@color> | space.[100 | 200]]\n',
     'primitives/color.dfn': 'root = color.[base | subtle]\n',
   });
-  const resolved = resolveModule(join(dir, 'primitives.dfn'));
-  const linked = emit(build(resolved), {
-    moduleFile: 'primitives.dfn',
+  const linked = buildModule(join(dir, 'primitives.dfn'), {
     linkResolve: (child) => `./primitives/${child.name}.json`,
-  });
+  }).content;
   const parsed = JSON.parse(linked);
   expect(parsed.properties.color).toEqual({
     $ref: './primitives/color.json#/properties/color',
@@ -438,11 +433,7 @@ test('linked emission: an unmodified root embedding $refs the child artifact', (
   expect(parsed.properties.space.properties['100']).toBeDefined();
 
   // Without linkResolve the same tree inlines — the tag is inert.
-  const inline = JSON.parse(
-    emit(build(resolveModule(join(dir, 'primitives.dfn'))), {
-      moduleFile: 'primitives.dfn',
-    }),
-  );
+  const inline = JSON.parse(buildModule(join(dir, 'primitives.dfn')).content);
   expect(inline.properties.color.properties.base).toBeDefined();
 });
 
@@ -457,10 +448,148 @@ test('linked emission: modified, tailed, and production refs stay inline', () =>
     'child.dfn': 'size = sm | md\nroot = [color.base | extra.thing]\n',
   });
   const linked = JSON.parse(
-    emit(build(resolveModule(join(dir, 'parent.dfn'))), {
-      moduleFile: 'parent.dfn',
+    buildModule(join(dir, 'parent.dfn'), {
       linkResolve: () => './child.json',
-    }),
+    }).content,
   );
   expect(JSON.stringify(linked)).not.toContain('child.json');
+});
+
+test('privacy: local refs resolve, importers are refused with the public listing', () => {
+  const dir = fixture({
+    'mydef.dfn': [
+      ':hidden = five',
+      'named = <hidden> | one | two',
+      'root = <named>',
+      '',
+    ].join('\n'),
+    'consumer.dfn': ['use "./mydef.dfn"', 'root = t.<@mydef/hidden>', ''].join(
+      '\n',
+    ),
+  });
+  const mine = JSON.parse(buildModule(join(dir, 'mydef.dfn')).content);
+  expect(Object.keys(mine.$defs)).toContain('named');
+  expect(Object.keys(mine.$defs)).not.toContain('hidden');
+
+  expect(() => buildModule(join(dir, 'consumer.dfn'))).toThrow(
+    /'hidden' is private to mydef\.dfn — its public productions: <@mydef\/named>/,
+  );
+});
+
+test('the def-scope dual form: patterns compose, the body applies the filename def', () => {
+  const dir = fixture({
+    'mydef.dfn': [
+      'scope "def"',
+      '',
+      'named-even = two | four',
+      'named-odd = one | three',
+      ':named-five = five',
+      'root = <named-even> | <named-odd> | <named-five>',
+      '',
+    ].join('\n'),
+  });
+  const schema = JSON.parse(buildModule(join(dir, 'mydef.dfn')).content);
+
+  // Patterns are open at the top; the root def composes them and inlines the private.
+  expect(schema.$defs['named-even'].unevaluatedProperties).toBeUndefined();
+  expect(schema.$defs.root.allOf).toEqual([
+    { $ref: '#/$defs/named-even' },
+    { $ref: '#/$defs/named-odd' },
+  ]);
+  expect(schema.$defs.root.properties).toHaveProperty('five');
+  // The body applies the def — pattern-natured: UNSEALED unless the author seals it,
+  // so a consumer can whole-file-compose the module beside siblings.
+  expect(schema.allOf).toEqual([{ $ref: '#/$defs/root' }]);
+  expect(schema.unevaluatedProperties).toBeUndefined();
+  expect(schema.properties).toBeUndefined();
+});
+
+test('a merge that grows a pattern member drops the ref back to expansion', () => {
+  const dir = fixture({
+    'grown.dfn': ['set = a | b', 'root = top.[<set> | a.extra]', ''].join('\n'),
+  });
+  const schema = JSON.parse(buildModule(join(dir, 'grown.dfn')).content);
+  const top = schema.properties.top;
+  // `a` gained a child beyond the pattern — the position expands instead of $ref'ing.
+  expect(top.allOf).toBeUndefined();
+  expect(top.properties.a.properties).toHaveProperty('extra');
+  expect(top.properties.b).toBeDefined();
+});
+
+test('the Tamblyn shape: one scale pattern, referenced from every member', () => {
+  const dir = fixture({
+    'color.dfn': [
+      'saturated = red | blue',
+      'neutral = white | black',
+      'scale = [ 50 | 100-200/100 ]',
+      'root = color.[ <saturated> | <neutral> ].<scale>',
+      '',
+    ].join('\n'),
+  });
+  const schema = JSON.parse(buildModule(join(dir, 'color.dfn')).content);
+  const color = schema.properties.color;
+  for (const member of ['red', 'blue', 'white', 'black']) {
+    expect(color.properties[member].allOf).toEqual([{ $ref: '#/$defs/scale' }]);
+  }
+  // The group wrapper no longer defeats set recognition (isNameSet recurses).
+  expect(Object.keys(schema.$defs.scale.properties)).toEqual([
+    '50',
+    '100',
+    '200',
+  ]);
+});
+
+test('schemaId derives the $id when no pragma id exists', () => {
+  const dir = fixture({ 'x.dfn': 'root = x.a\n' });
+  const { content } = buildModule(join(dir, 'x.dfn'), {
+    schemaId: 'https://example.org/schemas/x.json',
+  });
+  expect(JSON.parse(content).$id).toBe('https://example.org/schemas/x.json');
+});
+
+test('a def module: sealed "true" opts the body in; consumers reference the FILE', () => {
+  const dir = fixture({
+    'color.dfn': [
+      'scope "def"',
+      'sealed "true"',
+      'root = color.[base | subtle]',
+      '',
+    ].join('\n'),
+    'primitives.dfn': [
+      'use "./color.dfn"',
+      'root = [<@color> | space.[100 | 200]]',
+      '',
+    ].join('\n'),
+  });
+  const child = JSON.parse(buildModule(join(dir, 'color.dfn')).content);
+  expect(child.unevaluatedProperties).toBe(false);
+
+  const parent = JSON.parse(
+    buildModule(join(dir, 'primitives.dfn'), {
+      linkResolve: (m) => `./${m.name}.json`,
+    }).content,
+  );
+  // A SEALED def file cannot be whole-file-composed — the pointer reaches its
+  // unsealed root def instead.
+  expect(parent.allOf).toEqual([{ $ref: './color.json#/$defs/root' }]);
+  expect(parent.properties.color).toBeUndefined();
+  expect(parent.properties.space).toBeDefined();
+  expect(parent.unevaluatedProperties).toBe(false);
+});
+
+test('an unsealed def module composes as the whole file', () => {
+  const dir = fixture({
+    'color.dfn': ['scope "def"', 'root = color.[base | subtle]', ''].join('\n'),
+    'primitives.dfn': [
+      'use "./color.dfn"',
+      'root = [<@color> | space.[100 | 200]]',
+      '',
+    ].join('\n'),
+  });
+  const parent = JSON.parse(
+    buildModule(join(dir, 'primitives.dfn'), {
+      linkResolve: (m) => `./${m.name}.json`,
+    }).content,
+  );
+  expect(parent.allOf).toEqual([{ $ref: './color.json' }]);
 });

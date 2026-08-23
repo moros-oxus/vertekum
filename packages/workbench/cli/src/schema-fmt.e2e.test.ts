@@ -93,12 +93,15 @@ test('fmt and build take directory arguments with sweep semantics', async () => 
     'deno = a | b\nroot = t.<deno>\n',
   );
 
+  // A rootless module now emits a defs-only artifact (default nature: def).
   const build = await run('node', [bin, 'schema', 'build', 'src/dfn'], { cwd });
-  expect(build.stdout).toContain('built 1 module(s)');
-  expect(build.stdout).toContain(
-    'frag.dfn declares no root (a fragment) — skipped',
-  );
+  expect(build.stdout).toContain('built 2 module(s)');
   expect(await readFile(join(cwd, 'src/dfn/scruffy.json'), 'utf8')).toContain(
     'src/dfn/scruffy.dfn',
   );
+  const frag = JSON.parse(
+    await readFile(join(cwd, 'src/dfn/frag.json'), 'utf8'),
+  );
+  expect(Object.keys(frag.$defs)).toContain('tone');
+  expect(frag.properties).toBeUndefined();
 }, 60_000);

@@ -4,6 +4,16 @@
   "$comment": "built by @vertekum/schema-builder from font.dfn — do not hand-edit; remove this comment to take ownership",
   "title": "Atlassian Design System — font",
   "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
+  "$defs": {
+    "terminal": {
+      "type": "object",
+      "properties": {},
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    }
+  },
   "type": "object",
   "properties": {
     "font": {
@@ -13,20 +23,10 @@
           "type": "object",
           "properties": {
             "large": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "small": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             }
           },
           "patternProperties": {
@@ -35,58 +35,28 @@
           "unevaluatedProperties": false
         },
         "code": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "family": {
           "type": "object",
           "properties": {
             "body": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "code": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "heading": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "brand": {
               "type": "object",
               "properties": {
                 "body": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 },
                 "heading": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 }
               },
               "patternProperties": {
@@ -104,60 +74,25 @@
           "type": "object",
           "properties": {
             "large": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "medium": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "small": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "xlarge": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "xsmall": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "xxlarge": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "xxsmall": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             }
           },
           "patternProperties": {
@@ -169,28 +104,13 @@
           "type": "object",
           "properties": {
             "large": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "medium": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "small": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             }
           },
           "patternProperties": {
@@ -202,36 +122,16 @@
           "type": "object",
           "properties": {
             "bold": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "medium": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "regular": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "semibold": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             }
           },
           "patternProperties": {

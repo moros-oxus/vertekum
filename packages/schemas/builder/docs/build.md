@@ -36,7 +36,8 @@ schemas: [{ from: './src/schemas', use: { 'color.json': '*-tokens.json' } }],
 | -------- | ------------- | --------------------------------------------------------------- |
 | `source` | `'./schemas'` | Where the `.dfn` modules live — the default sweep for `build`, [`lint`](./lint.md), and [`fmt`](./format.md). |
 | `out`    | — (beside)    | Where built `.json` files land, mirroring `source`'s structure. |
-| `link`   | `false`       | [Linked emission](./emission.md#linked-emission): root embeddings `$ref` the child's artifact instead of inlining a copy. |
+| `link`   | `false`       | [Linked emission](./emission.md#linked-emission): cross-file embeddings `$ref` the child's artifact instead of inlining a copy. |
+| `schemaId` | —           | Base URI for derived `$id`s: each artifact gets base + its artifact-relative path; a file's `id` pragma wins. |
 
 Input and output are a **pair**, not a redirect: `out` maps modules under `source`
 (and a positional `[out]` maps modules under this invocation's `[module]` root); a
@@ -45,10 +46,10 @@ module outside the pair's root builds beside itself. The stamp-ownership contrac
 
 ## The sweep
 
-With no argument, every `.dfn` under the configured `source` builds —
-recursively, so nested module directories are included (`node_modules` is not).
-Modules without a `root` are **fragments**: the sweep skips them with a notice, while
-naming one explicitly is an error — see [modules](./modules.md#fragments).
+With no argument, every `.dfn` under the configured `source` builds — recursively,
+with `node_modules` excluded. Every module emits by default (a rootless one emits a
+defs-only artifact); only [`scope "inline"`](./language.md#pragmas) modules are
+skipped, with a notice — and naming one explicitly is an error.
 
 ## Artifacts
 

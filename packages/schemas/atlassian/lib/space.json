@@ -4,197 +4,105 @@
   "$comment": "built by @vertekum/schema-builder from space.dfn — do not hand-edit; remove this comment to take ownership",
   "title": "Atlassian Design System — space",
   "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
-  "type": "object",
-  "properties": {
-    "space": {
+  "$defs": {
+    "terminal": {
+      "type": "object",
+      "properties": {},
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    },
+    "scale": {
       "type": "object",
       "properties": {
         "0": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "100": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "150": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "200": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "250": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "300": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "400": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "500": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "600": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "800": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "1000": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "025": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "050": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "075": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
-        },
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "space": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/scale"
+        }
+      ],
+      "type": "object",
+      "properties": {
         "negative": {
           "type": "object",
           "properties": {
             "100": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "150": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "200": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "250": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "300": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "400": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "025": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "050": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "075": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             }
           },
           "patternProperties": {

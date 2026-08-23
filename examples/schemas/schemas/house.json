@@ -2,30 +2,27 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$comment": "built by @vertekum/schema-builder from schemas/house.dfn — do not hand-edit; remove this comment to take ownership",
   "$defs": {
-    "emphasis": {
+    "terminal": {
       "type": "object",
-      "properties": {
-        "subtle": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
-        },
-        "bold": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
-        }
-      },
+      "properties": {},
       "patternProperties": {
         "^\\$": true
       },
       "unevaluatedProperties": false
+    },
+    "emphasis": {
+      "type": "object",
+      "properties": {
+        "subtle": {
+          "$ref": "#/$defs/terminal"
+        },
+        "bold": {
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
     }
   },
   "type": "object",
@@ -37,13 +34,40 @@
           "type": "object",
           "properties": {
             "neutral": {
-              "$ref": "#/$defs/emphasis"
+              "allOf": [
+                {
+                  "$ref": "#/$defs/emphasis"
+                }
+              ],
+              "type": "object",
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
             },
             "brand": {
-              "$ref": "#/$defs/emphasis"
+              "allOf": [
+                {
+                  "$ref": "#/$defs/emphasis"
+                }
+              ],
+              "type": "object",
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
             },
             "success": {
-              "$ref": "#/$defs/emphasis"
+              "allOf": [
+                {
+                  "$ref": "#/$defs/emphasis"
+                }
+              ],
+              "type": "object",
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
             }
           },
           "patternProperties": {

@@ -54,6 +54,8 @@ test('the sample module tokenizes with the expected scopes', async () => {
     '  | fallback.[a | b *]',
     'xsmall = 2xs | 3xs | 950',
     't-shirt = (2-4)xs | x(2-8/2)l',
+    'sealed "false"',
+    ':hidden = five',
   ];
   let state = INITIAL;
   const perLine = lines.map((line) => {
@@ -124,5 +126,14 @@ test('the sample module tokenizes with the expected scopes', async () => {
   );
   expect(scopesFor(perLine[7], lines[7], 'xs |')).toContain(
     'constant.language.name.dfn',
+  );
+  expect(scopesFor(perLine[8], lines[8], 'sealed')).toContain(
+    'keyword.other.pragma.dfn',
+  );
+  expect(scopesFor(perLine[9], lines[9], ':')).toContain(
+    'storage.modifier.private.dfn',
+  );
+  expect(scopesFor(perLine[9], lines[9], 'hidden')).toContain(
+    'entity.name.function.production.dfn',
   );
 });

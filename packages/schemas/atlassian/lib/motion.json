@@ -5,364 +5,140 @@
   "title": "Atlassian Design System — motion",
   "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
   "$defs": {
-    "transition": {
+    "terminal": {
       "type": "object",
-      "properties": {
-        "enter": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
-        },
-        "exit": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
-        }
-      },
+      "properties": {},
       "patternProperties": {
         "^\\$": true
       },
       "unevaluatedProperties": false
     },
-    "direction": {
+    "transition": {
       "type": "object",
       "properties": {
-        "bottom": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+        "enter": {
+          "$ref": "#/$defs/terminal"
         },
-        "left": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
-        },
-        "right": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
-        },
-        "top": {
-          "type": "object",
-          "properties": {},
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+        "exit": {
+          "$ref": "#/$defs/terminal"
         }
       },
       "patternProperties": {
         "^\\$": true
+      }
+    },
+    "direction": {
+      "type": "object",
+      "properties": {
+        "bottom": {
+          "$ref": "#/$defs/terminal"
+        },
+        "left": {
+          "$ref": "#/$defs/terminal"
+        },
+        "right": {
+          "$ref": "#/$defs/terminal"
+        },
+        "top": {
+          "$ref": "#/$defs/terminal"
+        }
       },
-      "unevaluatedProperties": false
-    }
-  },
-  "type": "object",
-  "properties": {
-    "motion": {
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "io": {
+      "type": "object",
+      "properties": {
+        "in": {
+          "$ref": "#/$defs/terminal"
+        },
+        "out": {
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "interaction": {
+      "type": "object",
+      "properties": {
+        "hovered": {
+          "$ref": "#/$defs/terminal"
+        },
+        "pressed": {
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "component": {
       "type": "object",
       "properties": {
         "avatar": {
-          "type": "object",
-          "properties": {
-            "enter": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "exit": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "hovered": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            }
-          },
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "blanket": {
-          "$ref": "#/$defs/transition"
+          "$ref": "#/$defs/terminal"
         },
         "flag": {
-          "type": "object",
-          "properties": {
-            "enter": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "exit": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "reposition": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            }
-          },
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+          "$ref": "#/$defs/terminal"
         },
         "label": {
-          "$ref": "#/$defs/transition"
+          "$ref": "#/$defs/terminal"
         },
         "modal": {
-          "$ref": "#/$defs/transition"
+          "$ref": "#/$defs/terminal"
         },
         "panel": {
-          "$ref": "#/$defs/transition"
+          "$ref": "#/$defs/terminal"
         },
         "spotlight": {
-          "$ref": "#/$defs/transition"
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "duration": {
+      "type": "object",
+      "properties": {
+        "instant": {
+          "$ref": "#/$defs/terminal"
         },
-        "button": {
-          "type": "object",
-          "properties": {
-            "hovered": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "pressed": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            }
-          },
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+        "xxshort": {
+          "$ref": "#/$defs/terminal"
         },
-        "listitem": {
-          "type": "object",
-          "properties": {
-            "hovered": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "pressed": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "selected": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            }
-          },
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+        "xshort": {
+          "$ref": "#/$defs/terminal"
         },
-        "popup": {
-          "type": "object",
-          "properties": {
-            "enter": {
-              "$ref": "#/$defs/direction"
-            },
-            "exit": {
-              "$ref": "#/$defs/direction"
-            }
-          },
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+        "short": {
+          "$ref": "#/$defs/terminal"
         },
-        "sidenav": {
-          "type": "object",
-          "properties": {
-            "enter": {
-              "type": "object",
-              "properties": {
-                "left": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                },
-                "right": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                }
-              },
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "exit": {
-              "type": "object",
-              "properties": {
-                "left": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                },
-                "right": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                }
-              },
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            }
-          },
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+        "medium": {
+          "$ref": "#/$defs/terminal"
         },
-        "duration": {
-          "type": "object",
-          "properties": {
-            "instant": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "xxshort": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "xshort": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "short": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "medium": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "long": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "xlong": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "xxlong": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            }
-          },
-          "patternProperties": {
-            "^\\$": true
-          },
-          "unevaluatedProperties": false
+        "long": {
+          "$ref": "#/$defs/terminal"
         },
+        "xlong": {
+          "$ref": "#/$defs/terminal"
+        },
+        "xxlong": {
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "easing": {
+      "type": "object",
+      "properties": {
         "easing": {
           "type": "object",
           "properties": {
@@ -370,20 +146,10 @@
               "type": "object",
               "properties": {
                 "bold": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 },
                 "practical": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 }
               },
               "patternProperties": {
@@ -395,20 +161,10 @@
               "type": "object",
               "properties": {
                 "bold": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 },
                 "practical": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 }
               },
               "patternProperties": {
@@ -420,12 +176,7 @@
               "type": "object",
               "properties": {
                 "bold": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 }
               },
               "patternProperties": {
@@ -434,42 +185,32 @@
               "unevaluatedProperties": false
             },
             "spring": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             }
           },
           "patternProperties": {
             "^\\$": true
           },
           "unevaluatedProperties": false
-        },
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "keyframe": {
+      "type": "object",
+      "properties": {
         "keyframe": {
           "type": "object",
           "properties": {
             "fade": {
-              "type": "object",
-              "properties": {
-                "in": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                },
-                "out": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+              "allOf": [
+                {
+                  "$ref": "#/$defs/io"
                 }
-              },
+              ],
+              "type": "object",
               "patternProperties": {
                 "^\\$": true
               },
@@ -482,20 +223,10 @@
                   "type": "object",
                   "properties": {
                     "medium": {
-                      "type": "object",
-                      "properties": {},
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
+                      "$ref": "#/$defs/terminal"
                     },
                     "small": {
-                      "type": "object",
-                      "properties": {},
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
+                      "$ref": "#/$defs/terminal"
                     }
                   },
                   "patternProperties": {
@@ -507,20 +238,10 @@
                   "type": "object",
                   "properties": {
                     "medium": {
-                      "type": "object",
-                      "properties": {},
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
+                      "$ref": "#/$defs/terminal"
                     },
                     "small": {
-                      "type": "object",
-                      "properties": {},
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
+                      "$ref": "#/$defs/terminal"
                     }
                   },
                   "patternProperties": {
@@ -538,170 +259,24 @@
               "type": "object",
               "properties": {
                 "in": {
-                  "type": "object",
-                  "properties": {
-                    "bottom": {
-                      "type": "object",
-                      "properties": {
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
-                    },
-                    "right": {
-                      "type": "object",
-                      "properties": {
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
-                    },
-                    "top": {
-                      "type": "object",
-                      "properties": {
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
-                    },
-                    "left": {
-                      "type": "object",
-                      "properties": {
-                        "half": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        },
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/slide-direction"
                     }
-                  },
+                  ],
+                  "type": "object",
                   "patternProperties": {
                     "^\\$": true
                   },
                   "unevaluatedProperties": false
                 },
                 "out": {
-                  "type": "object",
-                  "properties": {
-                    "bottom": {
-                      "type": "object",
-                      "properties": {
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
-                    },
-                    "right": {
-                      "type": "object",
-                      "properties": {
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
-                    },
-                    "top": {
-                      "type": "object",
-                      "properties": {
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
-                    },
-                    "left": {
-                      "type": "object",
-                      "properties": {
-                        "half": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        },
-                        "short": {
-                          "type": "object",
-                          "properties": {},
-                          "patternProperties": {
-                            "^\\$": true
-                          },
-                          "unevaluatedProperties": false
-                        }
-                      },
-                      "patternProperties": {
-                        "^\\$": true
-                      },
-                      "unevaluatedProperties": false
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/slide-direction"
                     }
-                  },
+                  ],
+                  "type": "object",
                   "patternProperties": {
                     "^\\$": true
                   },
@@ -714,6 +289,291 @@
               "unevaluatedProperties": false
             }
           },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "slide-direction": {
+      "type": "object",
+      "properties": {
+        "bottom": {
+          "type": "object",
+          "properties": {
+            "short": {
+              "$ref": "#/$defs/terminal"
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "right": {
+          "type": "object",
+          "properties": {
+            "short": {
+              "$ref": "#/$defs/terminal"
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "top": {
+          "type": "object",
+          "properties": {
+            "short": {
+              "$ref": "#/$defs/terminal"
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "left": {
+          "type": "object",
+          "properties": {
+            "half": {
+              "$ref": "#/$defs/terminal"
+            },
+            "short": {
+              "$ref": "#/$defs/terminal"
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "motion": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/easing"
+        },
+        {
+          "$ref": "#/$defs/keyframe"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "avatar": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/transition"
+            }
+          ],
+          "type": "object",
+          "properties": {
+            "hovered": {
+              "$ref": "#/$defs/terminal"
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "blanket": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/transition"
+            }
+          ],
+          "type": "object",
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "flag": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/transition"
+            }
+          ],
+          "type": "object",
+          "properties": {
+            "reposition": {
+              "$ref": "#/$defs/terminal"
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "label": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/transition"
+            }
+          ],
+          "type": "object",
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "modal": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/transition"
+            }
+          ],
+          "type": "object",
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "panel": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/transition"
+            }
+          ],
+          "type": "object",
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "spotlight": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/transition"
+            }
+          ],
+          "type": "object",
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "button": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/interaction"
+            }
+          ],
+          "type": "object",
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "listitem": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/interaction"
+            }
+          ],
+          "type": "object",
+          "properties": {
+            "selected": {
+              "$ref": "#/$defs/terminal"
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "popup": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/direction"
+                }
+              ],
+              "type": "object",
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/direction"
+                }
+              ],
+              "type": "object",
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "sidenav": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "$ref": "#/$defs/terminal"
+                },
+                "right": {
+                  "$ref": "#/$defs/terminal"
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            },
+            "exit": {
+              "type": "object",
+              "properties": {
+                "left": {
+                  "$ref": "#/$defs/terminal"
+                },
+                "right": {
+                  "$ref": "#/$defs/terminal"
+                }
+              },
+              "patternProperties": {
+                "^\\$": true
+              },
+              "unevaluatedProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": true
+          },
+          "unevaluatedProperties": false
+        },
+        "duration": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/duration"
+            }
+          ],
+          "type": "object",
           "patternProperties": {
             "^\\$": true
           },

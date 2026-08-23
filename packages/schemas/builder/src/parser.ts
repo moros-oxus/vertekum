@@ -51,6 +51,8 @@ class Parser {
   module(): Module {
     const uses: Array<{ spec: string; alias?: string }> = [];
     const productions = new Map<string, Node>();
+    const privates = new Set<string>();
+    const notes: Array<{ line: number; column: number; message: string }> = [];
     const meta: ModuleMeta = {};
     let root: Node | undefined;
 
@@ -75,10 +77,11 @@ class Parser {
           name.value !== 'id' &&
           name.value !== 'title' &&
           name.value !== 'description' &&
-          name.value !== 'scope'
+          name.value !== 'scope' &&
+          name.value !== 'sealed'
         ) {
           throw new DfnError(
-            `unknown pragma '${name.value}' — id, title, description, and scope exist`,
+            `unknown pragma '${name.value}' — id, title, description, scope, and sealed exist`,
             name.line,
             name.column,
           );
@@ -92,17 +95,66 @@ class Parser {
           );
         }
         if (key === 'scope') {
-          if (value !== 'document' && value !== 'branch') {
+          if (value === 'branch') {
+            // The old sealing value, before `sealed` existed — honored, and noted for lint.
+            meta.sealed = false;
+            notes.push({
+              line: name.line,
+              column: name.column,
+              message:
+                'scope "branch" is deprecated — write sealed "false" (scope now names the file\'s nature: document, def, or inline)',
+            });
+          } else if (
+            value === 'document' ||
+            value === 'def' ||
+            value === 'inline'
+          ) {
+            meta.scope = value;
+          } else {
             throw new DfnError(
-              `scope is "document" or "branch", not "${value}"`,
+              `scope is "document", "def", or "inline", not "${value}"`,
               name.line,
               name.column,
             );
           }
-          meta.scope = value;
+        } else if (key === 'sealed') {
+          if (value !== 'true' && value !== 'false') {
+            throw new DfnError(
+              `sealed is "true" or "false", not "${value}"`,
+              name.line,
+              name.column,
+            );
+          }
+          meta.sealed = value === 'true';
         } else {
           meta[key] = value;
         }
+      } else if (
+        token.kind === 'colon' &&
+        this.at(1)?.kind === 'ident' &&
+        this.at(2)?.kind === 'equals'
+      ) {
+        // `:name = …` — a PRIVATE production: inlined at use, invisible to importers.
+        this.next();
+        const name = this.next();
+        this.next();
+        const expression = this.alternation();
+        if (name.value === 'root') {
+          throw new DfnError(
+            'root cannot be private — it is the module itself',
+            name.line,
+            name.column,
+          );
+        }
+        if (productions.has(name.value)) {
+          throw new DfnError(
+            `duplicate production '${name.value}'`,
+            name.line,
+            name.column,
+          );
+        }
+        productions.set(name.value, expression);
+        privates.add(name.value);
       } else if (token.kind === 'ident') {
         const name = this.next();
         this.expect('equals', "'='");
@@ -147,7 +199,7 @@ class Parser {
       this.skipNewlines();
     }
 
-    return { uses, productions, root, meta };
+    return { uses, productions, private: privates, root, meta, notes };
   }
 
   /** `a | b | c` — a single option collapses to itself. */

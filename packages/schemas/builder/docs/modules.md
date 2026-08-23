@@ -45,19 +45,22 @@ use "./system/color.dfn" as system-color
 When two imports both declare `<accent>`, the unqualified `<@accent>` refuses with the
 qualified form to use. Local productions (`<name>`, no `@`) never collide with imports.
 
-## Fragments
+## Fragments and natures
 
 A module without a `root` is a **fragment** — a library of denotations meant to be
-imported, never built:
+imported:
 
 ```dfn
 # denotations/emphasis.dfn
 emphasis = subtle | bold
 ```
 
-The build sweep skips fragments with a notice (`… declares no root (a fragment) —
-skipped`); naming one explicitly as the build argument is an error, so a module whose
-`root` was mistyped cannot be silently skipped.
+By default a fragment still EMITS — a defs-only artifact (`$defs.emphasis`), its
+public productions addressable by consumers. A file that should never emit says so:
+[`scope "inline"`](./language.md#pragmas) — the sweep skips it with a notice, and
+naming it explicitly as the build argument is an error. Private productions
+(`:name = …`) are invisible to importers in every nature — a qualified reference to
+one is refused, naming the module's public productions.
 
 ## Aggregate roots
 

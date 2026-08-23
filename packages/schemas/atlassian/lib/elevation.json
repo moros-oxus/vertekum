@@ -4,125 +4,103 @@
   "$comment": "built by @vertekum/schema-builder from elevation.dfn — do not hand-edit; remove this comment to take ownership",
   "title": "Atlassian Design System — elevation",
   "description": "Token path vocabulary: which names may appear, in what order, and where the order ends. What a granted name IS — group, token, base value — belongs to the token author and the DTCG format schema.",
-  "type": "object",
-  "properties": {
-    "elevation": {
+  "$defs": {
+    "terminal": {
+      "type": "object",
+      "properties": {},
+      "patternProperties": {
+        "^\\$": true
+      },
+      "unevaluatedProperties": false
+    },
+    "interaction": {
+      "type": "object",
+      "properties": {
+        "hovered": {
+          "$ref": "#/$defs/terminal"
+        },
+        "pressed": {
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "surface-kind": {
+      "type": "object",
+      "properties": {
+        "container": {
+          "$ref": "#/$defs/terminal"
+        },
+        "overlay": {
+          "$ref": "#/$defs/terminal"
+        },
+        "raised": {
+          "$ref": "#/$defs/terminal"
+        },
+        "sunken": {
+          "$ref": "#/$defs/terminal"
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "surface": {
       "type": "object",
       "properties": {
         "surface": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/interaction"
+            }
+          ],
           "type": "object",
           "properties": {
             "container": {
-              "type": "object",
-              "properties": {
-                "hovered": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                },
-                "pressed": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+              "allOf": [
+                {
+                  "$ref": "#/$defs/interaction"
                 }
-              },
+              ],
+              "type": "object",
               "patternProperties": {
                 "^\\$": true
               },
               "unevaluatedProperties": false
             },
             "overlay": {
-              "type": "object",
-              "properties": {
-                "hovered": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                },
-                "pressed": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+              "allOf": [
+                {
+                  "$ref": "#/$defs/interaction"
                 }
-              },
+              ],
+              "type": "object",
               "patternProperties": {
                 "^\\$": true
               },
               "unevaluatedProperties": false
             },
             "raised": {
-              "type": "object",
-              "properties": {
-                "hovered": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                },
-                "pressed": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+              "allOf": [
+                {
+                  "$ref": "#/$defs/interaction"
                 }
-              },
+              ],
+              "type": "object",
               "patternProperties": {
                 "^\\$": true
               },
               "unevaluatedProperties": false
             },
             "sunken": {
-              "type": "object",
-              "properties": {
-                "hovered": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
-                },
-                "pressed": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+              "allOf": [
+                {
+                  "$ref": "#/$defs/interaction"
                 }
-              },
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "hovered": {
+              ],
               "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
-            },
-            "pressed": {
-              "type": "object",
-              "properties": {},
               "patternProperties": {
                 "^\\$": true
               },
@@ -133,44 +111,32 @@
             "^\\$": true
           },
           "unevaluatedProperties": false
-        },
+        }
+      },
+      "patternProperties": {
+        "^\\$": true
+      }
+    },
+    "shadow": {
+      "type": "object",
+      "properties": {
         "shadow": {
           "type": "object",
           "properties": {
             "overlay": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "raised": {
-              "type": "object",
-              "properties": {},
-              "patternProperties": {
-                "^\\$": true
-              },
-              "unevaluatedProperties": false
+              "$ref": "#/$defs/terminal"
             },
             "overflow": {
               "type": "object",
               "properties": {
                 "perimeter": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 },
                 "spread": {
-                  "type": "object",
-                  "properties": {},
-                  "patternProperties": {
-                    "^\\$": true
-                  },
-                  "unevaluatedProperties": false
+                  "$ref": "#/$defs/terminal"
                 }
               },
               "patternProperties": {
@@ -185,6 +151,23 @@
           "unevaluatedProperties": false
         }
       },
+      "patternProperties": {
+        "^\\$": true
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "elevation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/surface"
+        },
+        {
+          "$ref": "#/$defs/shadow"
+        }
+      ],
+      "type": "object",
       "patternProperties": {
         "^\\$": true
       },
