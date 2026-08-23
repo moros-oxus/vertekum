@@ -147,3 +147,9 @@ test('fixSource leaves the unfixable bare star and unlexable sources alone', () 
 test('a private production formats with the colon tight to its name', () => {
   expect(fmt(':  hidden = five | six\n')).toBe(':hidden = five | six\n');
 });
+
+test('set-valued operands format canonically', () => {
+  expect(fmt('x = <@full ![ <@full/saturated> ,white ]>\n')).toBe(
+    'x = <@full ![<@full/saturated>, white]>\n',
+  );
+});

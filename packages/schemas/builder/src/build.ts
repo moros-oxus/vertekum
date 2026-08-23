@@ -307,7 +307,21 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       }
       const forest = evaluate(production, refScope, tail);
       if (!node.imported) scope.expanding.delete(node.name);
-      for (const omitted of node.omit) {
+      // Set-valued operands: a member REFERENCE contributes every top-level name of the
+      // set it denotes (evaluated in this scope, privacy and all); strings pass through.
+      const expandOperands = (list: Ref['omit']): string[] => {
+        const out: string[] = [];
+        for (const member of list) {
+          if (typeof member === 'string') {
+            out.push(member);
+            continue;
+          }
+          const operand = evaluate(member, scope, leaf);
+          for (const name of operand.children.keys()) out.push(name);
+        }
+        return out;
+      };
+      for (const omitted of expandOperands(node.omit)) {
         if (!forest.children.delete(omitted)) {
           throw new DfnError(
             `'<${node.name}>' has no member '${omitted}' to omit`,
@@ -318,7 +332,8 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
         }
       }
       if (node.pick.length > 0) {
-        for (const picked of node.pick) {
+        const picks = expandOperands(node.pick);
+        for (const picked of picks) {
           if (!forest.children.has(picked)) {
             throw new DfnError(
               `'<${node.name}>' has no member '${picked}' to pick`,
@@ -328,7 +343,7 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
             );
           }
         }
-        const keep = new Set(node.pick);
+        const keep = new Set(picks);
         for (const name of [...forest.children.keys()]) {
           if (!keep.has(name)) forest.children.delete(name);
         }

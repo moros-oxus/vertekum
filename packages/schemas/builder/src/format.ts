@@ -52,6 +52,7 @@ const TIGHT_BEFORE = new Set([
   'question',
   'rangle',
   'rbracket',
+  'slash',
 ]);
 
 /** The separator between two adjacent tokens on one line. */

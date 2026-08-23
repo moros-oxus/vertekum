@@ -1,4 +1,4 @@
-import type { Alt, Module, ModuleMeta, Node, Path, Step } from './ast';
+import type { Alt, Module, ModuleMeta, Node, Path, Ref, Step } from './ast';
 import { DfnError } from './error';
 import { type Token, tokenize } from './tokenizer';
 
@@ -236,8 +236,27 @@ class Parser {
     return { term, optional };
   }
 
-  /** A pick/omit list member: an identifier or a (possibly padded) number. */
-  private member(): string {
+  /** A pick/omit list member: a name, a number, or a REFERENCE (its whole name set). */
+  private member(): string | Ref {
+    if (this.peek().kind === 'langle') {
+      const at = this.peek();
+      const term = this.term();
+      if (term.kind !== 'ref') {
+        throw new DfnError(
+          'expected a member name or reference',
+          at.line,
+          at.column,
+        );
+      }
+      if (term.open) {
+        throw new DfnError(
+          'a member reference names a closed set — drop the *',
+          at.line,
+          at.column,
+        );
+      }
+      return term;
+    }
     const token = this.next();
     if (token.kind !== 'ident' && token.kind !== 'number') {
       throw new DfnError(
@@ -335,8 +354,8 @@ class Parser {
           name = this.expect('ident', 'a production name');
         }
         // Set modifiers: `[a, b]` picks only the listed members; `![a, b]` omits them.
-        const pick: string[] = [];
-        const omit: string[] = [];
+        const pick: Array<string | Ref> = [];
+        const omit: Array<string | Ref> = [];
         const negated = this.peek().kind === 'bang';
         if (negated) this.next();
         if (this.peek().kind === 'lbracket') {

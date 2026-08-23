@@ -593,3 +593,49 @@ test('an unsealed def module composes as the whole file', () => {
   );
   expect(parent.allOf).toEqual([{ $ref: './color.json' }]);
 });
+
+test('set-valued operands: omit and pick take references as members', () => {
+  const dir = fixture({
+    'fullcolors.dfn': [
+      'scope "def"',
+      'saturated = red | blue | green',
+      'neutral = white | black',
+      'root = <saturated> | <neutral>',
+      '',
+    ].join('\n'),
+    'accents.dfn': [
+      'use "./fullcolors.dfn"',
+      'warm = red | gold',
+      'accent-only = <@fullcolors ![<@fullcolors/saturated>, white]>',
+      'warm-reds = <@fullcolors/saturated [<warm [red]>]>',
+      'root = t.[<accent-only> | picked.<warm-reds>]',
+      '',
+    ].join('\n'),
+  });
+  const tree = build(resolveModule(join(dir, 'accents.dfn')));
+  const t = tree.children.get('t') as TreeNode;
+  // fullcolors minus its saturated set minus white = black only.
+  expect([...t.children.keys()].sort()).toEqual(['black', 'picked']);
+  // pick with a nested-modifier operand: saturated ∩ (warm ∩ {red}) = red.
+  expect([...(t.children.get('picked') as TreeNode).children.keys()]).toEqual([
+    'red',
+  ]);
+});
+
+test('set-valued operands keep member validation and refuse open members', () => {
+  const dir = fixture({
+    'x.dfn': [
+      'small = one | two',
+      'other = three | four',
+      'root = t.<small ![<other>]>',
+      '',
+    ].join('\n'),
+  });
+  expect(() => build(resolveModule(join(dir, 'x.dfn')))).toThrow(
+    /'<small>' has no member 'three' to omit/,
+  );
+
+  expect(() => parse('root = <a ![<b*>]>\n')).toThrow(
+    /a member reference names a closed set/,
+  );
+});

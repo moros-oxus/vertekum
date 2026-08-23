@@ -98,7 +98,8 @@ export interface Range extends Position {
 /**
  * `<name>` / `<@name>`; `open` records a trailing `*` (the set admits additions). Set
  * modifiers: `[a, b]` is PICK (only the listed members), `![a, b]` is OMIT (the set minus
- * them) — a modified reference is a new set.
+ * them) — a modified reference is a new set. A member may itself be a REFERENCE, denoting
+ * every name in the referenced set (set algebra with sets as operands).
  */
 export interface Ref extends Position {
   kind: 'ref';
@@ -107,8 +108,8 @@ export interface Ref extends Position {
   /** `<@module/production>` — resolve `name` in this import alone (the collision resolver). */
   from?: string;
   open: boolean;
-  pick: string[];
-  omit: string[];
+  pick: Array<string | Ref>;
+  omit: Array<string | Ref>;
 }
 
 /** `[ … ]`; `open` records a trailing `*` before the closing bracket. */

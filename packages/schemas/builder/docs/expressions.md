@@ -80,7 +80,17 @@ use "./space.dfn"
 root = space.[<scale> | negative.<scale ![0, 1000]>]
 ```
 
-A modified set is a **new** set: it never shares the source denotation's `$def` in the
+A member may itself be a **reference**, denoting every name of the set it names — set
+algebra with sets as operands, validated member-by-member exactly like plain names
+(and an open member `<x*>` is refused: an operand names a closed set):
+
+```dfn
+use "./fullcolors.dfn"
+
+accent-only = <@fullcolors ![<@fullcolors/saturated>, white]>
+```
+
+A modified set is a **new** set: it never shares the source pattern's `$def` in the
 built schema — narrowing a set and changing the set are the same act. Naming the
 narrowed form derives a new denotation:
 
