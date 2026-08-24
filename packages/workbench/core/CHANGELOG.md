@@ -1,5 +1,12 @@
 # @vertekum/core
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`e07dbea`](https://github.com/moros-oxus/vertekum/commit/e07dbea25e983323ccc4a913b62794ae62c5a7b5)]:
+  - @vertekum/schema-dtcg@0.2.0
+
 ## 0.2.0
 
 ### Minor Changes
