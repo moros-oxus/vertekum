@@ -2,7 +2,7 @@
   "name": "vertekum-dfn",
   "displayName": "Vertekum DFN",
   "description": "Syntax highlighting for .dfn vocabulary definition files",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "license": "Apache-2.0",
   "private": true,
   "publisher": "vertekum",

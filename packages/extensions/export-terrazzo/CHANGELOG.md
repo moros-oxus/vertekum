@@ -1,5 +1,16 @@
 # @vertekum/ext-export-terrazzo
 
+## 0.3.0
+
+### Minor Changes
+
+- The coordinated wave: every published package moves in lockstep from here (core additionally gains affixed scale names — `evaluateScale` prefix/suffix).
+
+### Patch Changes
+
+- Updated dependencies [[`84172d2`](https://github.com/moros-oxus/vertekum/commit/84172d2ca90320b60ec4c42730a69c056631a81c)]:
+  - @vertekum/core@0.3.0
+
 ## 0.1.2
 
 ### Patch Changes

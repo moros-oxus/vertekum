@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/schema-vocabulary",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Shared vocabulary denotations for token schemas, as .dfn modules",
   "license": "UNLICENSED",
   "private": true,

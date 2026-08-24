@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/ext-essentials",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Vertekum's default extension set, bundled (the @storybook/addon-essentials analog)",
   "license": "UNLICENSED",
   "private": true,

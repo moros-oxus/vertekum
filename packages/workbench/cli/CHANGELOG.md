@@ -1,5 +1,14 @@
 # @vertekum/cli
 
+## 0.3.0
+
+### Patch Changes
+
+- Updated dependencies [[`84172d2`](https://github.com/moros-oxus/vertekum/commit/84172d2ca90320b60ec4c42730a69c056631a81c)]:
+  - @vertekum/core@0.3.0
+  - vertekum@0.1.0
+  - @vertekum/server@0.1.0
+
 ## 0.1.2
 
 ### Patch Changes

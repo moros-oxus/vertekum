@@ -1,5 +1,27 @@
 # @vertekum/schema-builder
 
+## 0.3.0
+
+### Minor Changes
+
+- [`1faab42`](https://github.com/moros-oxus/vertekum/commit/1faab429acdd5c53565b3975654ce8da05e89bfc) Thanks [@tschemmer](https://github.com/tschemmer)! - The emission model: public productions emit as open `$defs` patterns (sealing belongs to the positions that apply them, composed via `allOf`); `:name` declares a private production — inlined, invisible to importers; the `scope` pragma names the file's nature (`document` | `def` | `inline` — a def file's root also lands as `$defs.<filename>` and rootless files emit defs-only artifacts by default) while `sealed "true" | "false"` takes over the document-top seal (`scope "branch"` parses as a deprecated alias); the empty leaf dedupes into `$defs.terminal`; `schemaId` derives artifact `$id`s from a configured base; linked emission gains `#/$defs/…` pattern refs; lint reports non-failing warnings (open-merge, deprecations). Atlassian artifacts regenerate under the new shape — the granted vocabulary is unchanged.
+
+### Patch Changes
+
+- [`84172d2`](https://github.com/moros-oxus/vertekum/commit/84172d2ca90320b60ec4c42730a69c056631a81c) Thanks [@tschemmer](https://github.com/tschemmer)! - Affixed scales: a parenthesized formula may carry word fragments on either or both ends — `(2-4)xs` → `2xs 3xs 4xs`, `xs(2-4)`, `x(2-8/2)s` — with the full formula grammar (geometric ratios, quantization, zero-pad) available inside the parentheses. `evaluateScale` gains optional `prefix`/`suffix`; affixes wrap the names while values stay numeric. The additive step is now optional: `2-4` means `2-4/1`.
+
+- [`cd36a42`](https://github.com/moros-oxus/vertekum/commit/cd36a421dbec1a71a06f173a32dbcd4482f85199) Thanks [@tschemmer](https://github.com/tschemmer)! - `schema lint`, `schema fmt`, and `schema build` accept a directory argument and sweep it — `.dfn` sources need not live under `./schemas`. A nonexistent path errors up front instead of `1:1 cannot read`.
+
+- [`be89083`](https://github.com/moros-oxus/vertekum/commit/be89083f58d8d01062240a84679ea9967071b3c4) Thanks [@tschemmer](https://github.com/tschemmer)! - Adds `vertekum schema fmt` — canonical `.dfn` formatting with JS-literal block indentation (indent resolves from `format.indent`, then `.editorconfig`), `--check` as the CI gate — and `schema lint --fix`, which relocates a misplaced trailing `*` into the reference or group it opens. The grammar itself gains block statements: a statement ends at the first newline at bracket depth 0, so a multi-line `[ … ]` may close at any indentation, and an unclosed `[` reports its opening position.
+
+- [`c81e024`](https://github.com/moros-oxus/vertekum/commit/c81e024133cf4f67b3cf690bfb77b849921ca9a2) Thanks [@tschemmer](https://github.com/tschemmer)! - Linked emission (`schemaBuilderExtension({ link: true })`): an unmodified `<@module>` root embedding emits a `$ref` into the child module's own artifact — `"color": { "$ref": "./primitives/color.json#/properties/color" }` — instead of inlining a duplicate. Property keys stay local so sealing is unchanged; modified, open, tailed, and production references still inline, as do modules the project does not build. Default remains self-contained artifacts.
+
+- [`ef1ca4a`](https://github.com/moros-oxus/vertekum/commit/ef1ca4a0b696b799275c0f0acf7fde9414793f8d) Thanks [@tschemmer](https://github.com/tschemmer)! - Pick/omit lists take references as members — set algebra with sets as operands: `<@fullcolors ![<@fullcolors/saturated>, white]>` omits every saturated name plus white. Operands resolve with normal scope and privacy rules, keep member-by-member validation, and an open member reference is refused.
+
+- [`1de5e76`](https://github.com/moros-oxus/vertekum/commit/1de5e76929f9a1e17e6625cb3bfd36a3fd86ceec) Thanks [@tschemmer](https://github.com/tschemmer)! - The input/output pair is configurable on the extension — `schemaBuilderExtension({ source: './src/dfn', out: './src/schemas' })`. `source` becomes the default sweep for `schema build`, `lint`, and `fmt`; `out` redirects built schemas, mirroring `source`'s directory structure. `schema build` also takes a positional `[out]` for one invocation: a directory argument mirrors into it, a file argument lands directly in it.
+- Updated dependencies [[`84172d2`](https://github.com/moros-oxus/vertekum/commit/84172d2ca90320b60ec4c42730a69c056631a81c)]:
+  - @vertekum/core@0.3.0
+
 ## 0.1.7
 
 ### Patch Changes

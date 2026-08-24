@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/ext-release",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Vertekum extension: semantic versioning + changelog release cutting (lock-file or git provider)",
   "license": "UNLICENSED",
   "private": true,

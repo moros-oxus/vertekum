@@ -1,7 +1,7 @@
 {
   "name": "@vertekum-example/schemas",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Three routes to a token vocabulary: a local schema, an ejected one, and one extending a packaged schema.",
   "type": "module",
   "scripts": {

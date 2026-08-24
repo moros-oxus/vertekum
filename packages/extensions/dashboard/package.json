@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/ext-dashboard",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Vertekum extension: the Dashboard route; soft-consumes TokenStatsService",
   "license": "UNLICENSED",
   "private": true,

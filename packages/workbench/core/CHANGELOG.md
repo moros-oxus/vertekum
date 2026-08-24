@@ -1,5 +1,17 @@
 # @vertekum/core
 
+## 0.3.0
+
+### Minor Changes
+
+- The coordinated wave: every published package moves in lockstep from here (core additionally gains affixed scale names — `evaluateScale` prefix/suffix).
+
+### Patch Changes
+
+- [`84172d2`](https://github.com/moros-oxus/vertekum/commit/84172d2ca90320b60ec4c42730a69c056631a81c) Thanks [@tschemmer](https://github.com/tschemmer)! - Affixed scales: a parenthesized formula may carry word fragments on either or both ends — `(2-4)xs` → `2xs 3xs 4xs`, `xs(2-4)`, `x(2-8/2)s` — with the full formula grammar (geometric ratios, quantization, zero-pad) available inside the parentheses. `evaluateScale` gains optional `prefix`/`suffix`; affixes wrap the names while values stay numeric. The additive step is now optional: `2-4` means `2-4/1`.
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.3.0
+
 ## 0.1.2
 
 ### Patch Changes

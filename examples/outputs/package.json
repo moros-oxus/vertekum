@@ -1,7 +1,7 @@
 {
   "name": "@vertekum-example/outputs",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Terrazzo-driven outputs — Vertekum passes the files, terrazzo formats them.",
   "type": "module",
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/ext-export-css",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Vertekum extension: the CSS custom-properties exporter",
   "license": "UNLICENSED",
   "private": true,
