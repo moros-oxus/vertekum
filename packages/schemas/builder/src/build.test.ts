@@ -639,3 +639,42 @@ test('set-valued operands keep member validation and refuse open members', () =>
     /a member reference names a closed set/,
   );
 });
+
+test('a module key wins over sibling productions of the same name', () => {
+  const dir = fixture({
+    'size.dfn': ['scope "def"', 'root = size.border.[thin | thick]', ''].join(
+      '\n',
+    ),
+    'typography.dfn': [
+      'scope "def"',
+      'size = small | large',
+      'root = typography.<size>',
+      '',
+    ].join('\n'),
+    'semantics.dfn': [
+      'use "./size.dfn"',
+      'use "./typography.dfn"',
+      'root = [<@size> | <@typography>]',
+      '',
+    ].join('\n'),
+  });
+  const tree = build(resolveModule(join(dir, 'semantics.dfn')));
+  // <@size> = the KEYED module's root — typography's public `size` cannot collide.
+  expect(names(tree.children.get('size') as TreeNode)).toEqual(['border']);
+  expect(tree.children.get('typography')).toBeDefined();
+});
+
+test('a keyed fragment resolves to its own same-name production, shadow-proof', () => {
+  const dir = fixture({
+    'conspicuity.dfn': 'conspicuity = subtle | bold\n',
+    'other.dfn': 'conspicuity = loud | quiet\nroot = o.<conspicuity>\n',
+    'main.dfn': [
+      'use "./conspicuity.dfn"',
+      'use "./other.dfn"',
+      'root = t.<@conspicuity>',
+      '',
+    ].join('\n'),
+  });
+  const tree = build(resolveModule(join(dir, 'main.dfn')));
+  expect(names(tree.children.get('t') as TreeNode)).toEqual(['subtle', 'bold']);
+});

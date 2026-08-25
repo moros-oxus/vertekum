@@ -125,41 +125,51 @@ function target(
     };
   }
 
+  // 1. A module KEY match wins outright — a keyed module cannot be shadowed by (or
+  //    collide with) sibling imports' productions. Its root; else its OWN production of
+  //    the same name (the fragment-declares-its-own-name idiom); else the fragment hint.
+  const keyed = scope.module.imports.get(ref.name);
+  if (keyed) {
+    const keyedScope: Scope = {
+      module: keyed,
+      expanding: new Set(),
+      warn: scope.warn,
+    };
+    if (keyed.module.root) {
+      return {
+        node: keyed.module.root,
+        scope: keyedScope,
+        importedRoot: keyed,
+      };
+    }
+    const own = keyed.module.productions.get(ref.name);
+    if (own && !keyed.module.private.has(ref.name)) {
+      return { node: own, scope: keyedScope };
+    }
+    throw new DfnError(
+      `'${ref.name}' is imported, but it declares no root (a fragment) — reference one of its productions: ${productionsOf(ref.name, keyed)}`,
+      ref.line,
+      ref.column,
+      file,
+    );
+  }
+
+  // 2. No key match: the production searched across every import — unambiguous or say so.
   const hits: Array<{
     node: Node;
     scope: Scope;
     importedRoot?: ResolvedModule;
   }> = [];
-  for (const [key, imported] of scope.module.imports) {
-    const importedScope: Scope = {
-      module: imported,
-      expanding: new Set(),
-      warn: scope.warn,
-    };
+  for (const imported of scope.module.imports.values()) {
     const production = imported.module.productions.get(ref.name);
     if (production && !imported.module.private.has(ref.name)) {
-      hits.push({ node: production, scope: importedScope });
-    }
-    if (key === ref.name && imported.module.root) {
       hits.push({
-        node: imported.module.root,
-        scope: importedScope,
-        importedRoot: imported,
+        node: production,
+        scope: { module: imported, expanding: new Set(), warn: scope.warn },
       });
     }
   }
   if (hits.length === 0) {
-    // The near-miss that reads as a missing `use`: the import EXISTS under this key, but
-    // `<@key>` means its root and a fragment has none. Say so, and name the real forms.
-    const fragment = scope.module.imports.get(ref.name);
-    if (fragment) {
-      throw new DfnError(
-        `'${ref.name}' is imported, but it declares no root (a fragment) — reference one of its productions: ${productionsOf(ref.name, fragment)}`,
-        ref.line,
-        ref.column,
-        file,
-      );
-    }
     throw new DfnError(
       `no import provides '<@${ref.name}>'`,
       ref.line,

@@ -38,8 +38,8 @@ use "./system/color.dfn" as system-color
 
 | Reference            | Means                                                                       |
 | -------------------- | ---------------------------------------------------------------------------- |
-| `<@key>`             | the imported module's **root** — the whole subtree it grants.                |
-| `<@name>`            | the production `name`, searched across every import; unambiguous or an error. |
+| `<@key>`             | an import KEYED `key` **wins outright**: its root — else its own `key` production (the fragment idiom) — sibling imports' productions can never shadow or collide with it. |
+| `<@name>`            | no key matches: the production `name`, searched across every import; unambiguous or an error. |
 | `<@key/name>`        | qualified: that import's production alone — the collision resolver.           |
 
 When two imports both declare `<accent>`, the unqualified `<@accent>` refuses with the
