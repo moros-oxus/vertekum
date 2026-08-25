@@ -1,5 +1,13 @@
 # @vertekum/schema-builder
 
+## 0.3.1
+
+### Patch Changes
+
+- [`7f9db48`](https://github.com/moros-oxus/vertekum/commit/7f9db48344c672b90a97f3f4608bf7de893799bf) Thanks [@tschemmer](https://github.com/tschemmer)! - `<@name>` resolution gains key precedence: an import keyed `name` wins outright — its root, else its own `name` production — so sibling imports' public productions can no longer shadow or collide with a keyed module. The cross-import production search remains as the fallback when no key matches.
+- Updated dependencies []:
+  - @vertekum/core@0.3.1
+
 ## 0.3.0
 
 ### Minor Changes
