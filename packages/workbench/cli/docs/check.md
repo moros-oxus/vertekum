@@ -25,9 +25,12 @@ any error.
    - schema-loading problems (`schema/unreadable`, `schema/no-op`, …),
    - resolver sources naming token sets that do not exist (`resolver/unknown-source`).
 2. **Relational** — the parsed model: reference validity (dangling aliases, pointer
-   type mismatches), resolver semantics (`bad-default`, `empty-contexts`, …),
-   export-target shape (unknown exporters and compositions, options validated against
-   each exporter's schema), plus any validator a loaded extension registered.
+   type mismatches), resolver semantics (`bad-default`, `empty-contexts`, …), token
+   sets no composition references (`resolver/unreferenced-set`, a warning — the set's
+   tokens are validated but reach no output; flat projects, which merge every file,
+   never warn), export-target shape (unknown exporters and compositions, options
+   validated against each exporter's schema), plus any validator a loaded extension
+   registered.
 
 A structural **error** stops the pass before the relational checks: the parsed model was
 built from files already known to be malformed, so diagnostics derived from it would be

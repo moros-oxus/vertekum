@@ -7,7 +7,7 @@ import {
   referenceToPath,
   resolveValue,
 } from '../dtcg/references';
-import { validateResolver } from '../dtcg/resolve';
+import { referencedSetRefs, validateResolver } from '../dtcg/resolve';
 import { resolveExporterInput } from '../export/resolve-input';
 import { targetId } from '../export/target';
 import type { Diagnostic, Validator } from './validator';
@@ -284,6 +284,29 @@ export const resolverValidator: Validator = {
           source: 'core',
           file: `${name}.resolver.json`,
           target: issue.target,
+        });
+      }
+    }
+
+    // The inverse of `unknown-source`: a set file no composition mentions. Its tokens are
+    // validated, then reach no output — the silent half of a wiring mistake, so it warns rather
+    // than errors (an author mid-flight legitimately has the set before its composition entry).
+    // A collection-level finding, so it lands on the set file, not on any one resolver — and only
+    // when resolvers exist at all: the flat model merges every file, orphaning nothing.
+    if (resolvers.size > 0) {
+      const referenced = new Set<string>();
+      for (const doc of resolvers.values()) {
+        for (const ref of referencedSetRefs(doc)) referenced.add(ref);
+      }
+      for (const set of sets) {
+        const file = `${set}.json`;
+        if (referenced.has(file)) continue;
+        diagnostics.push({
+          code: 'resolver/unreferenced-set',
+          severity: 'warning',
+          message: `'${file}' is referenced by no composition — its tokens reach no output`,
+          source: 'core',
+          file,
         });
       }
     }

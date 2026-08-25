@@ -17,6 +17,26 @@ function sourceRefs(sources: Source[]): string[] {
 }
 
 /**
+ * Every set-file `$ref` a resolver mentions ANYWHERE — all sets' sources and every modifier
+ * context's sources, whether or not `resolutionOrder` currently reaches them. Deliberately an
+ * over-approximation: the `resolver/unreferenced-set` warning built on this must stay silent for
+ * a set staged behind an unchosen context or an entry not yet ordered (order/defs mismatches are
+ * `dangling-ref`'s to report, not orphanhood).
+ */
+export function referencedSetRefs(doc: ResolverDocument): Set<string> {
+  const out = new Set<string>();
+  for (const set of Object.values(doc.sets)) {
+    for (const ref of sourceRefs(set.sources)) out.add(ref);
+  }
+  for (const modifier of Object.values(doc.modifiers)) {
+    for (const context of Object.values(modifier.contexts)) {
+      for (const ref of sourceRefs(context)) out.add(ref);
+    }
+  }
+  return out;
+}
+
+/**
  * Structure-level resolution: collapse `resolutionOrder` to the ordered list of set-file `$ref`s to
  * merge (last-wins, duplicates preserved). For each modifier the chosen context is
  * `selection[name] ?? default ?? first context`. Refs to undefined defs, and modifiers with no

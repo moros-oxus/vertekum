@@ -76,7 +76,11 @@ sets that actually exist. Errors should block; warnings advise:
 | `empty-contexts` | error    | A modifier has no contexts.                                |
 | `single-context` | warning  | A modifier has only one context.                           |
 
-The same checks run as part of `vertekum check`.
+The same checks run as part of `vertekum check`, which adds one collection-level
+finding of its own: `unreferenced-set` (warning) — a token set that no resolver
+mentions anywhere, in any set's sources or any modifier context. Its tokens are
+validated but reach no output. Projects without resolvers never warn: the flat model
+merges every file.
 
 ## Compositions and export
 
