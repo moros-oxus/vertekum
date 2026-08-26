@@ -1,7 +1,8 @@
 # The CLI contract
 
 Every `vertekum` verb — built-in or contributed — behaves by one set of rules. This page
-is those rules; the per-verb pages only add what is specific to each verb.
+is those rules; the per-verb pages only add what is specific to each verb. The binary
+installs under two names, `vertekum` and the shorthand `vtk` — they are the same program.
 
 ## Exit codes
 

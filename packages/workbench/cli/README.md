@@ -19,6 +19,8 @@ vertekum check     # validate: references, compositions, vocabulary, targets
 vertekum build     # run the configured export targets
 ```
 
+`vtk` is a shorthand alias for the same binary — `vtk check`, `vtk resolver add -s sem`.
+
 `vertekum describe --json` reports what CAN be configured — registered exporters and
 their option schemas, validators, compositions, runnable commands; config files only say
 what IS. That split is what lets an agent (or a script) learn a project's capabilities
@@ -32,7 +34,7 @@ instead of guessing them.
 | [`check`](./docs/check.md)               | run every registered validator and report diagnostics                    |
 | [`build`](./docs/build.md)               | run the configured export targets and write their files                  |
 | [`describe`](./docs/describe.md)         | print the live inventory: extensions, exporters, validators, schemas, commands, compositions |
-| [`token` / `group` / `set` …](./docs/curation.md) | the curation verbs: structural edits that rewrite references and refuse to break the collection |
+| [`token` / `group` / `set` / `resolver` …](./docs/curation.md) | the curation verbs: structural edits that rewrite references and refuse to break the collection |
 | [`migrate values`](./docs/curation.md#migrate-values) | convert stored string values to 2025.10 object notation     |
 | [`schema eject`](./docs/schemas.md)      | copy a schema into the working directory so it can be changed            |
 | `dev`                                    | launch the Vertekum UI — optional peer; see [the contract](./docs/contract.md#vertekum-dev) |
