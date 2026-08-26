@@ -83,6 +83,57 @@ A set is a file: these create and delete `<name>.json` in the collection.
 | `set add <name>`    | create a token set (an empty file)    | —                                                |
 | `set remove <name>` | delete a set and every token in it    | `--force` (required when it still holds tokens)  |
 
+## `resolver` verbs
+
+Curate compositions — which sets combine, under which modifier contexts, in what
+order (see `@vertekum/core`'s resolver documentation for the model). Seven generic
+verbs over an **address path**: the flag names which branch of the resolver document
+the `/`-joined path walks.
+
+```
+vtk resolver <verb> [-s <path> | -m <path> | <resolver>] [operands…]
+
+  (no flag)  <resolver>                           the resolver itself
+  -s         [<resolver>/]<set>                   a set entry
+  -m         [<resolver>/]<modifier>[/<context>]  a modifier, or a context under it
+```
+
+The leading `<resolver>/` may be elided when the project has exactly one resolver
+(with several, eliding refuses and lists the names). A first segment naming an
+existing resolver is always read as the resolver — write the full path when a
+modifier shares a resolver's name. `vtk` is a bin alias of `vertekum`; either works.
+
+The model's symmetry decides which verbs apply where: **named** children (sets,
+modifiers, contexts) get `add`/`remove`; the anonymous **ordered source lists**
+inside sets and contexts get `push`/`pop`/`order`; every level gets `list`.
+
+| Verb | Does |
+| --- | --- |
+| `resolver add <name>` | create a resolver |
+| `resolver add -s [r/]<set>` | add a set entry sourcing `<set>.json`, appended to the resolution order |
+| `resolver add -m [r/]<mod>/<cxt> <source>` | add a context sourcing `<source>.json` — a missing modifier is created around it (first context becomes the default; a modifier is never created bare) |
+| `resolver remove …` | the inverse at every address; a context refuses when it is the default (retarget first) or the last (remove the modifier) |
+| `resolver push -s\|-m <path> <sources>` | append sources — **comma-delimited** set names |
+| `resolver pop -s\|-m <path> [which]` | remove one source by index or set name (default the last; the last remaining source refuses) |
+| `resolver order <addr> …` | reorder the resolution order (no flag) or a source list (`-s`/`-m`): placements `name@{2}[,…]`, a move `1 3`, or a swap `1 3 --swap` |
+| `resolver default -m [r/]<mod>/<cxt>` | set a modifier's default context |
+| `resolver list [addr]` | show resolvers, or the addressed level |
+
+Only `add` ever creates — every other verb refuses a missing path component and
+suggests the closest existing name. Set entries and sources are anchored to real
+collection files, so a typo there is a hard error; `add`'s summary states exactly
+what it created and warns when a new modifier/context name near-misses an existing
+sibling. In the resolution order, a name existing as both a set and a modifier is
+addressed as `sets/<name>` / `modifiers/<name>`.
+
+```bash
+vtk resolver add -s sem                          # the whole "compose sem" ask, elided
+vtk resolver add -m theme/light light            # modifier + first context + default
+vtk resolver add -m theme/dark dark
+vtk resolver default -m theme/dark
+vtk resolver order default sem@{1}
+```
+
 ## `migrate values`
 
 Convert stored **string** values to 2025.10 object notation, by each token's effective

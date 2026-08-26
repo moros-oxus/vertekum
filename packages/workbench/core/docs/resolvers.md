@@ -76,6 +76,10 @@ sets that actually exist. Errors should block; warnings advise:
 | `empty-contexts` | error    | A modifier has no contexts.                                |
 | `single-context` | warning  | A modifier has only one context.                           |
 
+Resolvers are curated from the command line — `vtk resolver add -s sem`,
+`vtk resolver add -m theme/dark dark`, … — see the CLI's curation documentation for
+the verb surface.
+
 The same checks run as part of `vertekum check`, which adds one collection-level
 finding of its own: `unreferenced-set` (warning) — a token set that no resolver
 mentions anywhere, in any set's sources or any modifier context. Its tokens are

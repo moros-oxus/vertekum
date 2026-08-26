@@ -1,10 +1,12 @@
 import type { CommandDescriptor } from '../shell/types';
 import { groupVerbs } from './group-verbs';
+import { resolverVerbs } from './resolver-verbs';
 import { setVerbs } from './set-verbs';
 import { tokenVerbs } from './token-verbs';
 
 export { documentOf, isGroupPath, parseValue, tokenAtPath } from './context';
 export { groupVerbs } from './group-verbs';
+export { resolverVerbs } from './resolver-verbs';
 export { setVerbs } from './set-verbs';
 export { tokenVerbs } from './token-verbs';
 
@@ -17,5 +19,5 @@ export { tokenVerbs } from './token-verbs';
  * rather than a built-in table plus a contributed one.
  */
 export function builtinCommands(): CommandDescriptor[] {
-  return [...tokenVerbs, ...groupVerbs, ...setVerbs];
+  return [...tokenVerbs, ...groupVerbs, ...setVerbs, ...resolverVerbs];
 }

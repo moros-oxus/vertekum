@@ -144,5 +144,12 @@ test('the kernel seeds core’s curation verbs before any extension activates', 
     'group remove',
     'set add',
     'set remove',
+    'resolver add',
+    'resolver remove',
+    'resolver push',
+    'resolver pop',
+    'resolver order',
+    'resolver default',
+    'resolver list',
   ]);
 });

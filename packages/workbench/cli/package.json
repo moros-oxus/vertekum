@@ -62,6 +62,7 @@
     }
   },
   "bin": {
-    "vertekum": "./bin/vertekum.mjs"
+    "vertekum": "./bin/vertekum.mjs",
+    "vtk": "./bin/vertekum.mjs"
   }
 }
