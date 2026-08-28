@@ -1,5 +1,17 @@
 # @vertekum/core
 
+## 0.3.2
+
+### Patch Changes
+
+- [`b591cb5`](https://github.com/moros-oxus/vertekum/commit/b591cb59351c937c0405601eeeee89e33a418fa7) Thanks [@tschemmer](https://github.com/tschemmer)! - Extending the DTCG schema: patch documents (top-level `$extends` mapping `dtcg#` anchors to additive deltas) declare custom and compound types — tokens carry them directly in `$type`/`$value`, validated by the patched effective schema. Anchors derive from the binding in effect; bindings assemble across config and extension routes with last-wins `id` replacement and origins in `describe`. Extensions can also register token codecs (`'token-codec'` service) that materialize `$extensions`-carried generative payloads into ordinary tokens, and schema bindings (`'schema-bindings'` service) without a config entry.
+
+- [`83f296c`](https://github.com/moros-oxus/vertekum/commit/83f296c742bd7b5be22f509b4430829b4032605c) Thanks [@tschemmer](https://github.com/tschemmer)! - Resolver curation verbs: `vtk resolver add/remove/push/pop/order/default/list` edit compositions from the command line — generic verbs over an address path (`-s [resolver/]set`, `-m [resolver/]modifier[/context]`), with single-resolver elision, creation confined to `add`, and closest-name suggestions on every refusal. `vtk` joins `vertekum` as a bin alias.
+
+- [`44122ed`](https://github.com/moros-oxus/vertekum/commit/44122ed8327c4d39b55c8c45d194f423fed96289) Thanks [@tschemmer](https://github.com/tschemmer)! - `vertekum check` now warns (`resolver/unreferenced-set`) when a token set is referenced by no composition — its tokens were validated but reached no output. Flat projects (no resolvers) are unaffected.
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes
