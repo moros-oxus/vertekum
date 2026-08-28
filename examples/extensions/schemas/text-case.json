@@ -1,0 +1,26 @@
+{
+  "$comment": "A patch document: its top level is only $extends, mapping anchors of the effective DTCG schema to deltas. Bound like any schema in vertekum.config.ts; merged at load, so tokens carry the new type directly in $type/$value.",
+  "$extends": {
+    "dtcg#tokenType": { "enum": ["textCase"] },
+    "dtcg#token": {
+      "allOf": [
+        {
+          "if": {
+            "properties": { "$type": { "const": "textCase" } },
+            "required": ["$type"]
+          },
+          "then": {
+            "properties": {
+              "$value": {
+                "anyOf": [
+                  { "enum": ["none", "uppercase", "lowercase", "capitalize"] },
+                  { "$ref": "dtcg#tokenValueReference" }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

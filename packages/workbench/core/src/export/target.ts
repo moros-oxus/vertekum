@@ -2,6 +2,7 @@ import type { ResolverDocument } from '../document/resolver-types';
 import { emptyResolver } from '../document/resolver-types';
 import type { Token } from '../document/types';
 import type { DtcgNode } from '../dtcg/parse';
+import { interchangeFiles } from '../dtcg/serialize';
 import type { ExporterInput, ExporterService, OutputFile } from './exporter';
 import { resolveExporterInput } from './resolve-input';
 
@@ -55,6 +56,13 @@ export async function runTargets(
   const selected = targets.filter((t) =>
     ctx.only ? ctx.only.includes(targetId(t)) : t.enabled !== false,
   );
+  // Exporters receive the INTERCHANGE form: codec carriers inlined as plain tokens, so a tool
+  // that stages files verbatim (the terrazzo bridge) sees real tokens where the store holds
+  // conformant empty-group carriers. Identity when no codec tokens exist.
+  const staged =
+    ctx.files === undefined
+      ? undefined
+      : interchangeFiles(ctx.files, ctx.tokens);
   const results: TargetResult[] = [];
   for (const target of selected) {
     const exporter = ctx.registry.get(target.exporter);
@@ -78,7 +86,7 @@ export async function runTargets(
     }
     const files = await exporter.transform({
       ...input,
-      files: ctx.files,
+      files: staged,
       options: target.options,
     });
     results.push({ id: targetId(target), target, files });

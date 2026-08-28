@@ -108,6 +108,19 @@ system's own data; every other vendor's keys are preserved verbatim through pars
 edit, and write. Unknown `org.vertekum.*` keys are ignored on parse and preserved on
 write, so files from a newer version remain safe to edit in an older one.
 
+### Custom types, and extension-held data
+
+Two different needs, two mechanisms:
+
+- **Custom and compound types** — a `textCase` token, a typography value with a
+  `textDecoration` member — are declared by
+  [extending the DTCG schema](./schemas.md#extending-the-dtcg-schema); tokens carry
+  them directly in `$type`/`$value`. Such files are the project's declared dialect:
+  valid against its effective schema, not against the unextended spec.
+- **Generative data** — a payload a value (or set of values) derives from — lives in
+  `$extensions` on a carrier node, materialized into ordinary tokens by an
+  extension's codec; see [extension-held token data](./extension-data.md).
+
 ## Programmatic access
 
 `parseCollection(files)` turns a file record into a flat `Token[]`; `serializeSets`

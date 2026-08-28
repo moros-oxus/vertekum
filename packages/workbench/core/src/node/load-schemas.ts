@@ -151,7 +151,10 @@ async function loadFile(
     const object = node as Json;
     const ref = object.$ref;
     if (typeof ref === 'string') {
-      if (isRemoteRef(ref)) {
+      if (ref.startsWith('dtcg#')) {
+        // A derived anchor of the effective DTCG schema (`dtcg#typographyValue`, …) — resolved by
+        // binding assembly against the anchor shell, never by this loader. Left verbatim.
+      } else if (isRemoteRef(ref)) {
         // Remote-LOOKING is not remote: the published DTCG schema references its own inlined,
         // $id-carrying definitions by absolute URL, and a validator resolves those with no
         // network. Only a ref that nothing loaded can satisfy would need a fetch — that one is
@@ -306,7 +309,12 @@ export async function loadSchemas(
       );
       if (!schema) continue;
 
-      const foreign = foreignKeywords(schema);
+      // A patch document (top-level `$extends`) constrains nothing BY DESIGN — it is merged into
+      // the effective DTCG schema at assembly, so the no-op and dialect guards do not apply.
+      const patch =
+        typeof schema === 'object' && schema !== null && '$extends' in schema;
+
+      const foreign = patch ? [] : foreignKeywords(schema);
       if (foreign.length > 0) {
         diagnostics.push(
           diagnostic(
@@ -321,7 +329,7 @@ export async function loadSchemas(
         );
       }
 
-      if (constrainsNothing(schema)) {
+      if (!patch && constrainsNothing(schema)) {
         diagnostics.push(
           diagnostic(
             'schema/no-op',
@@ -338,6 +346,7 @@ export async function loadSchemas(
         target: entry.target ?? group.target ?? 'tokens',
         schema,
         file: path,
+        origin: 'config',
         ...(severity ? { severity } : {}),
         ...(domain ? { domain } : {}),
         ...(entry.id ? { id: entry.id } : {}),

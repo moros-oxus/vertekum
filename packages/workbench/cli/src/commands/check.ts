@@ -1,11 +1,14 @@
 import type { DtcgNode } from '@vertekum/core';
 import {
+  assembleBindings,
   builtinValidators,
   type Diagnostic,
   dtcg,
   EXPORTER_SERVICE,
   type ExporterService,
   isResolverFile,
+  SCHEMA_BINDING_SERVICE,
+  type SchemaBindingService,
   VALIDATOR_SERVICE,
   type ValidatorService,
   validateFiles,
@@ -31,12 +34,25 @@ async function collectStructural(
   // a configured entry may replace, not a separate concept layered on afterwards.
   const { bindings, referenced, diagnostics } = project.schemas;
 
+  // Extension-contributed bindings join the loader's, then ASSEMBLY makes one coherent set:
+  // cross-route id resolution (an extension can eject as config can), `$extends` patches merged
+  // into the effective DTCG schema, and the `dtcg#` anchor shell derived from the result.
+  const contributed =
+    project.kernel.services
+      .get<SchemaBindingService>(SCHEMA_BINDING_SERVICE)
+      ?.list() ?? [];
+  const assembled = assembleBindings([...bindings, ...contributed]);
+
   return [
     // A schema that could not be read, a remote `$ref`, a binding that enforces nothing — decided at
     // load time, reported here, so `check` stays the one place a project asks what is wrong.
     ...diagnostics,
+    ...assembled.diagnostics,
     ...resolverSourceProblems(source),
-    ...(await validateFiles(source, bindings, referenced)),
+    ...(await validateFiles(source, assembled.bindings, [
+      ...referenced,
+      ...assembled.referenced,
+    ])),
   ];
 }
 

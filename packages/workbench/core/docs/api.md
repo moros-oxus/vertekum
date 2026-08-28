@@ -94,8 +94,12 @@ const tokens = kernel.document.getAllTokens();
 - `kernel.document` — the mutable document: `hydrate`, `apply(command)`, `undo`/`redo`,
   `getFiles` (the raw trees — the write path), `getAllTokens`, `getSets`,
   `getResolvers`, `subscribe`.
-- `kernel.services` — the shared service registry (where the
-  [exporter registry](./export.md) lives, under `EXPORTER_SERVICE`).
+- `kernel.services` — the shared service registry. Well-known keys: `EXPORTER_SERVICE`
+  (the [exporter registry](./export.md)); `TOKEN_CODEC_SERVICE` (token codecs —
+  [extension-held token data](./extension-data.md)); `SCHEMA_BINDING_SERVICE`
+  (extension-contributed [schema bindings](./schemas.md#extension-contributed-bindings)).
+  The codec and binding registries are pre-created by the kernel — core itself consumes
+  them — so `ctx.services.get(...)` always finds them during activation.
 - `kernel.commands` — the command registry: the built-in curation verbs plus whatever
   extensions contribute.
 - `kernel.config` — extension settings, validated against each extension's declared
@@ -111,6 +115,28 @@ Persisting is the caller's job: `saveDocument` (from `@vertekum/core/node`) writ
 document's files back to the collection directory, and `writeCollection` /
 `writeTextFile` are the lower-level pieces (the latter refuses to escape the collection
 directory).
+
+## Extension-held token data, and schema assembly
+
+The codec seam in API terms — [the reference](./extension-data.md) covers the model
+(custom types are a schema concern instead: see
+[extending the DTCG schema](./schemas.md#extending-the-dtcg-schema)):
+
+- `TokenCodec` / `TokenCodecService` / `TOKEN_CODEC_SERVICE` — register a codec
+  (`{ key, materialize, serialize }`) and carriers under that key parse into ordinary
+  tokens (`token.codec` carries the provenance); every document write round-trips them
+  back to carrier form. Registering after `hydrate` refreshes the derived token view
+  (`document.invalidateDerived()`) without counting as a mutation.
+- `SchemaBindingService` / `SCHEMA_BINDING_SERVICE` — register a `SchemaBinding`
+  programmatically; it layers into `vertekum check` beside configured bindings.
+- `interchangeFiles(files, tokens)` — the exporter-side form: carrier nodes inlined as
+  plain `$type`/`$value` nodes in a clone. `runTargets` applies it automatically; call
+  it directly when handing collection files to an external tool yourself.
+- `parseCollection(files, codecs?)` / `tokenNode(token, codecs?)` — the pure functions
+  under it all, for drivers that bypass the kernel.
+- `assembleBindings(bindings)` — the schema-assembly pass `check` and `describe` run:
+  cross-route `id` resolution, `$extends` patch merging into the effective DTCG
+  schema, and the `dtcg#` anchor shell as a referenced schema.
 
 ## Running exports
 

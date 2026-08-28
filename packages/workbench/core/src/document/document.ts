@@ -9,6 +9,7 @@ import {
   pruneEmptyAncestors,
   setNodeAt,
 } from '../dtcg/tree';
+import type { TokenCodec } from './codec';
 import type { Command } from './commands';
 import {
   isResolverFile,
@@ -48,6 +49,13 @@ export interface Document {
   /** A counter that increments on every mutation — lets callers detect unsaved changes. */
   getVersion(): number;
   subscribe(listener: ChangeListener): () => void;
+  /**
+   * Drop the derived-view caches and notify subscribers WITHOUT counting as a mutation. The token
+   * view depends on an external input — the registered codecs — so the kernel calls this when one
+   * registers after hydration. Not a version bump: nothing on disk changed, and a runner must not
+   * mistake a registration for an edit to persist.
+   */
+  invalidateDerived(): void;
 }
 
 /**
@@ -59,7 +67,18 @@ export interface Document {
  * every DTCG or vendor key nobody had modelled. Holding the tree makes that loss impossible rather
  * than fixing it case by case.
  */
-export function createDocument(): Document {
+export function createDocument(options?: {
+  /**
+   * Lazy supplier of the registered token codecs (extension-held token data). Lazy so the kernel
+   * can wire the registry it creates alongside the document; consulted on every derivation and
+   * every codec-aware write.
+   */
+  codecs?: () => TokenCodec[];
+}): Document {
+  const codecList = (): TokenCodec[] => options?.codecs?.() ?? [];
+  const codecLookup = {
+    get: (key: string) => codecList().find((codec) => codec.key === key),
+  };
   const files = new Map<string, DtcgNode>();
   // Each undo entry pairs the forward command with its inverse, so undo applies
   // the inverse and redo re-applies the forward command (ADR-0012).
@@ -89,7 +108,7 @@ export function createDocument(): Document {
 
   function allTokens(): Token[] {
     if (tokenList === null)
-      tokenList = parseCollection(partition(record()).sets);
+      tokenList = parseCollection(partition(record()).sets, codecList());
     return tokenList;
   }
 
@@ -146,9 +165,49 @@ export function createDocument(): Document {
     return out;
   }
 
-  /** Write a token's node at the location its id names. */
+  /** Write a token's node at the location its id names — carrier form for codec-owned tokens. */
   function writeToken(token: Token): void {
-    setNodeAt(setTree(token.set ?? DEFAULT_SET), token.path, tokenNode(token));
+    setNodeAt(
+      setTree(token.set ?? DEFAULT_SET),
+      token.path,
+      tokenNode(token, codecLookup),
+    );
+  }
+
+  /**
+   * Patch a token node's value in place, carrier-aware. On an ordinary node this is the historical
+   * `$value` write; on a carrier (extension-held token data) writing `$value` beside the payload
+   * would corrupt the store — a malformed half-token next to stale data — so the payload is
+   * re-serialized through its codec instead.
+   */
+  function patchTokenValue(
+    node: DtcgNode,
+    value: unknown,
+    at: { set: string; path: string[] },
+  ): void {
+    const ext = node.$extensions as DtcgNode | undefined;
+    if (ext && !('$value' in node) && !('$ref' in node)) {
+      for (const codec of codecList()) {
+        if (!(codec.key in ext)) continue;
+        const fields = codec.materialize(ext[codec.key], at);
+        if (!fields) break;
+        ext[codec.key] = codec.serialize({
+          id: tokenId(at.set, at.path),
+          path: at.path,
+          type: fields.type,
+          value,
+          set: at.set,
+          codec: codec.key,
+          codecSource: ext[codec.key],
+          ...(fields.description !== undefined
+            ? { description: fields.description }
+            : {}),
+        });
+        return;
+      }
+    }
+    node.$value = value;
+    delete node.$ref; // $value XOR $ref — an edited reference becomes a literal
   }
 
   /** Token-set file names, in insertion order. */
@@ -173,7 +232,9 @@ export function createDocument(): Document {
       const node = getNodeAt(setTree(set), path);
       if (!node) continue;
       if (ref !== undefined) node.$ref = ref;
-      else node.$value = value;
+      // Carrier-aware: an alias living INSIDE a codec payload is rewritten through its codec,
+      // never as a stray `$value` beside the payload.
+      else patchTokenValue(node, value, { set, path });
     }
 
     for (const name of tokenFiles()) {
@@ -199,8 +260,7 @@ export function createDocument(): Document {
         const { set, path } = parseTokenId(command.id);
         const node = getNodeAt(setTree(set), path);
         if (node) {
-          node.$value = command.value;
-          delete node.$ref; // $value XOR $ref — an edited reference becomes a literal
+          patchTokenValue(node, command.value, { set, path });
         }
         break;
       }
@@ -224,9 +284,17 @@ export function createDocument(): Document {
         if (plan) {
           applyPlan(plan, from, to);
           // The plan moved the node; overwrite it with the command's content at the new path.
-          setNodeAt(setTree(set), to, tokenNode({ ...command.token, set }));
+          setNodeAt(
+            setTree(set),
+            to,
+            tokenNode({ ...command.token, set }, codecLookup),
+          );
         } else {
-          setNodeAt(setTree(set), from, tokenNode({ ...command.token, set }));
+          setNodeAt(
+            setTree(set),
+            from,
+            tokenNode({ ...command.token, set }, codecLookup),
+          );
         }
         break;
       }
@@ -388,6 +456,12 @@ export function createDocument(): Document {
     },
     getVersion() {
       return version;
+    },
+    invalidateDerived() {
+      tokenList = null;
+      setsList = null;
+      resolversSnapshot = null;
+      for (const listener of listeners) listener();
     },
     subscribe(listener) {
       listeners.add(listener);

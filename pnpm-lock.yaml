@@ -57,6 +57,18 @@ importers:
         specifier: workspace:*
         version: link:../../packages/schemas/atlassian
 
+  examples/extensions:
+    devDependencies:
+      '@vertekum/cli':
+        specifier: workspace:*
+        version: link:../../packages/workbench/cli
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../packages/workbench/core
+      '@vertekum/ext-export-css':
+        specifier: workspace:*
+        version: link:../../packages/extensions/export-css
+
   examples/outputs:
     devDependencies:
       '@terrazzo/plugin-css':
@@ -64,7 +76,7 @@ importers:
         version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1)
       '@terrazzo/plugin-js':
         specifier: ^2.7.1
-        version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1)
+        version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1(yaml-to-momoa@0.0.8))
       '@vertekum/cli':
         specifier: workspace:*
         version: link:../../packages/workbench/cli
@@ -2730,7 +2742,7 @@ snapshots:
       '@terrazzo/parser': 2.7.1(yaml-to-momoa@0.0.8)
       '@terrazzo/token-tools': 2.7.1
 
-  '@terrazzo/plugin-js@2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1)':
+  '@terrazzo/plugin-js@2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1(yaml-to-momoa@0.0.8))':
     dependencies:
       '@terrazzo/cli': 0.10.5(hono@4.13.0)
       '@terrazzo/parser': 2.7.1(yaml-to-momoa@0.0.8)

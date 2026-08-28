@@ -1,11 +1,25 @@
 import {
+  assembleBindings,
   builtinValidators,
   EXPORTER_SERVICE,
   type ExporterService,
+  SCHEMA_BINDING_SERVICE,
+  type SchemaBinding,
+  type SchemaBindingService,
   VALIDATOR_SERVICE,
   type ValidatorService,
 } from '@vertekum/core';
 import type { Project } from '../loadProject';
+
+/** The same assembly `check` runs — one truth for what is in effect. */
+function assembledBindings(project: Project): SchemaBinding[] {
+  const contributed =
+    project.kernel.services
+      .get<SchemaBindingService>(SCHEMA_BINDING_SERVICE)
+      ?.list() ?? [];
+  return assembleBindings([...project.schemas.bindings, ...contributed])
+    .bindings;
+}
 
 export interface DescribeOptions {
   project: Project;
@@ -67,13 +81,16 @@ export async function runDescribe(options: DescribeOptions): Promise<number> {
     // failing. Schema bodies are deliberately not serialized — describe is an inventory, not a dump
     // — but the resolved PATH is, because that is what lets an agent open the file and read the
     // permitted vocabulary for itself.
-    schemas: project.schemas.bindings.map((b) => ({
+    // The ASSEMBLED view — extension-registered bindings and `$extends` patches included — with
+    // each binding's origin, so "which schema is in effect and who supplied it" is inspectable.
+    schemas: assembledBindings(project).map((b) => ({
       id: b.id ?? null,
       match: b.match,
       target: b.target ?? 'tokens',
       domain: b.domain ?? 'schema',
       severity: b.severity ?? 'error',
       file: b.file ?? null,
+      origin: b.origin ?? null,
     })),
     // What an agent can RUN here — like exporters, this exists nowhere on disk.
     commands: project.kernel.commands.list().map((c) => ({

@@ -71,6 +71,9 @@ The `dtcg` facade groups the token and resolver operations (`dtcg.tokens`, `dtcg
 - [Schema validation](./docs/schemas.md) — vocabulary bindings, layering, ejection,
   diagnostics.
 - [Tokens](./docs/tokens.md) — sets, groups, `$root`, value notation, references.
+- [Extension-held token data](./docs/extension-data.md) — token codecs: generative
+  payloads materialized into ordinary tokens. (Custom types are a schema concern —
+  see schema validation.)
 - [Resolvers and theming](./docs/resolvers.md) — compositions, modifiers, resolution.
 - [Export](./docs/export.md) — the exporter contract, targets, the run model.
 - [The core API](./docs/api.md) — direct headless use: the `dtcg` facade, the kernel,

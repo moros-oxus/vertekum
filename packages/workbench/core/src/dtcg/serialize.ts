@@ -1,5 +1,12 @@
+import type { TokenCodec } from '../document/codec';
 import type { Token } from '../document/types';
 import { type DtcgNode, VTK_PREFIX } from './parse';
+import { cloneNode, setNodeAt } from './tree';
+
+/** The lookup half of the codec service — all the write path needs. */
+export interface CodecLookup {
+  get(key: string): TokenCodec | undefined;
+}
 
 /**
  * Build a nested DTCG tree from a flat `Token[]`, writing `org.vertekum.meta` under `$extensions`
@@ -13,12 +20,23 @@ import { type DtcgNode, VTK_PREFIX } from './parse';
  * The DTCG node for one token. Extracted so the document's write path and this view builder share
  * one definition of what a token looks like on disk — two copies would drift.
  */
-export function tokenNode(token: Token): DtcgNode {
+export function tokenNode(token: Token, codecs?: CodecLookup): DtcgNode {
   const extensions: DtcgNode = { ...(token.extensions ?? {}) };
   if (token.vtk) {
     for (const [sub, value] of Object.entries(token.vtk)) {
       extensions[`${VTK_PREFIX}.${sub}`] = value;
     }
+  }
+
+  // A codec-owned token writes as its CARRIER — a conformant empty group whose payload holds the
+  // data (extension-held token data). Store form only: view builders (exporter staging) call
+  // without a lookup and get the plain interchange node below. A codec key with no registered
+  // codec also falls through to plain — better an honest token than an unreproducible payload.
+  const codec =
+    token.codec === undefined ? undefined : codecs?.get(token.codec);
+  if (codec) {
+    extensions[codec.key] = codec.serialize(token);
+    return { $extensions: extensions };
   }
 
   return {
@@ -93,4 +111,31 @@ export function serializeSets(
     files[`${set}.json`] = serializeCollection(group);
   }
   return files;
+}
+
+/**
+ * The INTERCHANGE form of a collection: every codec token's carrier node replaced by its plain
+ * `$type`/`$value` node, in a clone — the authored files are never touched. This is what exporters
+ * receive (`runTargets`), so a tool that stages files verbatim (the terrazzo bridge) sees real
+ * tokens where the store holds conformant carriers. Files without carriers pass through by
+ * reference; with no codec tokens at all this is the identity.
+ */
+export function interchangeFiles(
+  files: Record<string, DtcgNode>,
+  tokens: Token[],
+): Record<string, DtcgNode> {
+  const carriers = tokens.filter((token) => token.codec !== undefined);
+  if (carriers.length === 0) return files;
+
+  const out: Record<string, DtcgNode> = { ...files };
+  for (const token of carriers) {
+    const name = `${token.set ?? DEFAULT_SET}.json`;
+    const held = out[name];
+    if (!held) continue;
+    // Clone lazily, once per touched file.
+    const tree = held === files[name] ? cloneNode(held) : held;
+    out[name] = tree;
+    setNodeAt(tree, token.path, tokenNode(token));
+  }
+  return out;
 }

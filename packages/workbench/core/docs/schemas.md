@@ -187,6 +187,56 @@ inlined definitions this way); a reference only a network fetch could satisfy is
 error — offline and CI must behave identically. Vendor the schema as a file whose `$id`
 is that URL.
 
+## Extending the DTCG schema
+
+Custom and compound types are declared by **extending the effective DTCG schema** —
+tokens then carry them directly in `$type`/`$value`. Two pieces make the declaration
+small:
+
+**Derived anchors.** Short names for the effective `dtcg-tokens` schema's parts —
+`dtcg#tokenType`, `dtcg#token`, `dtcg#typographyValue`, `dtcg#curlyBraceReference`,
+`dtcg#tokenValueReference`, each value schema as `dtcg#<type>Value` — usable as `$ref`
+targets from any binding's schema (2020-12 documents). Anchors derive from the schema
+**in effect**, so an ejected or replaced DTCG binding feeds them.
+
+**Patch documents.** A schema whose top level is only `$extends`, mapping anchors to
+deltas, merged into the effective DTCG schema at load:
+
+```json
+{
+  "$extends": {
+    "dtcg#tokenType": { "enum": ["textCase"] },
+    "dtcg#token": {
+      "allOf": [ { "if": { "properties": { "$type": { "const": "textCase" } } },
+                   "then": { "properties": { "$value": {
+                     "anyOf": [ { "enum": ["none", "uppercase", "lowercase", "capitalize"] },
+                                { "$ref": "dtcg#tokenValueReference" } ] } } } } ]
+    }
+  }
+}
+```
+
+Merge semantics are **additive** — objects deep-merge, `enum`/`required` union,
+`allOf`/`anyOf`/`oneOf` append, scalars replace. Extending only ever adds; narrowing
+is what *layering* already does (every binding must pass). The merge is structural and
+happens at load, because the spec's value schemas are closed and composition cannot
+open them. An unknown target is `schema/unknown-extend-target`, never a silent no-op.
+
+Extended types are the project's **declared dialect**: valid against its effective
+schema — which travels as these small bindable documents — not against the unextended
+spec.
+
+## Routes and assembly
+
+Bindings arrive by three routes — the built-ins, config `schemas[]`, and extensions
+(the `'schema-bindings'` service) — and are assembled into one set: `id` replacement
+resolves **last-wins across every route** (an extension can eject exactly as config
+can), patch documents merge in order, and each binding carries an `origin`
+(`core` / `config` / `extension`) that `describe` publishes, so which schema is in
+effect and who supplied it stays inspectable. An extension may also register ordinary
+layered bindings — e.g. validating its own `$extensions` payloads (see
+[extension-held token data](./extension-data.md)) under its own [`domain`](#domain).
+
 ## Diagnostics
 
 Schema failures come back through `vertekum check` in the same vocabulary as every other

@@ -72,3 +72,36 @@ test('examples/agentic passes check and its vocabulary bites', async () => {
   expect(error.code).toBe(1);
   expect(error.stderr).toContain('refused');
 }, 60_000);
+
+const extensionsExample = join(repoRoot, 'examples/extensions');
+
+test('examples/extensions: extended types check clean and the patched schema bites', async () => {
+  const { stdout } = await run('node', [bin, 'check', '--json'], {
+    cwd: extensionsExample,
+  });
+  expect(JSON.parse(stdout).ok).toBe(true);
+
+  // A value outside the extended enum is refused by the PATCHED dtcg binding at the exact
+  // pointer — refused means nothing is written and the example stays clean.
+  const error = await run(
+    'node',
+    [bin, 'token', 'set', 'font.case.upper', 'sparkle'],
+    { cwd: extensionsExample },
+  ).catch((e) => e);
+  expect(error.code).toBe(1);
+  expect(error.stderr).toContain('schema/enum');
+  expect(error.stderr).toContain('/font/case/upper/$value');
+}, 60_000);
+
+test('examples/extensions: describe shows the assembled bindings with origins', async () => {
+  const { stdout } = await run('node', [bin, 'describe', '--json'], {
+    cwd: extensionsExample,
+  });
+  const schemas = JSON.parse(stdout).schemas as Array<{
+    id: string | null;
+    origin: string | null;
+  }>;
+  // The patch documents merged away; the surviving dtcg-tokens binding is core's, patched.
+  expect(schemas.filter((s) => s.id === 'dtcg-tokens')).toHaveLength(1);
+  expect(schemas.map((s) => s.origin)).toContain('core');
+}, 60_000);

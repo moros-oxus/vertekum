@@ -20,8 +20,9 @@ any error.
 ## What runs, in what order
 
 1. **Structural** — the files as they sit on disk, before parsing:
-   - every schema binding (the DTCG format schemas plus the project's configured
-     vocabulary — see `@vertekum/core`'s schema documentation),
+   - every schema binding (the DTCG format schemas, the project's configured
+     vocabulary, and any bindings installed extensions registered — see
+     `@vertekum/core`'s schema documentation),
    - schema-loading problems (`schema/unreadable`, `schema/no-op`, …),
    - resolver sources naming token sets that do not exist (`resolver/unknown-source`).
 2. **Relational** — the parsed model: reference validity (dangling aliases, pointer

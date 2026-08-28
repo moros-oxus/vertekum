@@ -25,6 +25,11 @@ export type {
   ExtensionSettingsInput,
 } from './config/manifest';
 export { ExtensionManifestSchema } from './config/manifest';
+export type { TokenCodec, TokenCodecService } from './document/codec';
+export {
+  createTokenCodecRegistry,
+  TOKEN_CODEC_SERVICE,
+} from './document/codec';
 export type {
   AddResolverCommand,
   AddTokenCommand,
@@ -48,6 +53,7 @@ export {
   removeToken,
   renamePath,
   replaceToken,
+  restoreFiles,
   restoreTokens,
   updateResolver,
   updateTokenValue,
@@ -75,6 +81,7 @@ export { parseCollection, ROOT_TOKEN, VTK_PREFIX } from './dtcg/parse';
 export { parseResolver, serializeResolver } from './dtcg/resolver';
 export {
   DEFAULT_SET,
+  interchangeFiles,
   serializeCollection,
   serializeSets,
   tokenNode,
@@ -118,6 +125,13 @@ export type {
 export type { FileStore, StorageProvider } from './storage/provider';
 export { createStorageProvider, serializeDocument } from './storage/provider';
 export { allowedNamesAt } from './validate/allowed-names';
+export type { AssembledSchemas } from './validate/assemble';
+export { assembleBindings } from './validate/assemble';
+export type { SchemaBindingService } from './validate/binding-registry';
+export {
+  createSchemaBindingRegistry,
+  SCHEMA_BINDING_SERVICE,
+} from './validate/binding-registry';
 export {
   aliasValidator,
   builtinValidators,
@@ -128,6 +142,7 @@ export {
   DTCG_RESOLVER_SCHEMA,
   DTCG_TOKEN_SCHEMA,
 } from './validate/dtcg-schema';
+export { DTCG_ANCHOR_ID, isPatchDocument } from './validate/extend';
 export { createValidatorRegistry } from './validate/registry';
 export type { SchemaBinding } from './validate/schema';
 export { defaultBindings, validateFiles } from './validate/schema';

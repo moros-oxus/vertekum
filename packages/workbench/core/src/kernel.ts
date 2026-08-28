@@ -4,6 +4,10 @@ import {
   scopedConfig,
 } from './config/config-store';
 import type { ExtensionManifest } from './config/manifest';
+import {
+  createTokenCodecRegistry,
+  TOKEN_CODEC_SERVICE,
+} from './document/codec';
 import { createDocument, type Document } from './document/document';
 import { createCommandRegistry } from './shell/command-registry';
 import { createServiceRegistry } from './shell/service-registry';
@@ -15,6 +19,10 @@ import type {
   InstalledExtension,
   ServiceRegistry,
 } from './shell/types';
+import {
+  createSchemaBindingRegistry,
+  SCHEMA_BINDING_SERVICE,
+} from './validate/binding-registry';
 import { builtinCommands } from './verbs/index';
 
 /** The thin kernel: document store, registries, config engine, and extension host (ADR-0009). */
@@ -59,9 +67,18 @@ function attributeCommands(
 }
 
 export function createKernel(): Kernel {
-  const document = createDocument();
+  // Codecs before the document: the token view derives through them (extension-held token data).
+  const codecs = createTokenCodecRegistry();
+  const document = createDocument({ codecs: () => codecs.list() });
+  // A codec registered after hydration must reach the already-derived view — without a version
+  // bump, so a runner never mistakes a registration for an edit to persist.
+  codecs.subscribe(() => document.invalidateDerived());
   const services = createServiceRegistry();
   const commands = createCommandRegistry();
+  // Core itself consumes both registries (parse, check), so they exist before any extension
+  // activates — registered on the raw services registry like the built-in verbs, unattributed.
+  services.register(TOKEN_CODEC_SERVICE, codecs);
+  services.register(SCHEMA_BINDING_SERVICE, createSchemaBindingRegistry());
   // Core's own curation verbs, registered before any extension activates. They go through the same
   // registry contributed commands use, so a client sees one list and cannot tell a built-in verb
   // from a contributed one. Registered on the RAW registry, not an attributed wrapper — they belong

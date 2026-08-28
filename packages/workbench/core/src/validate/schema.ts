@@ -32,6 +32,8 @@ export interface SchemaBinding {
   id?: string;
   /** Absolute path this schema was loaded from, when it came from a file. Published by `describe`. */
   file?: string;
+  /** Which route supplied it — built-in, config `schemas[]`, or an extension. Published by `describe`. */
+  origin?: 'core' | 'config' | 'extension';
 }
 
 /**
@@ -64,12 +66,14 @@ export function defaultBindings(): SchemaBinding[] {
       match: '*',
       target: 'resolver',
       schema: DTCG_RESOLVER_SCHEMA,
+      origin: 'core',
     },
     {
       id: 'dtcg-tokens',
       match: '*',
       target: 'tokens',
       schema: DTCG_TOKEN_SCHEMA,
+      origin: 'core',
     },
   ];
 }

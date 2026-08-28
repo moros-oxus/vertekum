@@ -1,0 +1,33 @@
+{
+  "$comment": "The same patch-document shape as text-case.json, delivered by the OTHER route: extensions/text-decoration.ts imports this file and registers it in code. It also extends the typography compound, so a typography $value may carry a textDecoration member.",
+  "$extends": {
+    "dtcg#tokenType": { "enum": ["textDecoration"] },
+    "dtcg#token": {
+      "allOf": [
+        {
+          "if": {
+            "properties": { "$type": { "const": "textDecoration" } },
+            "required": ["$type"]
+          },
+          "then": {
+            "properties": {
+              "$value": {
+                "anyOf": [
+                  { "enum": ["none", "underline", "overline", "line-through"] },
+                  { "$ref": "dtcg#tokenValueReference" }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "dtcg#typographyValue": {
+      "properties": {
+        "textDecoration": {
+          "enum": ["none", "underline", "overline", "line-through"]
+        }
+      }
+    }
+  }
+}

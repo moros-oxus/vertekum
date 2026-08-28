@@ -1,0 +1,59 @@
+{
+  "color": {
+    "ink": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.25, 0.02, 250],
+        "alpha": 1,
+        "hex": "#2e3440"
+      }
+    }
+  },
+  "font": {
+    "case": {
+      "upper": {
+        "$type": "textCase",
+        "$value": "uppercase"
+      },
+      "title": {
+        "$type": "textCase",
+        "$value": "capitalize"
+      }
+    },
+    "decoration": {
+      "underline": {
+        "$type": "textDecoration",
+        "$value": "underline"
+      },
+      "strike": {
+        "$type": "textDecoration",
+        "$value": "line-through",
+        "$description": "Struck-through content."
+      },
+      "emphasis": {
+        "$type": "textDecoration",
+        "$value": "{font.decoration.underline}"
+      }
+    }
+  },
+  "text": {
+    "link": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter",
+        "fontSize": {
+          "value": 1,
+          "unit": "rem"
+        },
+        "fontWeight": 500,
+        "letterSpacing": {
+          "value": 0,
+          "unit": "px"
+        },
+        "lineHeight": 1.5,
+        "textDecoration": "underline"
+      }
+    }
+  }
+}

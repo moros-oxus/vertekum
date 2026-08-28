@@ -38,4 +38,17 @@ export interface Token {
   vtk?: Record<string, unknown>;
   /** Foreign vendor `$extensions` (non-`org.vertekum.*`), preserved untouched. */
   extensions?: Record<string, unknown>;
+  /**
+   * The `$extensions` key of the codec that materialized this token from a carrier node
+   * (extension-held token data). Present = the store form is a conformant empty-group carrier and
+   * every write goes back through the codec; absent = an ordinary token node.
+   */
+  codec?: string;
+  /**
+   * The carrier payload as parsed, stamped alongside `codec`. A codec whose payload is a
+   * DERIVATION (a formula the value is computed from) reads this in `serialize` — the stored
+   * source cannot be reconstructed from the computed value alone, and it travels with the token
+   * through moves, replaces, and value edits.
+   */
+  codecSource?: unknown;
 }

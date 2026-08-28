@@ -1,3 +1,4 @@
+import type { TokenCodec } from '../document/codec';
 import { tokenId } from '../document/identity';
 import type { Token } from '../document/types';
 import { materializeTokens } from './materialize';
@@ -75,11 +76,36 @@ function vtkBucket(ext: DtcgNode | undefined): DtcgNode | undefined {
  * and that is the more common authoring style. `inherited` carries the nearest ancestor group's
  * type down; a token's own `$type` always wins.
  */
+/**
+ * The carrier rule (extension-held token data): a node that is not a token, has no non-`$`
+ * children and no `$root`, and whose `$extensions` carries exactly ONE registered codec key,
+ * materializes into an ordinary token via that codec. Anything else — children present, `$value`
+ * beside the key, two registered keys — is left as authored: the payload is inert group data
+ * there, and the malformed-carrier diagnostic belongs to the owning extension's schema binding,
+ * which can say WHY, not to a silent parse rule.
+ */
+function carrierOf(
+  node: DtcgNode,
+  codecs: TokenCodec[],
+): { codec: TokenCodec; payload: unknown } | null {
+  const ext = node.$extensions;
+  if (!ext || typeof ext !== 'object') return null;
+  for (const key of Object.keys(node)) {
+    if (!key.startsWith('$')) return null;
+  }
+  if (ROOT_TOKEN in node) return null;
+  const matches = codecs.filter((codec) => codec.key in (ext as DtcgNode));
+  if (matches.length !== 1) return null;
+  const codec = matches[0] as TokenCodec;
+  return { codec, payload: (ext as DtcgNode)[codec.key] };
+}
+
 function walk(
   node: DtcgNode,
   path: string[],
   out: Token[],
   set: string,
+  codecs: TokenCodec[],
   inherited?: string,
 ): void {
   if (isTokenNode(node)) {
@@ -107,19 +133,51 @@ function walk(
     return;
   }
 
+  // A carrier node — conformant empty group on disk, ordinary token in the model. The codec's
+  // fields are authoritative (the payload owns `$type`/`$value`/`$description`); the carrier's
+  // OTHER extension keys ride exactly as they would on a real token.
+  const carrier = path.length > 0 ? carrierOf(node, codecs) : null;
+  if (carrier) {
+    const fields = carrier.codec.materialize(carrier.payload, { set, path });
+    if (fields) {
+      const ext = node.$extensions as DtcgNode;
+      const token: Token = {
+        id: tokenId(set, path),
+        path,
+        type: fields.type,
+        value: fields.value,
+        set,
+        codec: carrier.codec.key,
+        codecSource: carrier.payload,
+      };
+      if (fields.description !== undefined) {
+        token.description = fields.description;
+      }
+      const vtk = vtkBucket(ext);
+      if (vtk) token.vtk = vtk;
+      const foreign = foreignExtensions(ext);
+      if (foreign) {
+        delete foreign[carrier.codec.key];
+        if (Object.keys(foreign).length > 0) token.extensions = foreign;
+      }
+      out.push(token);
+      return;
+    }
+  }
+
   const groupType = typeof node.$type === 'string' ? node.$type : inherited;
 
   // The root token is a CHILD, so it is walked like one — which gives it `$type` inheritance and
   // its own `$description`/`$extensions` handling for free, rather than a second parsing path.
   const root = node[ROOT_TOKEN];
   if (root && typeof root === 'object') {
-    walk(root as DtcgNode, [...path, ROOT_TOKEN], out, set, groupType);
+    walk(root as DtcgNode, [...path, ROOT_TOKEN], out, set, codecs, groupType);
   }
 
   for (const [key, child] of Object.entries(node)) {
     if (key.startsWith('$')) continue;
     if (child && typeof child === 'object') {
-      walk(child as DtcgNode, [...path, key], out, set, groupType);
+      walk(child as DtcgNode, [...path, key], out, set, codecs, groupType);
     }
   }
 }
@@ -133,10 +191,13 @@ function walk(
  * exporter/validator path re-materializes each bundle (`resolveExporterInput`); the flat pass here
  * is what the un-composed model (UI, verbs, migrate) reads.
  */
-export function parseCollection(files: Record<string, DtcgNode>): Token[] {
+export function parseCollection(
+  files: Record<string, DtcgNode>,
+  codecs: TokenCodec[] = [],
+): Token[] {
   const out: Token[] = [];
   for (const [filename, node] of Object.entries(files)) {
-    walk(node, [], out, filename.replace(/\.json$/, ''));
+    walk(node, [], out, filename.replace(/\.json$/, ''), codecs);
   }
   return materializeTokens(out);
 }
