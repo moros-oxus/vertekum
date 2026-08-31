@@ -1,5 +1,15 @@
 # @vertekum/cli
 
+## 0.3.5
+
+### Patch Changes
+
+- [`86eb7a3`](https://github.com/moros-oxus/vertekum/commit/86eb7a33302c84b0db6be1f5e9bb9b1cf77a4d8a) Thanks [@tschemmer](https://github.com/tschemmer)! - Collection files may live in subdirectories — directories are purely organizational. A set's name is its collection-relative path (`brands/rexall`); reading walks recursively, writing creates and cleans up directories, schema `match` globs the relative path, and `vtk resolver -s` paths re-join the tail as the set name (resolutionOrder refs RFC 6901-escape nested names, tolerantly read either way).
+- Updated dependencies [[`86eb7a3`](https://github.com/moros-oxus/vertekum/commit/86eb7a33302c84b0db6be1f5e9bb9b1cf77a4d8a)]:
+  - @vertekum/core@0.3.5
+  - vertekum@0.3.0
+  - @vertekum/server@0.3.0
+
 ## 0.3.4
 
 ### Patch Changes
