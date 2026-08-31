@@ -1,5 +1,15 @@
 # @vertekum/cli
 
+## 0.3.3
+
+### Patch Changes
+
+- [`9cff445`](https://github.com/moros-oxus/vertekum/commit/9cff4459526a0900295b4c8f1f90460fe753b77f) Thanks [@tschemmer](https://github.com/tschemmer)! - A relative `--cwd` no longer breaks config loading (`ERR_INVALID_MODULE_SPECIFIER`): the working directory is absolutized before discovery and the config is imported by file URL, which also makes loading correct on Windows.
+- Updated dependencies []:
+  - vertekum@0.3.0
+  - @vertekum/core@0.3.3
+  - @vertekum/server@0.3.0
+
 ## 0.3.2
 
 ### Patch Changes
