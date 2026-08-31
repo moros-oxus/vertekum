@@ -1,5 +1,6 @@
 import type { ResolverDocument } from '../document/resolver-types';
 import type { Token } from '../document/types';
+import type { DtcgNode } from '../dtcg/parse';
 import type { ExporterService } from '../export/exporter';
 import type { Target } from '../export/target';
 
@@ -42,6 +43,11 @@ export interface ValidationInput {
   targets?: Target[];
   /** The live exporter registry, for validators that check against it. */
   exporters?: ExporterService;
+  /**
+   * The raw collection trees, for validators whose subject is not token-shaped — group
+   * `$extensions` payloads, carrier data. The token list cannot show an absence; the files can.
+   */
+  files?: Record<string, DtcgNode>;
 }
 
 /** A registered check. Extensions register these; `vertekum check` runs every one. */

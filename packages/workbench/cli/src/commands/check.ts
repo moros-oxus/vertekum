@@ -126,6 +126,7 @@ async function collectRelational(project: Project): Promise<Diagnostic[]> {
     resolvers: project.document.getResolvers(),
     targets: readTargets(project),
     exporters: project.kernel.services.get<ExporterService>(EXPORTER_SERVICE),
+    files: project.document.getFiles(),
   };
   const out: Diagnostic[] = [];
   for (const validator of [...builtinValidators, ...(registry?.list() ?? [])]) {

@@ -1,4 +1,8 @@
-import type { TokenCodec } from '../document/codec';
+import {
+  type GroupTokenCodec,
+  isGroupCodec,
+  type TokenCodec,
+} from '../document/codec';
 import { tokenId } from '../document/identity';
 import type { Token } from '../document/types';
 import { materializeTokens } from './materialize';
@@ -100,12 +104,20 @@ function carrierOf(
   return { codec, payload: (ext as DtcgNode)[codec.key] };
 }
 
+interface PendingExpansion {
+  codec: GroupTokenCodec;
+  payload: unknown;
+  set: string;
+  path: string[];
+}
+
 function walk(
   node: DtcgNode,
   path: string[],
   out: Token[],
   set: string,
   codecs: TokenCodec[],
+  pending: PendingExpansion[],
   inherited?: string,
 ): void {
   if (isTokenNode(node)) {
@@ -137,7 +149,13 @@ function walk(
   // fields are authoritative (the payload owns `$type`/`$value`/`$description`); the carrier's
   // OTHER extension keys ride exactly as they would on a real token.
   const carrier = path.length > 0 ? carrierOf(node, codecs) : null;
-  if (carrier) {
+  if (carrier && isGroupCodec(carrier.codec)) {
+    // Group carriers expand AFTER the whole collection is walked, so an anchor can reference a
+    // real token anywhere in it (two-pass parse).
+    pending.push({ codec: carrier.codec, payload: carrier.payload, set, path });
+    return;
+  }
+  if (carrier && !isGroupCodec(carrier.codec)) {
     const fields = carrier.codec.materialize(carrier.payload, { set, path });
     if (fields) {
       const ext = node.$extensions as DtcgNode;
@@ -171,13 +189,29 @@ function walk(
   // its own `$description`/`$extensions` handling for free, rather than a second parsing path.
   const root = node[ROOT_TOKEN];
   if (root && typeof root === 'object') {
-    walk(root as DtcgNode, [...path, ROOT_TOKEN], out, set, codecs, groupType);
+    walk(
+      root as DtcgNode,
+      [...path, ROOT_TOKEN],
+      out,
+      set,
+      codecs,
+      pending,
+      groupType,
+    );
   }
 
   for (const [key, child] of Object.entries(node)) {
     if (key.startsWith('$')) continue;
     if (child && typeof child === 'object') {
-      walk(child as DtcgNode, [...path, key], out, set, codecs, groupType);
+      walk(
+        child as DtcgNode,
+        [...path, key],
+        out,
+        set,
+        codecs,
+        pending,
+        groupType,
+      );
     }
   }
 }
@@ -196,8 +230,54 @@ export function parseCollection(
   codecs: TokenCodec[] = [],
 ): Token[] {
   const out: Token[] = [];
+  const pending: PendingExpansion[] = [];
   for (const [filename, node] of Object.entries(files)) {
-    walk(node, [], out, filename.replace(/\.json$/, ''), codecs);
+    walk(node, [], out, filename.replace(/\.json$/, ''), codecs, pending);
   }
+
+  if (pending.length > 0) {
+    // Alias-chain resolution over everything the first pass produced — ordinary and value-codec
+    // tokens. Cycle-guarded; a dangling chain resolves to undefined and the codec decides.
+    const byPath = new Map(out.map((token) => [token.path.join('.'), token]));
+    const resolve = (value: unknown): unknown => {
+      const seen = new Set<string>();
+      let held = value;
+      while (typeof held === 'string' && /^\{[^}]+\}$/.test(held)) {
+        const target = held.slice(1, -1);
+        if (seen.has(target)) return undefined;
+        seen.add(target);
+        const token = byPath.get(target);
+        if (!token) return undefined;
+        held = token.value;
+      }
+      return held;
+    };
+
+    for (const expansion of pending) {
+      const children = expansion.codec.expand(
+        expansion.payload,
+        { set: expansion.set, path: expansion.path },
+        { resolve },
+      );
+      if (!children) continue;
+      for (const [name, fields] of Object.entries(children)) {
+        const path = [...expansion.path, name];
+        out.push({
+          id: tokenId(expansion.set, path),
+          path,
+          type: fields.type,
+          value: fields.value,
+          set: expansion.set,
+          codec: expansion.codec.key,
+          codecSource: expansion.payload,
+          generated: true,
+          ...(fields.description !== undefined
+            ? { description: fields.description }
+            : {}),
+        });
+      }
+    }
+  }
+
   return materializeTokens(out);
 }

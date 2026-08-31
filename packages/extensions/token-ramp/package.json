@@ -1,0 +1,49 @@
+{
+  "name": "@vertekum/ext-token-ramp",
+  "version": "0.3.3",
+  "description": "Vertekum extension: generate colour ramps from a single brand anchor — a fixed lightness ladder with chroma arched through the anchor",
+  "license": "Apache-2.0",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "color",
+    "ramp",
+    "palette"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moros-oxus/vertekum.git",
+    "directory": "packages/extensions/token-ramp"
+  },
+  "homepage": "https://github.com/moros-oxus/vertekum",
+  "bugs": "https://github.com/moros-oxus/vertekum/issues",
+  "files": [
+    "CHANGELOG.md",
+    "docs",
+    "src",
+    "tsconfig.json",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts"
+  },
+  "peerDependencies": {
+    "@vertekum/core": "workspace:*"
+  },
+  "dependencies": {
+    "culori": "^4.0.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/culori": "^4.0.1",
+    "@vertekum/core": "workspace:*"
+  }
+}

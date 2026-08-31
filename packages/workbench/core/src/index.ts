@@ -25,9 +25,17 @@ export type {
   ExtensionSettingsInput,
 } from './config/manifest';
 export { ExtensionManifestSchema } from './config/manifest';
-export type { TokenCodec, TokenCodecService } from './document/codec';
+export type {
+  CodecTokenFields,
+  GroupCodecContext,
+  GroupTokenCodec,
+  TokenCodec,
+  TokenCodecService,
+  ValueTokenCodec,
+} from './document/codec';
 export {
   createTokenCodecRegistry,
+  isGroupCodec,
   TOKEN_CODEC_SERVICE,
 } from './document/codec';
 export type {

@@ -1,7 +1,7 @@
 # examples/extensions
 
-Two type extensions to the DTCG schema, side by side — one delivered from config, one
-from an extension. DTCG's 2025.10 type set has no `textCase` or `textDecoration`; this
+Three extensions in action: two type extensions to the DTCG schema — one delivered
+from config, one from an extension — and a generated colour ramp. DTCG's 2025.10 type set has no `textCase` or `textDecoration`; this
 project declares both, and its tokens carry them directly where every tool expects:
 
 ```json
@@ -16,7 +16,7 @@ load, whichever route delivers them:
 schemas/text-case.json           the config route — a patch file bound in vertekum.config.ts
 schemas/text-decoration.json     the same document shape, delivered by the extension route:
 extensions/text-decoration.ts    …imports it and registers it in code
-tokens/core.json                 tokens using both types, an alias, a compound
+tokens/core.json                 tokens using both types, an alias, a compound — and a ramp
 ```
 
 Run `vertekum check` here; it passes. `vertekum build` writes `build/css/tokens.css`.
@@ -76,6 +76,17 @@ document:
   emission is the exporter's own concern, independent of type extensions.)
 - `vertekum describe --json` lists the bindings in effect with their origins
   (`core` / `config` / `extension`).
+
+## The generated ramp
+
+`color.teal` holds no stops — it is a group carrying a
+`org.vertekum.generate/ramp` payload (`@vertekum/ext-token-ramp`): an anchor
+referencing `{brand.poolside}` and a scalar naming the steps. The stops are
+**generated** into the model — aliasable, validated, exported to css — while the
+file stores only the payload. Editing a stop directly is refused;
+`vertekum ramp build` writes them as real tokens instead, and
+`ramp build --check` guards the committed form. The extension's docs walk the
+colour math.
 
 ## The dialect, stated plainly
 

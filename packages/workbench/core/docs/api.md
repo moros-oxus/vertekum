@@ -122,10 +122,11 @@ The codec seam in API terms — [the reference](./extension-data.md) covers the 
 (custom types are a schema concern instead: see
 [extending the DTCG schema](./schemas.md#extending-the-dtcg-schema)):
 
-- `TokenCodec` / `TokenCodecService` / `TOKEN_CODEC_SERVICE` — register a codec
-  (`{ key, materialize, serialize }`) and carriers under that key parse into ordinary
-  tokens (`token.codec` carries the provenance); every document write round-trips them
-  back to carrier form. Registering after `hydrate` refreshes the derived token view
+- `TokenCodec` / `TokenCodecService` / `TOKEN_CODEC_SERVICE` — register a VALUE codec
+  (`{ key, materialize, serialize }`; carrier ⇄ one token) or a GROUP codec
+  (`{ key, expand }`; leaf carrier group → generated child tokens, refused by the
+  mutation verbs). `token.codec`/`codecSource`/`generated` carry the provenance.
+  Registering after `hydrate` refreshes the derived token view
   (`document.invalidateDerived()`) without counting as a mutation.
 - `SchemaBindingService` / `SCHEMA_BINDING_SERVICE` — register a `SchemaBinding`
   programmatically; it layers into `vertekum check` beside configured bindings.

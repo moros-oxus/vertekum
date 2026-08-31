@@ -68,6 +68,9 @@ importers:
       '@vertekum/ext-export-css':
         specifier: workspace:*
         version: link:../../packages/extensions/export-css
+      '@vertekum/ext-token-ramp':
+        specifier: workspace:*
+        version: link:../../packages/extensions/token-ramp
 
   examples/outputs:
     devDependencies:
@@ -263,6 +266,22 @@ importers:
       vertekum:
         specifier: workspace:*
         version: link:../../workbench/app
+
+  packages/extensions/token-ramp:
+    dependencies:
+      culori:
+        specifier: ^4.0.2
+        version: 4.0.2
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/culori':
+        specifier: ^4.0.1
+        version: 4.0.1
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../workbench/core
 
   packages/extensions/tokens:
     dependencies:

@@ -14,7 +14,8 @@
       "@vertekum/schema-builder",
       "@vertekum/schema-atlassian",
       "@vertekum/ext-export-terrazzo",
-      "@vertekum/schema-dtcg"
+      "@vertekum/schema-dtcg",
+      "@vertekum/ext-token-ramp"
     ]
   ],
   "linked": [],

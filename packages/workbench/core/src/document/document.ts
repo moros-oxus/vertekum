@@ -9,7 +9,7 @@ import {
   pruneEmptyAncestors,
   setNodeAt,
 } from '../dtcg/tree';
-import type { TokenCodec } from './codec';
+import { isGroupCodec, type TokenCodec } from './codec';
 import type { Command } from './commands';
 import {
   isResolverFile,
@@ -189,6 +189,7 @@ export function createDocument(options?: {
     if (ext && !('$value' in node) && !('$ref' in node)) {
       for (const codec of codecList()) {
         if (!(codec.key in ext)) continue;
+        if (isGroupCodec(codec)) break; // a group payload is not a value to patch
         const fields = codec.materialize(ext[codec.key], at);
         if (!fields) break;
         ext[codec.key] = codec.serialize({

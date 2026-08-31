@@ -1,4 +1,4 @@
-import type { TokenCodec } from '../document/codec';
+import { isGroupCodec, type TokenCodec } from '../document/codec';
 import type { Token } from '../document/types';
 import { type DtcgNode, VTK_PREFIX } from './parse';
 import { cloneNode, setNodeAt } from './tree';
@@ -34,7 +34,7 @@ export function tokenNode(token: Token, codecs?: CodecLookup): DtcgNode {
   // codec also falls through to plain — better an honest token than an unreproducible payload.
   const codec =
     token.codec === undefined ? undefined : codecs?.get(token.codec);
-  if (codec) {
+  if (codec && !isGroupCodec(codec)) {
     extensions[codec.key] = codec.serialize(token);
     return { $extensions: extensions };
   }

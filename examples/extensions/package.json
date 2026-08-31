@@ -2,7 +2,7 @@
   "name": "@vertekum-example/extensions",
   "private": true,
   "version": "0.3.1",
-  "description": "Two extensions holding token data in conformant DTCG files: a minimal custom type, and a derivation with a contributed CLI command.",
+  "description": "Extensions in action: two DTCG type extensions (config + extension routes) and a generated colour ramp.",
   "type": "module",
   "scripts": {
     "check": "vertekum check",
@@ -11,6 +11,7 @@
   "devDependencies": {
     "@vertekum/cli": "workspace:*",
     "@vertekum/core": "workspace:*",
-    "@vertekum/ext-export-css": "workspace:*"
+    "@vertekum/ext-export-css": "workspace:*",
+    "@vertekum/ext-token-ramp": "workspace:*"
   }
 }

@@ -1,12 +1,11 @@
 {
   "color": {
-    "ink": {
-      "$type": "color",
-      "$value": {
-        "colorSpace": "oklch",
-        "components": [0.25, 0.02, 250],
-        "alpha": 1,
-        "hex": "#2e3440"
+    "teal": {
+      "$extensions": {
+        "org.vertekum.generate/ramp": {
+          "anchor": "{brand.poolside}",
+          "scalar": "100-500/100"
+        }
       }
     }
   },
@@ -53,6 +52,17 @@
         },
         "lineHeight": 1.5,
         "textDecoration": "underline"
+      }
+    }
+  },
+  "brand": {
+    "poolside": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.6884, 0.1148, 188.2],
+        "alpha": 1,
+        "hex": "#1DB1A8"
       }
     }
   }

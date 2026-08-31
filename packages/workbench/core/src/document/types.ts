@@ -51,4 +51,10 @@ export interface Token {
    * through moves, replaces, and value edits.
    */
   codecSource?: unknown;
+  /**
+   * True for a token a GROUP codec generated (one payload → many tokens). A view, not storage:
+   * no file node exists at its path, the store never writes it, and the curation verbs refuse to
+   * mutate it — the group's payload is the single source.
+   */
+  generated?: true;
 }
