@@ -1,0 +1,13 @@
+{
+  "brand": {
+    "print": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.45, 0.09, 250],
+        "alpha": 1,
+        "hex": "#33518d"
+      }
+    }
+  }
+}

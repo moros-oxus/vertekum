@@ -17,6 +17,7 @@ schemas/text-case.json           the config route — a patch file bound in vert
 schemas/text-decoration.json     the same document shape, delivered by the extension route:
 extensions/text-decoration.ts    …imports it and registers it in code
 tokens/core.json                 tokens using both types, an alias, a compound — and a ramp
+tokens/brands/print.json         a set in a subdirectory — directories are organizational
 ```
 
 Run `vertekum check` here; it passes. `vertekum build` writes `build/css/tokens.css`.

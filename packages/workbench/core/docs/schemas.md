@@ -87,9 +87,10 @@ for `{ match }` — or an object:
 
 #### `match`
 
-A glob over the collection **file name** (not a path — the collection is flat). `*`
-matches any run of characters; the whole name must match. `'core-tokens.json'` binds one
-set; `'*'` binds every file of the binding's `target` kind.
+A glob over the collection-relative **file path** (`core.json`,
+`brands/rexall.json`). `*` matches any run of characters — directories included —
+and the whole path must match. `'core-tokens.json'` binds one set; `'brands/*'`
+binds a subdirectory; `'*'` binds every file of the binding's `target` kind.
 
 #### `target`
 

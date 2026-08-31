@@ -65,14 +65,18 @@ test('-s with no resolvers points at resolver add', () => {
   );
 });
 
-test('a full -s path requires its first segment to name a resolver, with a suggestion', () => {
+test('a multi-segment -s path with an unknown head is an elided NESTED set, not an error', () => {
+  // Nested collection files made this legitimate: 'rexal/sem' is a set named 'rexal/sem'.
+  // A typo'd resolver surfaces downstream instead ("no token set file 'rexal/sem.json'").
   const document = withResolvers('rexall');
-  expect(() => resolverAddress(document, { set: 'rexal/sem' })).toThrow(
-    /no resolver 'rexal' — did you mean 'rexall'\?/,
-  );
+  expect(resolverAddress(document, { set: 'rexal/sem' })).toEqual({
+    resolver: 'rexall',
+    branch: 'set',
+    set: 'rexal/sem',
+  });
 });
 
-test('-s refuses a path that names only a resolver, an empty segment, and extra depth', () => {
+test('-s refuses a path that names only a resolver or holds an empty segment', () => {
   const document = withResolvers('rexall');
   expect(() => resolverAddress(document, { set: 'rexall' })).toThrow(
     /names only a resolver/,
@@ -80,9 +84,12 @@ test('-s refuses a path that names only a resolver, an empty segment, and extra 
   expect(() => resolverAddress(document, { set: 'rexall//sem' })).toThrow(
     /empty path segment/,
   );
-  expect(() => resolverAddress(document, { set: 'rexall/sem/deep' })).toThrow(
-    /too deep/,
-  );
+  // Depth is no longer bounded: the tail is a nested set name.
+  expect(resolverAddress(document, { set: 'rexall/sem/deep' })).toEqual({
+    resolver: 'rexall',
+    branch: 'set',
+    set: 'sem/deep',
+  });
 });
 
 test('-m walks one, two, and three segments by the first-segment-is-resolver rule', () => {
@@ -123,4 +130,20 @@ test('closest and suggest surface near-misses within two edits, silent beyond', 
   expect(closest('zzz', ['theme', 'brand'])).toBeUndefined();
   expect(suggest('them', ['theme'])).toBe(" — did you mean 'theme'?");
   expect(suggest('zzz', ['theme'])).toBe('');
+});
+
+test('a nested set name re-joins after the resolver segment', () => {
+  const document = withResolvers('rexall');
+  // Elided: the whole path is the set.
+  expect(resolverAddress(document, { set: 'brands/lilly' })).toEqual({
+    resolver: 'rexall',
+    branch: 'set',
+    set: 'brands/lilly',
+  });
+  // Explicit: first segment is the resolver, the rest is the set.
+  expect(resolverAddress(document, { set: 'rexall/brands/lilly' })).toEqual({
+    resolver: 'rexall',
+    branch: 'set',
+    set: 'brands/lilly',
+  });
 });

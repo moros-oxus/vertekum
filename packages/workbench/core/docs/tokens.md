@@ -7,10 +7,16 @@ byte-for-byte in structure.
 
 ## The collection
 
-The collection directory holds one JSON file per **set** (`core.json`, `brand.json` — the
-set name is the file name minus `.json`) and zero or more resolver documents
-(`*.resolver.json`, covered in [resolvers](./resolvers.md)). Sets are the unit of
-composition: a resolver combines them into themes.
+The collection directory holds one JSON file per **set** and zero or more resolver
+documents (`*.resolver.json`, covered in [resolvers](./resolvers.md)). Sets are the
+unit of composition: a resolver combines them into themes.
+
+Files may live in subdirectories — **directories are purely organizational**, no
+semantics attach to structure. A set's name is its collection-relative path minus
+`.json`: `core.json` is the set `core`, `brands/rexall.json` is the set
+`brands/rexall` (that name is what resolver sources reference and what `--set`
+takes). Hidden entries (dot-files and dot-directories) are never part of a
+collection.
 
 A token's identity is `(set, path)` — nothing synthetic is stored in the files.
 

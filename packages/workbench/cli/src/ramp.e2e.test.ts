@@ -71,3 +71,37 @@ test('an unresolvable anchor is loud in check', async () => {
     ),
   ).toBe(true);
 }, 60_000);
+
+test('sets live in subdirectories: read, created by verb, removed with their dir', async () => {
+  const cwd = await fixture();
+
+  // The shipped nested set is read and exported like any other.
+  const described = await run('node', [bin, 'describe', '--json'], { cwd });
+  expect(JSON.parse(described.stdout).project.sets).toContain('brands/print');
+
+  await run('node', [bin, 'set', 'add', 'brands/extra'], { cwd });
+  await run(
+    'node',
+    [
+      bin,
+      'token',
+      'add',
+      'x.y',
+      '4px',
+      '--type',
+      'dimension',
+      '--set',
+      'brands/extra',
+    ],
+    { cwd },
+  );
+  const file = join(cwd, 'tokens/brands/extra.json');
+  expect(JSON.parse(await readFile(file, 'utf8')).x.y.$value).toEqual({
+    value: 4,
+    unit: 'px',
+  });
+
+  await run('node', [bin, 'set', 'remove', 'brands/extra', '--force'], { cwd });
+  const check = await run('node', [bin, 'check', '--json'], { cwd });
+  expect(JSON.parse(check.stdout).ok).toBe(true);
+}, 120_000);

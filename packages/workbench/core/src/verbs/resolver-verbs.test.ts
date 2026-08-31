@@ -576,3 +576,32 @@ test('editing preserves pass-through fields — the snapshot is cloned, never mu
   // The pre-edit snapshot did not gain the set — the verb edited a clone.
   expect(before.sets.sem).toBeUndefined();
 });
+
+test('a nested set writes an RFC 6901-escaped order ref and removes cleanly', async () => {
+  const document = newDocument({
+    sets: ['core', 'brands/lilly'],
+    resolvers: {
+      rexall: {
+        version: '2025.10',
+        sets: { core: { sources: [{ $ref: 'core.json' }] } },
+        modifiers: {},
+        resolutionOrder: [{ $ref: '#/sets/core' }],
+      },
+    },
+  });
+  await run('resolver add', document, {}, { set: 'rexall/brands/lilly' });
+  let doc = resolverOf(document, 'rexall');
+  expect(doc.sets['brands/lilly']).toEqual({
+    sources: [{ $ref: 'brands/lilly.json' }],
+  });
+  expect(doc.resolutionOrder.at(-1)).toEqual({
+    $ref: '#/sets/brands~1lilly',
+  });
+
+  const list = await run('resolver list', document, { name: 'rexall' });
+  expect(list?.summary).toContain('sets/brands/lilly');
+
+  await run('resolver remove', document, {}, { set: 'rexall/brands/lilly' });
+  doc = resolverOf(document, 'rexall');
+  expect(doc.resolutionOrder).toEqual([{ $ref: '#/sets/core' }]);
+});

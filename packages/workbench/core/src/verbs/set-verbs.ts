@@ -2,6 +2,22 @@ import { addSet, removeSet } from '../document/commands';
 import type { CommandDescriptor } from '../shell/types';
 import { documentOf, requireArg } from './context';
 
+/**
+ * A set name may be a PATH (`brands/rexall` → `brands/rexall.json`) — directories are purely
+ * organizational. The guard refuses shapes that would escape or confuse the collection.
+ */
+function requireValidSetName(name: string): void {
+  const segments = name.split('/');
+  if (
+    name.includes('\\') ||
+    segments.some((s) => s === '' || s === '.' || s === '..')
+  ) {
+    throw new Error(
+      `'${name}' is not a valid set name — segments separated by '/', no empty, '.' or '..' segments`,
+    );
+  }
+}
+
 /** Set curation. A set is a file, so these create and delete `<name>.json` in the collection. */
 export const setVerbs: CommandDescriptor[] = [
   {
@@ -11,6 +27,7 @@ export const setVerbs: CommandDescriptor[] = [
     run(ctx) {
       const document = documentOf(ctx);
       const name = requireArg(ctx, 'name');
+      requireValidSetName(name);
       if (document.getSets().includes(name)) {
         throw new Error(`set '${name}' already exists`);
       }

@@ -1,6 +1,6 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build, defineConfig, parse } from '@terrazzo/parser';
 import type {
@@ -91,6 +91,8 @@ export const terrazzoExporter: Exporter = {
           ),
         ]);
       for (const [name, tree] of corrected) {
+        // Nested set names (`brands/rexall.json`) need their directories staged too.
+        await mkdir(dirname(join(staging, name)), { recursive: true });
         await writeFile(join(staging, name), JSON.stringify(tree));
       }
 

@@ -5,6 +5,11 @@ import {
 } from '../document/commands';
 import type { Document } from '../document/document';
 import type { ResolverDocument, Source } from '../document/resolver-types';
+import {
+  escapePointerSegment,
+  orderModifierName,
+  orderSetName,
+} from '../dtcg/resolve';
 import type { CommandDescriptor } from '../shell/types';
 import { documentOf, requireArg } from './context';
 import type { ResolverAddress } from './resolver-address';
@@ -122,10 +127,10 @@ function orderEntryName(ref: string): {
   kind: 'sets' | 'modifiers' | null;
   name: string | null;
 } {
-  const set = /^#\/sets\/(.+)$/.exec(ref);
-  if (set) return { kind: 'sets', name: set[1] as string };
-  const modifier = /^#\/modifiers\/(.+)$/.exec(ref);
-  if (modifier) return { kind: 'modifiers', name: modifier[1] as string };
+  const set = orderSetName(ref);
+  if (set !== undefined) return { kind: 'sets', name: set };
+  const modifier = orderModifierName(ref);
+  if (modifier !== undefined) return { kind: 'modifiers', name: modifier };
   return { kind: null, name: null };
 }
 
@@ -200,7 +205,9 @@ export const resolverVerbs: CommandDescriptor[] = [
         }
         requireSetFile(document, set);
         doc.sets[set] = { sources: [{ $ref: fileOf(set) }] };
-        doc.resolutionOrder.push({ $ref: `#/sets/${set}` });
+        doc.resolutionOrder.push({
+          $ref: `#/sets/${escapePointerSegment(set)}`,
+        });
         document.apply(updateResolver(address.resolver, doc));
         return { summary: `added set ${set} to ${address.resolver}` };
       }
@@ -283,7 +290,7 @@ export const resolverVerbs: CommandDescriptor[] = [
         }
         delete doc.sets[set];
         doc.resolutionOrder = doc.resolutionOrder.filter(
-          (entry) => entry.$ref !== `#/sets/${set}`,
+          (entry) => orderSetName(entry.$ref) !== set,
         );
         document.apply(updateResolver(address.resolver, doc));
         return { summary: `removed set ${set} from ${address.resolver}` };

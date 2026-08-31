@@ -1,17 +1,39 @@
-import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  readdir,
+  readFile,
+  rmdir,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import type { DtcgNode } from '../dtcg/parse';
 
-/** Read every `*.json` file in a collection directory as parsed JSON. */
+/**
+ * Read every `*.json` file in a collection directory as parsed JSON, RECURSIVELY — subdirectories
+ * are purely organizational (a set's name is its collection-relative path minus `.json`:
+ * `brands/rexall`). Keys are POSIX-relative paths regardless of platform. Dot-entries are skipped:
+ * hidden directories are never part of a collection.
+ */
 export async function readCollection(
   dir: string,
 ): Promise<Record<string, DtcgNode>> {
-  const entries = await readdir(dir).catch(() => [] as string[]);
   const files: Record<string, DtcgNode> = {};
-  for (const name of entries) {
-    if (!name.endsWith('.json')) continue;
-    files[name] = JSON.parse(await readFile(join(dir, name), 'utf8'));
-  }
+  const walk = async (prefix: string): Promise<void> => {
+    const entries = await readdir(join(dir, prefix), {
+      withFileTypes: true,
+    }).catch(() => []);
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        await walk(rel);
+      } else if (entry.name.endsWith('.json')) {
+        files[rel] = JSON.parse(await readFile(join(dir, rel), 'utf8'));
+      }
+    }
+  };
+  await walk('');
   return files;
 }
 
@@ -37,18 +59,33 @@ export async function writeCollection(
 ): Promise<void> {
   await mkdir(dir, { recursive: true });
   for (const [name, data] of Object.entries(files)) {
+    // Nested set names (`brands/rexall.json`) need their directories to exist.
+    await mkdir(dirname(join(dir, name)), { recursive: true });
     await writeFile(
       join(dir, name),
       `${JSON.stringify(data, null, indent)}\n`,
       'utf8',
     );
   }
-  const existing = await readdir(dir).catch(() => [] as string[]);
-  for (const name of existing) {
-    if (name.endsWith('.json') && !(name in files)) {
-      await unlink(join(dir, name)).catch(() => {});
+  // Dir-sync, recursively: managed `*.json` no longer in the record are removed wherever they
+  // sit, and a directory the sync emptied is removed best-effort (organizational only — nothing
+  // references a directory).
+  const sweep = async (prefix: string): Promise<void> => {
+    const entries = await readdir(join(dir, prefix), {
+      withFileTypes: true,
+    }).catch(() => []);
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        await sweep(rel);
+        await rmdir(join(dir, rel)).catch(() => {}); // only succeeds when emptied
+      } else if (entry.name.endsWith('.json') && !(rel in files)) {
+        await unlink(join(dir, rel)).catch(() => {});
+      }
     }
-  }
+  };
+  await sweep('');
 }
 
 /** Write an export artifact as text, refusing to escape the collection directory. */

@@ -121,13 +121,20 @@ export function resolverAddress(
   const names = [...document.getResolvers().keys()];
 
   if (setPath !== undefined) {
-    const shape = '[resolver/]set';
+    const shape = '[resolver/]set (the set may be a nested path)';
     const segments = segmentsOf(setPath, shape);
     if (segments.length === 1 && names.includes(segments[0] as string)) {
       throw new Error(`'${setPath}' names only a resolver — expected ${shape}`);
     }
-    const { resolver, rest } = takeResolver(segments, 2, shape, names);
-    return { resolver, branch: 'set', set: rest[0] };
+    // The set name may itself be a path (`brands/lilly` — nested collection files), so only the
+    // FIRST segment is ever a resolver candidate; the rest re-joins as the set name.
+    const { resolver, rest } = takeResolver(
+      segments,
+      Number.POSITIVE_INFINITY,
+      shape,
+      names,
+    );
+    return { resolver, branch: 'set', set: rest.join('/') };
   }
 
   if (modifierPath !== undefined) {

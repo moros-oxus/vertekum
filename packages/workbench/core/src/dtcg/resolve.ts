@@ -9,6 +9,24 @@ import type { Token } from '../document/types';
 const SET_REF = /^#\/sets\/(.+)$/;
 const MODIFIER_REF = /^#\/modifiers\/(.+)$/;
 
+/** RFC 6901 escaping for one pointer segment — a nested set name (`brands/rexall`) needs it. */
+export function escapePointerSegment(segment: string): string {
+  return segment.replace(/~/g, '~0').replace(/\//g, '~1');
+}
+const unescapeSegment = (segment: string): string =>
+  segment.replace(/~1/g, '/').replace(/~0/g, '~');
+
+/** The set name a resolutionOrder `$ref` denotes — RFC 6901-unescaped, tolerant of unescaped refs. */
+export function orderSetName(ref: string): string | undefined {
+  const captured = SET_REF.exec(ref)?.[1];
+  return captured === undefined ? undefined : unescapeSegment(captured);
+}
+/** The modifier name a resolutionOrder `$ref` denotes, unescaped likewise. */
+export function orderModifierName(ref: string): string | undefined {
+  const captured = MODIFIER_REF.exec(ref)?.[1];
+  return captured === undefined ? undefined : unescapeSegment(captured);
+}
+
 /** The `$ref` strings of a sources array (inline, ref-less sources are skipped). */
 function sourceRefs(sources: Source[]): string[] {
   return sources
@@ -48,13 +66,13 @@ export function resolveOrder(
 ): string[] {
   const out: string[] = [];
   for (const { $ref } of doc.resolutionOrder) {
-    const setName = SET_REF.exec($ref)?.[1];
+    const setName = orderSetName($ref);
     if (setName !== undefined) {
       const set = doc.sets[setName];
       if (set) out.push(...sourceRefs(set.sources));
       continue;
     }
-    const modName = MODIFIER_REF.exec($ref)?.[1];
+    const modName = orderModifierName($ref);
     if (modName !== undefined) {
       const mod = doc.modifiers[modName];
       if (!mod) continue;
@@ -125,7 +143,7 @@ export function validateResolver(
   };
 
   for (const { $ref } of doc.resolutionOrder) {
-    const setName = SET_REF.exec($ref)?.[1];
+    const setName = orderSetName($ref);
     if (setName !== undefined) {
       if (!doc.sets[setName]) {
         issues.push({

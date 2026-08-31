@@ -208,3 +208,21 @@ test('resolveValues: a token whose set is not in the order is excluded', () => {
   ]);
   expect(out.some((x) => x.path.join('.') === 'color.unused')).toBe(false);
 });
+
+test('nested set names round-trip resolutionOrder refs via RFC 6901 escaping, tolerantly', async () => {
+  const { escapePointerSegment, orderSetName, resolveOrder } = await import(
+    './resolve'
+  );
+  expect(escapePointerSegment('brands/rexall')).toBe('brands~1rexall');
+  expect(orderSetName('#/sets/brands~1rexall')).toBe('brands/rexall');
+  // Hand-authored unescaped refs keep working.
+  expect(orderSetName('#/sets/brands/rexall')).toBe('brands/rexall');
+
+  const doc = {
+    version: '2025.10' as const,
+    sets: { 'brands/rexall': { sources: [{ $ref: 'brands/rexall.json' }] } },
+    modifiers: {},
+    resolutionOrder: [{ $ref: '#/sets/brands~1rexall' }],
+  };
+  expect(resolveOrder(doc)).toEqual(['brands/rexall.json']);
+});

@@ -86,6 +86,11 @@ export { emptyResolver } from './document/resolver-types';
 export type { Token } from './document/types';
 export type { DtcgNode } from './dtcg/parse';
 export { parseCollection, ROOT_TOKEN, VTK_PREFIX } from './dtcg/parse';
+export {
+  escapePointerSegment,
+  orderModifierName,
+  orderSetName,
+} from './dtcg/resolve';
 export { parseResolver, serializeResolver } from './dtcg/resolver';
 export {
   DEFAULT_SET,

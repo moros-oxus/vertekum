@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
@@ -113,4 +113,38 @@ test('writeCollection defaults to two-space JSON and honours an override', async
   // A repo that formats differently aligns it through `format.indent` in its config.
   await writeCollection(dir, files, '\t');
   expect(await written()).toContain('\n\t"color"');
+});
+
+describe('nested collection directories', () => {
+  test('readCollection walks subdirectories; keys are relative paths; dot-entries skipped', async () => {
+    const dir = await tempDir();
+    await mkdir(join(dir, 'brands/deep'), { recursive: true });
+    await writeFile(join(dir, 'core.json'), '{}');
+    await writeFile(join(dir, 'brands/rexall.json'), '{}');
+    await writeFile(join(dir, 'brands/deep/lilly.json'), '{}');
+    await mkdir(join(dir, '.hidden'));
+    await writeFile(join(dir, '.hidden/nope.json'), '{}');
+
+    expect(Object.keys(await readCollection(dir)).sort()).toEqual([
+      'brands/deep/lilly.json',
+      'brands/rexall.json',
+      'core.json',
+    ]);
+  });
+
+  test('writeCollection creates directories, dir-syncs recursively, removes emptied dirs', async () => {
+    const dir = await tempDir();
+    await writeCollection(dir, {
+      'core.json': {},
+      'brands/rexall.json': { x: { $type: 'number', $value: 1 } },
+    });
+    expect(Object.keys(await readCollection(dir)).sort()).toEqual([
+      'brands/rexall.json',
+      'core.json',
+    ]);
+
+    // The nested set leaves the record → its file goes, and the emptied directory with it.
+    await writeCollection(dir, { 'core.json': {} });
+    expect((await readdir(dir)).sort()).toEqual(['core.json']);
+  });
 });
