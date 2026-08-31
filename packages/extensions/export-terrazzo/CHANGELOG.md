@@ -1,5 +1,12 @@
 # @vertekum/ext-export-terrazzo
 
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [[`b00e906`](https://github.com/moros-oxus/vertekum/commit/b00e906bd3ad52056c6ac34fed920053f05404ec)]:
+  - @vertekum/core@0.3.4
+
 ## 0.3.3
 
 ### Patch Changes
