@@ -1,4 +1,5 @@
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   createKernel,
   type Document,
@@ -53,18 +54,22 @@ export interface Project {
  * is ever evaluated (ADR-0029).
  */
 export async function loadProject(cwd: string): Promise<Project> {
-  const configPath = findConfig(cwd);
+  // A relative cwd (`--cwd packages/tokens`) would make every discovered path relative — and a
+  // relative path handed to `import()` parses as a PACKAGE name (ERR_INVALID_MODULE_SPECIFIER).
+  // Absolutize once here, and import by file URL, which is also what Windows paths require.
+  const root = resolve(cwd);
+  const configPath = findConfig(root);
   const userConfig = configPath
-    ? resolveVertekumConfig((await import(configPath)).default, {
-        command: 'build',
-        mode: 'production',
-      })
+    ? resolveVertekumConfig(
+        (await import(pathToFileURL(configPath).href)).default,
+        { command: 'build', mode: 'production' },
+      )
     : {};
   const config = mergeVertekumConfig(await loadDefaultConfig(), userConfig);
 
   // Metadata + generated artifacts live at the working dir: the config's dir when found, else the
   // inferred repo root — the same rule `vertekum dev` applies.
-  const projectDir = configPath ? dirname(configPath) : findRepoRoot(cwd);
+  const projectDir = configPath ? dirname(configPath) : findRepoRoot(root);
   const collectionDir = resolveCollectionDir(config, configPath, projectDir);
 
   const colorSpace = config.defaultColorSpace ?? 'oklch';

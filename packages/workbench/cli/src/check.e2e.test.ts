@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
 import { bin, exampleFixture } from './e2e-fixture';
@@ -71,4 +71,17 @@ test('check reports a mistyped $ key, which parsing alone would swallow', async 
   expect(diagnostic.code).toBe('schema/additionalProperties');
   expect(diagnostic.file).toBe('core.json');
   expect(diagnostic.message).toContain('$vaule');
+}, 60_000);
+
+test('a RELATIVE --cwd loads the config — the Tamblyn field report', async () => {
+  // Run from the fixture's PARENT and point --cwd at it relatively: the discovered config path
+  // must be absolutized before import, or Node parses it as a package name
+  // (ERR_INVALID_MODULE_SPECIFIER).
+  const fixtureDir = await fixture();
+  const { stdout } = await run(
+    'node',
+    [bin, 'check', '--json', '--cwd', basename(fixtureDir)],
+    { cwd: dirname(fixtureDir) },
+  );
+  expect(JSON.parse(stdout).ok).toBe(true);
 }, 60_000);
