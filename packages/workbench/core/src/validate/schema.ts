@@ -9,8 +9,11 @@ import type { Diagnostic } from './validator';
  * particular paths against their own (or a third party's) schema.
  */
 export interface SchemaBinding {
-  /** Glob over the file name, e.g. `core.json` or `*`. */
-  match: string;
+  /**
+   * Glob(s) over the collection-relative file path — `core.json`, `brands/*`,
+   * `colors-{light,black}.json` — or a list of them (a file matches when ANY does).
+   */
+  match: string | string[];
   /**
    * Which kind of file this applies to; token sets by default.
    *
@@ -78,12 +81,27 @@ export function defaultBindings(): SchemaBinding[] {
   ];
 }
 
-/** Compile a glob (`*` = any run of characters) to an anchored regex. */
+/**
+ * Compile a glob to an anchored regex. Two constructs, nothing else:
+ * `*` = any run of characters (directories included), and `{a,b}` = alternation (standard glob
+ * convention: comma-separated, one level; alternatives may contain `*`). Unpaired braces are
+ * literal. This is Vertekum's ONE glob engine — every `match` funnels through it.
+ */
 function globToRegExp(glob: string): RegExp {
-  const escaped = glob
-    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-    .replace(/\*/g, '.*');
-  return new RegExp(`^${escaped}$`);
+  const literal = (part: string) =>
+    part.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+  const out: string[] = [];
+  const braces = /\{([^{}]*)\}/g;
+  let last = 0;
+  let match = braces.exec(glob);
+  while (match) {
+    out.push(literal(glob.slice(last, match.index)));
+    out.push(`(?:${(match[1] as string).split(',').map(literal).join('|')})`);
+    last = match.index + match[0].length;
+    match = braces.exec(glob);
+  }
+  out.push(literal(glob.slice(last)));
+  return new RegExp(`^${out.join('')}$`);
 }
 
 /** ajv's error shape, narrowed to what a diagnostic needs. */
@@ -303,7 +321,7 @@ export async function validateFiles(
   const diagnostics: Diagnostic[] = [];
   const compiled: Array<{
     binding: SchemaBinding;
-    match: RegExp;
+    match: RegExp[];
     validate: (data: unknown) => boolean;
   }> = [];
 
@@ -312,7 +330,10 @@ export async function validateFiles(
       const ajv = await instanceFor(binding.schema);
       compiled.push({
         binding,
-        match: globToRegExp(binding.match),
+        match: (Array.isArray(binding.match)
+          ? binding.match
+          : [binding.match]
+        ).map(globToRegExp),
         // ajv validates against the meta-schema here and THROWS on a bad one. That check stays on:
         // it is what turns an author's typo into a message rather than a stack trace out of `check`.
         validate: ajv.compile(binding.schema) as (data: unknown) => boolean,
@@ -333,7 +354,7 @@ export async function validateFiles(
     const kind = isResolverFile(name) ? 'resolver' : 'tokens';
     for (const entry of compiled) {
       if ((entry.binding.target ?? 'tokens') !== kind) continue;
-      if (!entry.match.test(name)) continue;
+      if (!entry.match.some((pattern) => pattern.test(name))) continue;
       if (entry.validate(files[name])) continue;
       const errors =
         (entry.validate as unknown as { errors?: SchemaError[] }).errors ?? [];

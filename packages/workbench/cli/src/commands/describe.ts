@@ -145,7 +145,7 @@ export async function runDescribe(options: DescribeOptions): Promise<number> {
     for (const [index, binding] of info.schemas.entries()) {
       const label = index === 0 ? 'schemas     ' : '            ';
       process.stdout.write(
-        `${label} ${binding.domain} (${binding.match}, ${binding.severity})${
+        `${label} ${binding.domain} (${[binding.match].flat().join(' | ')}, ${binding.severity})${
           binding.file ? ` ${binding.file}` : ''
         }\n`,
       );

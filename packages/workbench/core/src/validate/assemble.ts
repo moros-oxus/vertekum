@@ -27,7 +27,12 @@ export interface AssembledSchemas {
 }
 
 function labelOf(binding: SchemaBinding): string {
-  return binding.file ?? binding.id ?? binding.domain ?? binding.match;
+  return (
+    binding.file ??
+    binding.id ??
+    binding.domain ??
+    [binding.match].flat().join(', ')
+  );
 }
 
 export function assembleBindings(sources: SchemaBinding[]): AssembledSchemas {

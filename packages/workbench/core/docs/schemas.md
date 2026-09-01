@@ -87,10 +87,19 @@ for `{ match }` — or an object:
 
 #### `match`
 
-A glob over the collection-relative **file path** (`core.json`,
-`brands/brand-a.json`). `*` matches any run of characters — directories included —
-and the whole path must match. `'core-tokens.json'` binds one set; `'brands/*'`
-binds a subdirectory; `'*'` binds every file of the binding's `target` kind.
+A glob over the collection-relative **file path**, or an **array** of them (a file
+matches when ANY does). The glob has exactly two constructs:
+
+| Construct | Meaning |
+| --- | --- |
+| `*` | any run of characters, directories included |
+| `{a,b}` | alternation — comma-separated, one level; alternatives may contain `*` |
+
+Everything else is literal; unpaired braces are literal too. The whole path must
+match. `'core-tokens.json'` binds one set; `'brands/*'` binds a subdirectory;
+`'colors-{light,black}.json'` binds two spellings;
+`{ match: ['core.json', 'brands/*'] }` binds a list; `'*'` binds every file of the
+binding's `target` kind.
 
 #### `target`
 

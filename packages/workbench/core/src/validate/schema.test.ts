@@ -370,3 +370,48 @@ test('curation: a broken descendant does not echo up as sibling noise', async ()
   expect(diagnostics[0]?.pointer).toBe('/color/gray/400/$value');
   expect(diagnostics[0]?.message).toContain('must be object');
 });
+
+test('match supports brace alternation and arrays — nothing else beyond *', async () => {
+  const schema = {
+    type: 'object',
+    properties: { ok: { type: 'boolean' } },
+    additionalProperties: false,
+  };
+  const braced: SchemaBinding = {
+    match: '*colors-{light,black}.json',
+    target: 'tokens',
+    schema,
+    domain: 'braced',
+  };
+  const listed: SchemaBinding = {
+    match: ['a.json', 'brands/b.json'],
+    target: 'tokens',
+    schema,
+    domain: 'listed',
+  };
+  const files = {
+    'themes/colors-light.json': { bad: 1 },
+    'colors-black.json': { bad: 1 },
+    'colors-dark.json': { bad: 1 },
+    'a.json': { bad: 1 },
+    'brands/b.json': { bad: 1 },
+  };
+  const diagnostics = await validateFiles(files, [braced, listed]);
+  const hit = (domain: string) =>
+    diagnostics
+      .filter((d) => d.code.startsWith(`${domain}/`))
+      .map((d) => d.file)
+      .sort();
+  // Braces bind both spellings and nothing else; arrays or-match.
+  expect(hit('braced')).toEqual([
+    'colors-black.json',
+    'themes/colors-light.json',
+  ]);
+  expect(hit('listed')).toEqual(['a.json', 'brands/b.json']);
+  // Regex specials in an alternative stay literal.
+  const literal = await validateFiles(
+    { 'x.json': { bad: 1 }, xyjson: { bad: 1 } },
+    [{ match: '{x.json,y.json}', target: 'tokens', schema, domain: 'lit' }],
+  );
+  expect(literal.map((d) => d.file)).toEqual(['x.json']);
+});

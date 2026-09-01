@@ -18,11 +18,11 @@ export type ExtensionEntry =
   | ConfiguredExtension
   | ExtensionEntry[];
 
-/** What one schema in a group applies to: a glob, or the glob plus overrides. */
+/** What one schema in a group applies to: glob(s), or the glob(s) plus overrides. */
 export type SchemaUse =
   | string
   | {
-      match: string;
+      match: string | string[];
       target?: 'tokens' | 'resolver';
       severity?: 'error' | 'warning';
       domain?: string;
