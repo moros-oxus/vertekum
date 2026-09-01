@@ -1,5 +1,13 @@
 # @vertekum/ext-token-ramp
 
+## 0.3.6
+
+### Patch Changes
+
+- [`96145e3`](https://github.com/moros-oxus/vertekum/commit/96145e3894d53b4a9cc95e3c64a3e79c4eca365a) Thanks [@tschemmer](https://github.com/tschemmer)! - Multi-brand ramp physics: settings gain `profiles` (named partials — a brand's ladder, a tweaked curve) and `defaultProfile`; a ramp payload selects one with `profile`. Resolution is per field through defaults ← settings ← profile ← payload, ladders merging by step key; an unknown profile is `ramp/unknown-profile`, never a silent fallback.
+- Updated dependencies []:
+  - @vertekum/core@0.3.6
+
 ## 0.3.5
 
 ### Patch Changes
