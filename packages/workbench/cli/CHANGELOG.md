@@ -1,5 +1,15 @@
 # @vertekum/cli
 
+## 0.3.7
+
+### Patch Changes
+
+- [`f72a0a9`](https://github.com/moros-oxus/vertekum/commit/f72a0a9a01b9fa24c535aa3ad8c2259f77676c9c) Thanks [@tschemmer](https://github.com/tschemmer)! - Schema `match` grows brace alternation in the glob (`colors-{light,black}.json` — standard comma convention, everywhere globs are matched) and accepts an array of patterns (a file matches when any does).
+- Updated dependencies [[`f72a0a9`](https://github.com/moros-oxus/vertekum/commit/f72a0a9a01b9fa24c535aa3ad8c2259f77676c9c)]:
+  - @vertekum/core@0.3.7
+  - vertekum@0.3.0
+  - @vertekum/server@0.3.0
+
 ## 0.3.6
 
 ### Patch Changes
