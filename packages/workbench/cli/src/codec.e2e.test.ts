@@ -12,7 +12,7 @@ const KEY = 'org.test.type';
 /**
  * The fixture's config: the unabridged example with an INLINE extension registering a textCase
  * codec and its payload-validating schema binding — the whole extension-held-token-data seam
- * driven from a consumer config, exactly how Tamblyn will use it.
+ * driven from a consumer config, exactly how consumer will use it.
  */
 const CONFIG = `
 import { defineConfig, SCHEMA_BINDING_SERVICE, TOKEN_CODEC_SERVICE } from '@vertekum/core';

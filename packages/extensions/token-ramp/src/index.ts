@@ -7,10 +7,12 @@ export {
   computeRamp,
   DEFAULT_PHYSICS,
   parseScalar,
-  physicsOf,
+  physicsFor,
   RAMP_KEY,
+  type RampConfig,
   type RampPayload,
   type RampPhysics,
+  type RampProfile,
   type RampStop,
 } from './ramp';
 
@@ -26,6 +28,11 @@ export {
  *   anchor's (0.2 = one fifth of the brand colour's saturation).
  * - `darkExponent` — how quickly chroma falls on the dark side (higher = duller deep shades).
  *
+ * Multi-brand systems declare **profiles** — named partials of the same fields — and each ramp
+ * payload selects one by name (`"profile": "brand-a"`), or `defaultProfile` routes every silent
+ * payload through one. Resolution is per field: defaults ← top-level settings ← profile ←
+ * payload overrides, with ladder tables merging by step key.
+ *
  * Every field may also be overridden per ramp, inside the ramp's own payload.
  */
 export const RampSettings = z.object({
@@ -39,6 +46,23 @@ export const RampSettings = z.object({
   ladder: z.record(z.number().min(0).max(1)).optional(),
   lightFraction: z.number().positive().max(1).default(0.2),
   darkExponent: z.number().positive().default(0.85),
+  profiles: z
+    .record(
+      z.object({
+        lightness: z
+          .object({
+            first: z.number().min(0).max(1).optional(),
+            last: z.number().min(0).max(1).optional(),
+            ease: z.number().positive().optional(),
+          })
+          .optional(),
+        ladder: z.record(z.number().min(0).max(1)).optional(),
+        lightFraction: z.number().positive().max(1).optional(),
+        darkExponent: z.number().positive().optional(),
+      }),
+    )
+    .optional(),
+  defaultProfile: z.string().optional(),
 });
 export type RampSettingsType = z.infer<typeof RampSettings>;
 

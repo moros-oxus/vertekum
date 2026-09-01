@@ -516,7 +516,7 @@ test('a merge that grows a pattern member drops the ref back to expansion', () =
   expect(top.properties.b).toBeDefined();
 });
 
-test('the Tamblyn shape: one scale pattern, referenced from every member', () => {
+test('the consumer shape: one scale pattern, referenced from every member', () => {
   const dir = fixture({
     'color.dfn': [
       'saturated = red | blue',

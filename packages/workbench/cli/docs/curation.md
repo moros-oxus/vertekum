@@ -77,7 +77,7 @@ default is the `tokens` set).
 ## `set` verbs
 
 A set is a file: these create and delete `<name>.json` in the collection. A name may
-be a path (`brands/rexall` → `brands/rexall.json`) — directories are purely
+be a path (`brands/brand-a` → `brands/brand-a.json`) — directories are purely
 organizational, created and cleaned up as needed.
 
 | Verb                | Does                                  | Flags                                            |

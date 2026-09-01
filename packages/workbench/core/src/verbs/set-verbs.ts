@@ -3,7 +3,7 @@ import type { CommandDescriptor } from '../shell/types';
 import { documentOf, requireArg } from './context';
 
 /**
- * A set name may be a PATH (`brands/rexall` → `brands/rexall.json`) — directories are purely
+ * A set name may be a PATH (`brands/brand-a` → `brands/brand-a.json`) — directories are purely
  * organizational. The guard refuses shapes that would escape or confuse the collection.
  */
 function requireValidSetName(name: string): void {

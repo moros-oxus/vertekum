@@ -40,13 +40,30 @@ export const DEFAULT_PHYSICS: RampPhysics = {
   darkExponent: 0.85,
 };
 
+/** A named partial of the physics — a brand's ladder, a tweaked curve. */
+export interface RampProfile {
+  lightness?: Partial<RampPhysics['lightness']>;
+  ladder?: Record<string, number>;
+  lightFraction?: number;
+  darkExponent?: number;
+}
+
+/** The configured physics: the project-wide base plus named profiles. */
+export interface RampConfig extends RampPhysics {
+  profiles?: Record<string, RampProfile>;
+  /** The profile a payload without `profile` uses. */
+  defaultProfile?: string;
+}
+
 export interface RampPayload {
-  /** A colour (hex or stored object) or a reference (`"{brand.poolside-blue}"`). */
+  /** A colour (hex or stored object) or a reference (`"{brand.accent}"`). */
   anchor: unknown;
   /** Step names, in the dfn range grammar: `"100-1000/100"`, `"050-500/50"`. */
   scalar: string;
   /** Degrees of dark-side hue rotation, reached at the last step. Default 0 (hue held). */
   hueDrift?: number;
+  /** A named physics profile from settings; absent → `defaultProfile` → the base alone. */
+  profile?: string;
   /** Per-ramp overrides of the configured physics. */
   ladder?: Record<string, number>;
   lightness?: Partial<RampPhysics['lightness']>;
@@ -98,16 +115,44 @@ const round = (value: number, places: number): number => {
   return Math.round(value * f) / f;
 };
 
-/** Merge the configured physics with a payload's per-ramp overrides. */
-export function physicsOf(
-  settings: RampPhysics,
+/**
+ * Resolve one ramp's effective physics through the four-layer chain, per field:
+ * built-in defaults ← top-level settings ← selected profile ← payload overrides.
+ * `ladder` tables merge BY STEP KEY through the chain; `lightness` merges per-field; scalars
+ * replace. The selected profile is `payload.profile`, else `defaultProfile`, else none — and an
+ * unknown name is an ERROR, never a silent fallback.
+ */
+export function physicsFor(
+  config: RampConfig,
   payload: RampPayload,
-): RampPhysics {
+): RampPhysics | { error: string } {
+  const name = payload.profile ?? config.defaultProfile;
+  let profile: RampProfile = {};
+  if (name !== undefined) {
+    const held = config.profiles?.[name];
+    if (!held) {
+      const defined = Object.keys(config.profiles ?? {});
+      return {
+        error: `unknown profile '${name}' — defined: ${defined.join(', ') || '(none)'}`,
+      };
+    }
+    profile = held;
+  }
   return {
-    lightness: { ...settings.lightness, ...(payload.lightness ?? {}) },
-    ladder: { ...(settings.ladder ?? {}), ...(payload.ladder ?? {}) },
-    lightFraction: payload.lightFraction ?? settings.lightFraction,
-    darkExponent: payload.darkExponent ?? settings.darkExponent,
+    lightness: {
+      ...config.lightness,
+      ...(profile.lightness ?? {}),
+      ...(payload.lightness ?? {}),
+    },
+    ladder: {
+      ...(config.ladder ?? {}),
+      ...(profile.ladder ?? {}),
+      ...(payload.ladder ?? {}),
+    },
+    lightFraction:
+      payload.lightFraction ?? profile.lightFraction ?? config.lightFraction,
+    darkExponent:
+      payload.darkExponent ?? profile.darkExponent ?? config.darkExponent,
   };
 }
 
@@ -175,11 +220,13 @@ export function anchorOf(
  */
 export function computeRamp(
   payload: RampPayload,
-  settings: RampPhysics,
+  config: RampConfig,
   resolvedAnchor: unknown,
 ): { stops: Record<string, RampStop> } | { error: string } {
   const scale = parseScalar(payload.scalar);
   if ('error' in scale) return scale;
+  const physics = physicsFor(config, payload);
+  if ('error' in physics) return physics;
   const anchor = anchorOf(resolvedAnchor);
   if (!anchor) {
     return {
@@ -187,7 +234,6 @@ export function computeRamp(
     };
   }
 
-  const physics = physicsOf(settings, payload);
   const { names } = scale;
   const n = names.length;
   const ladderL = names.map((name, index) => {

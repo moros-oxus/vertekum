@@ -13,8 +13,8 @@ unit of composition: a resolver combines them into themes.
 
 Files may live in subdirectories — **directories are purely organizational**, no
 semantics attach to structure. A set's name is its collection-relative path minus
-`.json`: `core.json` is the set `core`, `brands/rexall.json` is the set
-`brands/rexall` (that name is what resolver sources reference and what `--set`
+`.json`: `core.json` is the set `core`, `brands/brand-a.json` is the set
+`brands/brand-a` (that name is what resolver sources reference and what `--set`
 takes). Hidden entries (dot-files and dot-directories) are never part of a
 collection.
 

@@ -120,14 +120,14 @@ describe('nested collection directories', () => {
     const dir = await tempDir();
     await mkdir(join(dir, 'brands/deep'), { recursive: true });
     await writeFile(join(dir, 'core.json'), '{}');
-    await writeFile(join(dir, 'brands/rexall.json'), '{}');
-    await writeFile(join(dir, 'brands/deep/lilly.json'), '{}');
+    await writeFile(join(dir, 'brands/brand-a.json'), '{}');
+    await writeFile(join(dir, 'brands/deep/brand-b.json'), '{}');
     await mkdir(join(dir, '.hidden'));
     await writeFile(join(dir, '.hidden/nope.json'), '{}');
 
     expect(Object.keys(await readCollection(dir)).sort()).toEqual([
-      'brands/deep/lilly.json',
-      'brands/rexall.json',
+      'brands/brand-a.json',
+      'brands/deep/brand-b.json',
       'core.json',
     ]);
   });
@@ -136,10 +136,10 @@ describe('nested collection directories', () => {
     const dir = await tempDir();
     await writeCollection(dir, {
       'core.json': {},
-      'brands/rexall.json': { x: { $type: 'number', $value: 1 } },
+      'brands/brand-a.json': { x: { $type: 'number', $value: 1 } },
     });
     expect(Object.keys(await readCollection(dir)).sort()).toEqual([
-      'brands/rexall.json',
+      'brands/brand-a.json',
       'core.json',
     ]);
 

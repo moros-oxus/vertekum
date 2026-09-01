@@ -8,8 +8,8 @@ import {
   type RampStop,
 } from './ramp';
 
-/** The Rexall v2 ladder — the hand-eased table the preview page documents. */
-const REXALL: RampPhysics = {
+/** A hand-eased ten-step reference ladder (the shape a designed system documents). */
+const BRAND_A: RampPhysics = {
   ...DEFAULT_PHYSICS,
   ladder: {
     '100': 0.958,
@@ -37,10 +37,10 @@ function expectHexClose(actual: string, expected: string, tolerance = 3): void {
   }
 }
 
-test('the Rexall teal ramp reproduces from its anchor', () => {
+test('the reference teal ramp reproduces from its anchor', () => {
   const ramp = computeRamp(
     { anchor: '#1DB1A8', scalar: '100-1000/100' },
-    REXALL,
+    BRAND_A,
     '#1DB1A8',
   );
   if ('error' in ramp) throw new Error(ramp.error);
@@ -73,12 +73,12 @@ test('the Rexall teal ramp reproduces from its anchor', () => {
 test('hueDrift rotates only the dark side, reaching the full drift at the last step', () => {
   const stillR = computeRamp(
     { anchor: '#FFCD00', scalar: '100-1000/100' },
-    REXALL,
+    BRAND_A,
     '#FFCD00',
   );
   const driftedR = computeRamp(
     { anchor: '#FFCD00', scalar: '100-1000/100', hueDrift: -18 },
-    REXALL,
+    BRAND_A,
     '#FFCD00',
   );
   if ('error' in stillR || 'error' in driftedR) throw new Error('no ramp');
@@ -100,7 +100,7 @@ test('a stored colour object anchors verbatim; a non-colour refuses', () => {
   };
   const ramp = computeRamp(
     { anchor: '{brand.pool}', scalar: '100-1000/100' },
-    REXALL,
+    BRAND_A,
     object,
   );
   if ('error' in ramp) throw new Error(ramp.error);
@@ -109,7 +109,7 @@ test('a stored colour object anchors verbatim; a non-colour refuses', () => {
 
   const refused = computeRamp(
     { anchor: '{nope}', scalar: '100-1000/100' },
-    REXALL,
+    BRAND_A,
     undefined,
   );
   expect('error' in refused && refused.error).toContain('anchor');
@@ -143,4 +143,58 @@ test('anchorOf normalizes hex and passes oklch objects through', () => {
   expect(fromHex?.stop.hex).toBe('#1DB1A8');
   expect(fromHex?.l).toBeCloseTo(0.688, 2);
   expect(anchorOf(42)).toBeNull();
+});
+
+test('profiles resolve through the four-layer chain, ladders merging by step key', async () => {
+  const { physicsFor } = await import('./ramp');
+  const config = {
+    ...DEFAULT_PHYSICS,
+    ladder: { '100': 0.9, '200': 0.8 },
+    profiles: {
+      'brand-a': { ladder: { '200': 0.7, '300': 0.6 }, lightFraction: 0.3 },
+    },
+    defaultProfile: 'brand-a',
+  };
+
+  // defaultProfile applies when the payload is silent; ladders merge by key.
+  const silent = physicsFor(config, { anchor: '#000', scalar: '100-300/100' });
+  if ('error' in silent) throw new Error(silent.error);
+  expect(silent.ladder).toEqual({ '100': 0.9, '200': 0.7, '300': 0.6 });
+  expect(silent.lightFraction).toBe(0.3);
+
+  // Payload overrides beat the profile; payload ladder keys win.
+  const overridden = physicsFor(config, {
+    anchor: '#000',
+    scalar: '100-300/100',
+    lightFraction: 0.1,
+    ladder: { '300': 0.5 },
+  });
+  if ('error' in overridden) throw new Error(overridden.error);
+  expect(overridden.lightFraction).toBe(0.1);
+  expect(overridden.ladder?.['300']).toBe(0.5);
+  expect(overridden.ladder?.['200']).toBe(0.7);
+
+  // An explicit payload profile beats defaultProfile.
+  const named = physicsFor(
+    { ...config, profiles: { ...config.profiles, plain: {} } },
+    { anchor: '#000', scalar: '100-300/100', profile: 'plain' },
+  );
+  if ('error' in named) throw new Error(named.error);
+  expect(named.lightFraction).toBe(DEFAULT_PHYSICS.lightFraction);
+
+  // Unknown names are errors naming what IS defined — payload or defaultProfile alike.
+  const unknown = physicsFor(config, {
+    anchor: '#000',
+    scalar: '100-300/100',
+    profile: 'nope',
+  });
+  expect('error' in unknown && unknown.error).toContain(
+    "unknown profile 'nope'",
+  );
+  expect('error' in unknown && unknown.error).toContain('brand-a');
+  const badDefault = physicsFor(
+    { ...DEFAULT_PHYSICS, defaultProfile: 'ghost' },
+    { anchor: '#000', scalar: '100-300/100' },
+  );
+  expect('error' in badDefault && badDefault.error).toContain('ghost');
 });

@@ -126,7 +126,7 @@ export function resolverAddress(
     if (segments.length === 1 && names.includes(segments[0] as string)) {
       throw new Error(`'${setPath}' names only a resolver — expected ${shape}`);
     }
-    // The set name may itself be a path (`brands/lilly` — nested collection files), so only the
+    // The set name may itself be a path (`brands/brand-b` — nested collection files), so only the
     // FIRST segment is ever a resolver candidate; the rest re-joins as the set name.
     const { resolver, rest } = takeResolver(
       segments,

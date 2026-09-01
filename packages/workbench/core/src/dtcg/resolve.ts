@@ -9,7 +9,7 @@ import type { Token } from '../document/types';
 const SET_REF = /^#\/sets\/(.+)$/;
 const MODIFIER_REF = /^#\/modifiers\/(.+)$/;
 
-/** RFC 6901 escaping for one pointer segment — a nested set name (`brands/rexall`) needs it. */
+/** RFC 6901 escaping for one pointer segment — a nested set name (`brands/brand-a`) needs it. */
 export function escapePointerSegment(segment: string): string {
   return segment.replace(/~/g, '~0').replace(/\//g, '~1');
 }

@@ -22,37 +22,37 @@ function withResolvers(...names: string[]): Document {
 
 test('bare addressing carries the name through unchecked — add wants a new one', () => {
   const document = withResolvers();
-  expect(resolverAddress(document, { bare: 'rexall' })).toEqual({
-    resolver: 'rexall',
+  expect(resolverAddress(document, { bare: 'brand-a' })).toEqual({
+    resolver: 'brand-a',
     branch: 'resolver',
   });
   expect(resolverAddress(document, {})).toBeNull();
 });
 
 test('both flags refuse — one address per command', () => {
-  const document = withResolvers('rexall');
+  const document = withResolvers('brand-a');
   expect(() => resolverAddress(document, { set: 'a', modifier: 'b' })).toThrow(
     /either -s or -m/,
   );
 });
 
 test('-s elides the resolver when exactly one exists', () => {
-  const document = withResolvers('rexall');
+  const document = withResolvers('brand-a');
   expect(resolverAddress(document, { set: 'sem' })).toEqual({
-    resolver: 'rexall',
+    resolver: 'brand-a',
     branch: 'set',
     set: 'sem',
   });
 });
 
 test('-s elision refuses with the names when several resolvers exist', () => {
-  const document = withResolvers('rexall', 'lilly');
+  const document = withResolvers('brand-a', 'brand-b');
   expect(() => resolverAddress(document, { set: 'sem' })).toThrow(
-    /lead the path with one of: rexall, lilly/,
+    /lead the path with one of: brand-a, brand-b/,
   );
   // Explicit leading resolver resolves it.
-  expect(resolverAddress(document, { set: 'lilly/sem' })).toEqual({
-    resolver: 'lilly',
+  expect(resolverAddress(document, { set: 'brand-b/sem' })).toEqual({
+    resolver: 'brand-b',
     branch: 'set',
     set: 'sem',
   });
@@ -66,60 +66,62 @@ test('-s with no resolvers points at resolver add', () => {
 });
 
 test('a multi-segment -s path with an unknown head is an elided NESTED set, not an error', () => {
-  // Nested collection files made this legitimate: 'rexal/sem' is a set named 'rexal/sem'.
-  // A typo'd resolver surfaces downstream instead ("no token set file 'rexal/sem.json'").
-  const document = withResolvers('rexall');
-  expect(resolverAddress(document, { set: 'rexal/sem' })).toEqual({
-    resolver: 'rexall',
+  // Nested collection files made this legitimate: 'brend-a/sem' is a set named 'brend-a/sem'.
+  // A typo'd resolver surfaces downstream instead ("no token set file 'brend-a/sem.json'").
+  const document = withResolvers('brand-a');
+  expect(resolverAddress(document, { set: 'brend-a/sem' })).toEqual({
+    resolver: 'brand-a',
     branch: 'set',
-    set: 'rexal/sem',
+    set: 'brend-a/sem',
   });
 });
 
 test('-s refuses a path that names only a resolver or holds an empty segment', () => {
-  const document = withResolvers('rexall');
-  expect(() => resolverAddress(document, { set: 'rexall' })).toThrow(
+  const document = withResolvers('brand-a');
+  expect(() => resolverAddress(document, { set: 'brand-a' })).toThrow(
     /names only a resolver/,
   );
-  expect(() => resolverAddress(document, { set: 'rexall//sem' })).toThrow(
+  expect(() => resolverAddress(document, { set: 'brand-a//sem' })).toThrow(
     /empty path segment/,
   );
   // Depth is no longer bounded: the tail is a nested set name.
-  expect(resolverAddress(document, { set: 'rexall/sem/deep' })).toEqual({
-    resolver: 'rexall',
+  expect(resolverAddress(document, { set: 'brand-a/sem/deep' })).toEqual({
+    resolver: 'brand-a',
     branch: 'set',
     set: 'sem/deep',
   });
 });
 
 test('-m walks one, two, and three segments by the first-segment-is-resolver rule', () => {
-  const document = withResolvers('rexall');
+  const document = withResolvers('brand-a');
   expect(resolverAddress(document, { modifier: 'theme' })).toEqual({
-    resolver: 'rexall',
+    resolver: 'brand-a',
     branch: 'modifier',
     modifier: 'theme',
     context: undefined,
   });
   // Two segments whose head names a resolver: resolver/modifier.
-  expect(resolverAddress(document, { modifier: 'rexall/theme' })).toEqual({
-    resolver: 'rexall',
+  expect(resolverAddress(document, { modifier: 'brand-a/theme' })).toEqual({
+    resolver: 'brand-a',
     branch: 'modifier',
     modifier: 'theme',
     context: undefined,
   });
   // Two segments whose head does NOT name a resolver: elided resolver, modifier/context.
   expect(resolverAddress(document, { modifier: 'theme/dark' })).toEqual({
-    resolver: 'rexall',
+    resolver: 'brand-a',
     branch: 'modifier',
     modifier: 'theme',
     context: 'dark',
   });
-  expect(resolverAddress(document, { modifier: 'rexall/theme/dark' })).toEqual({
-    resolver: 'rexall',
-    branch: 'modifier',
-    modifier: 'theme',
-    context: 'dark',
-  });
+  expect(resolverAddress(document, { modifier: 'brand-a/theme/dark' })).toEqual(
+    {
+      resolver: 'brand-a',
+      branch: 'modifier',
+      modifier: 'theme',
+      context: 'dark',
+    },
+  );
   expect(() =>
     resolverAddress(document, { modifier: 'nope/theme/dark' }),
   ).toThrow(/no resolver 'nope'/);
@@ -133,17 +135,17 @@ test('closest and suggest surface near-misses within two edits, silent beyond', 
 });
 
 test('a nested set name re-joins after the resolver segment', () => {
-  const document = withResolvers('rexall');
+  const document = withResolvers('brand-a');
   // Elided: the whole path is the set.
-  expect(resolverAddress(document, { set: 'brands/lilly' })).toEqual({
-    resolver: 'rexall',
+  expect(resolverAddress(document, { set: 'brands/brand-b' })).toEqual({
+    resolver: 'brand-a',
     branch: 'set',
-    set: 'brands/lilly',
+    set: 'brands/brand-b',
   });
   // Explicit: first segment is the resolver, the rest is the set.
-  expect(resolverAddress(document, { set: 'rexall/brands/lilly' })).toEqual({
-    resolver: 'rexall',
+  expect(resolverAddress(document, { set: 'brand-a/brands/brand-b' })).toEqual({
+    resolver: 'brand-a',
     branch: 'set',
-    set: 'brands/lilly',
+    set: 'brands/brand-b',
   });
 });

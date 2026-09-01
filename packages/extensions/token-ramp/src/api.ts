@@ -18,9 +18,10 @@ import {
   computeRamp,
   DEFAULT_PHYSICS,
   parseScalar,
+  physicsFor,
   RAMP_KEY,
+  type RampConfig,
   type RampPayload,
-  type RampPhysics,
 } from './ramp';
 
 /** Follow alias chains (`"{a.b}"`) through the token list; cycle-guarded. */
@@ -48,13 +49,17 @@ function isPayload(payload: unknown): payload is RampPayload {
   );
 }
 
-function physicsFrom(settings: RampSettingsType | undefined): RampPhysics {
+function physicsFrom(settings: RampSettingsType | undefined): RampConfig {
   if (!settings) return DEFAULT_PHYSICS;
   return {
     lightness: settings.lightness,
     ...(settings.ladder ? { ladder: settings.ladder } : {}),
     lightFraction: settings.lightFraction,
     darkExponent: settings.darkExponent,
+    ...(settings.profiles ? { profiles: settings.profiles } : {}),
+    ...(settings.defaultProfile
+      ? { defaultProfile: settings.defaultProfile }
+      : {}),
   };
 }
 
@@ -105,6 +110,7 @@ const PAYLOAD_SCHEMA = {
         },
         scalar: { type: 'string', pattern: '^\\d+-\\d+/\\d+$' },
         hueDrift: { type: 'number' },
+        profile: { type: 'string' },
         ladder: { type: 'object', additionalProperties: { type: 'number' } },
         lightness: {
           type: 'object',
@@ -145,7 +151,7 @@ const PAYLOAD_SCHEMA = {
  * `ramp build` command (committed ramps).
  */
 export function activate(ctx: ActivateContext<typeof tokenRampManifest>): void {
-  const settings = (): RampPhysics =>
+  const settings = (): RampConfig =>
     physicsFrom(ctx.config.get() as RampSettingsType | undefined);
 
   ctx.services.get<TokenCodecService>(TOKEN_CODEC_SERVICE)?.register({
@@ -197,6 +203,17 @@ export function activate(ctx: ActivateContext<typeof tokenRampManifest>): void {
             code: 'ramp/invalid-scalar',
             severity: 'error',
             message: `'${where}': ${scale.error}`,
+            source: 'ext-token-ramp',
+            file,
+          });
+          continue;
+        }
+        const physics = physicsFor(settings(), carrier.payload);
+        if ('error' in physics) {
+          out.push({
+            code: 'ramp/unknown-profile',
+            severity: 'error',
+            message: `'${where}': ${physics.error}`,
             source: 'ext-token-ramp',
             file,
           });

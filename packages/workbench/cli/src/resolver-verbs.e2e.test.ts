@@ -25,7 +25,7 @@ async function resolverOn(cwd: string): Promise<{
 test('resolver verbs drive a composition end-to-end, elided paths included', async () => {
   const cwd = await fixture();
 
-  // Membership — the ask a Tamblyn agent was blocked on. Single resolver, so paths elide it.
+  // Membership — the ask a consumer agent was blocked on. Single resolver, so paths elide it.
   await run('node', [bin, 'set', 'add', 'extra'], { cwd });
   const { stdout } = await run(
     'node',

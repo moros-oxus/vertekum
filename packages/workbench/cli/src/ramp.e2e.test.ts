@@ -105,3 +105,22 @@ test('sets live in subdirectories: read, created by verb, removed with their dir
   const check = await run('node', [bin, 'check', '--json'], { cwd });
   expect(JSON.parse(check.stdout).ok).toBe(true);
 }, 120_000);
+
+test('an unknown profile is loud in check', async () => {
+  const cwd = await fixture();
+  const corePath = join(cwd, 'tokens/core.json');
+  const core = JSON.parse(await readFile(corePath, 'utf8'));
+  core.color.teal.$extensions['org.vertekum.generate/ramp'].profile = 'nope';
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(corePath, JSON.stringify(core, null, 2));
+
+  const refused = await run('node', [bin, 'check', '--json'], { cwd }).catch(
+    (e: { code: number; stdout: string }) => e,
+  );
+  expect(refused.code).toBe(1);
+  const report = JSON.parse(refused.stdout);
+  const found = report.diagnostics.find(
+    (d: { code: string }) => d.code === 'ramp/unknown-profile',
+  );
+  expect(found?.message).toContain("unknown profile 'nope'");
+}, 60_000);

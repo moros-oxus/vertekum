@@ -5,7 +5,7 @@ import {
   restoreFiles,
 } from '@vertekum/core';
 import { followAliases, rampCarriers } from './api';
-import { computeRamp, type RampPayload, type RampPhysics } from './ramp';
+import { computeRamp, type RampConfig, type RampPayload } from './ramp';
 
 /**
  * `vertekum ramp build [--check]` — the COMMITTED mode. Writes each ramp's computed stops as
@@ -19,7 +19,7 @@ import { computeRamp, type RampPayload, type RampPhysics } from './ramp';
  * introduce errors.
  */
 export function rampBuildCommand(
-  settings: () => RampPhysics,
+  settings: () => RampConfig,
 ): CommandDescriptor {
   return {
     name: 'ramp build',

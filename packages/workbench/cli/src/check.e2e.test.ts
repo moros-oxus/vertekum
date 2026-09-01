@@ -73,7 +73,7 @@ test('check reports a mistyped $ key, which parsing alone would swallow', async 
   expect(diagnostic.message).toContain('$vaule');
 }, 60_000);
 
-test('a RELATIVE --cwd loads the config — the Tamblyn field report', async () => {
+test('a RELATIVE --cwd loads the config — the consumer field report', async () => {
   // Run from the fixture's PARENT and point --cwd at it relatively: the discovered config path
   // must be absolutized before import, or Node parses it as a package name
   // (ERR_INVALID_MODULE_SPECIFIER).

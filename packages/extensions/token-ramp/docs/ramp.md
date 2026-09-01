@@ -64,6 +64,31 @@ step 600 (L 0.635, darker):   C = 0.115 × (0.635/0.688)^0.85        = 0.107  �
 step 1000 (L 0.270, darker):  C = 0.115 × (0.270/0.688)^0.85        = 0.052  → #002E2B
 ```
 
+## Profiles — multi-brand physics
+
+A multi-brand system wants each brand's ladder declared once, not repeated in every
+ramp. **Profiles** are named partials of the settings:
+
+```ts
+tokenRampExtension({
+  profiles: {
+    brand-a: { ladder: { '100': 0.958, /* … */ '1000': 0.27 } },
+    brand-b:  { lightness: { first: 0.97, last: 0.24, ease: 1.15 } },
+  },
+  defaultProfile: 'brand-a',
+})
+```
+
+```json
+{ "anchor": "{brand.brand-b-rose}", "scalar": "100-1000/100", "profile": "brand-b" }
+```
+
+Each ramp's effective physics resolves per field through four layers — built-in
+defaults ← top-level settings ← the selected profile ← the payload's own
+overrides — with ladder tables merging by step key. The selected profile is the
+payload's `profile`, else `defaultProfile`, else none; an unknown name is an error
+that lists the defined profiles, never a silent fallback.
+
 ## Virtual and committed
 
 A ramp group with no children is **virtual**: the stops exist in the model — for

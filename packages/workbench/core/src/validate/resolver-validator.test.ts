@@ -55,20 +55,20 @@ function resolver(overrides: Partial<ResolverDocument>): ResolverDocument {
 }
 
 test('a set no composition mentions draws a warning on the set file', async () => {
-  // The Tamblyn shape: sem.json validated, composed by nothing, shipped nowhere.
+  // The consumer shape: sem.json validated, composed by nothing, shipped nowhere.
   const diagnostics = await resolverValidator.validate({
     tokens: [],
     sets: ['core', 'sem'],
     resolvers: new Map([
       [
-        'rexall',
+        'brand-a',
         resolver({
           sets: { core: { sources: [{ $ref: 'core.json' }] } },
           resolutionOrder: [{ $ref: '#/sets/core' }],
         }),
       ],
       [
-        'lilly',
+        'brand-b',
         resolver({
           sets: { core: { sources: [{ $ref: 'core.json' }] } },
           resolutionOrder: [{ $ref: '#/sets/core' }],

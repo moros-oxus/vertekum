@@ -12,7 +12,7 @@ import type { DtcgNode } from '../dtcg/parse';
 /**
  * Read every `*.json` file in a collection directory as parsed JSON, RECURSIVELY — subdirectories
  * are purely organizational (a set's name is its collection-relative path minus `.json`:
- * `brands/rexall`). Keys are POSIX-relative paths regardless of platform. Dot-entries are skipped:
+ * `brands/brand-a`). Keys are POSIX-relative paths regardless of platform. Dot-entries are skipped:
  * hidden directories are never part of a collection.
  */
 export async function readCollection(
@@ -59,7 +59,7 @@ export async function writeCollection(
 ): Promise<void> {
   await mkdir(dir, { recursive: true });
   for (const [name, data] of Object.entries(files)) {
-    // Nested set names (`brands/rexall.json`) need their directories to exist.
+    // Nested set names (`brands/brand-a.json`) need their directories to exist.
     await mkdir(dirname(join(dir, name)), { recursive: true });
     await writeFile(
       join(dir, name),

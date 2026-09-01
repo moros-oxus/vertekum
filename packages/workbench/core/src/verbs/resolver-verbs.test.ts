@@ -41,11 +41,11 @@ function resolverOf(document: Document, name: string): ResolverDocument {
   return doc;
 }
 
-/** The Tamblyn shape: one resolver composing only core. */
-function tamblyn(): Document {
+/** The consumer shape: one resolver composing only core. */
+function consumer(): Document {
   return newDocument({
     resolvers: {
-      rexall: {
+      'brand-a': {
         version: '2025.10',
         sets: { core: { sources: [{ $ref: 'core.json' }] } },
         modifiers: {},
@@ -59,25 +59,30 @@ function tamblyn(): Document {
 
 test('resolver add creates a resolver file; an existing name refuses; a near-miss notes', async () => {
   const document = newDocument();
-  const result = await run('resolver add', document, { operand: 'rexall' });
-  expect(result?.summary).toBe('added resolver rexall');
-  expect(document.getResolvers().has('rexall')).toBe(true);
+  const result = await run('resolver add', document, { operand: 'brand-a' });
+  expect(result?.summary).toBe('added resolver brand-a');
+  expect(document.getResolvers().has('brand-a')).toBe(true);
 
   await expect(
-    run('resolver add', document, { operand: 'rexall' }),
+    run('resolver add', document, { operand: 'brand-a' }),
   ).rejects.toThrow(/already exists/);
 
-  const near = await run('resolver add', document, { operand: 'rexal' });
+  const near = await run('resolver add', document, { operand: 'brand-c' });
   expect(near?.summary).toContain(
-    "existing resolver 'rexall' is 1 edit(s) away",
+    "existing resolver 'brand-a' is 1 edit(s) away",
   );
 });
 
-test('add -s writes the entry and its order ref — the blocked Tamblyn ask', async () => {
-  const document = tamblyn();
-  const result = await run('resolver add', document, {}, { set: 'rexall/sem' });
-  expect(result?.summary).toBe('added set sem to rexall');
-  const doc = resolverOf(document, 'rexall');
+test('add -s writes the entry and its order ref — the blocked consumer ask', async () => {
+  const document = consumer();
+  const result = await run(
+    'resolver add',
+    document,
+    {},
+    { set: 'brand-a/sem' },
+  );
+  expect(result?.summary).toBe('added set sem to brand-a');
+  const doc = resolverOf(document, 'brand-a');
   expect(doc.sets.sem).toEqual({ sources: [{ $ref: 'sem.json' }] });
   expect(doc.resolutionOrder).toEqual([
     { $ref: '#/sets/core' },
@@ -86,32 +91,32 @@ test('add -s writes the entry and its order ref — the blocked Tamblyn ask', as
 });
 
 test('add -s refuses a missing set file, an existing entry, and a stray operand', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await expect(
-    run('resolver add', document, {}, { set: 'rexall/nope' }),
+    run('resolver add', document, {}, { set: 'brand-a/nope' }),
   ).rejects.toThrow(
     /no token set file 'nope.json'.*known sets: core, sem, light, dark/,
   );
   await expect(
-    run('resolver add', document, {}, { set: 'rexall/core' }),
+    run('resolver add', document, {}, { set: 'brand-a/core' }),
   ).rejects.toThrow(/already has set 'core'/);
   await expect(
-    run('resolver add', document, { operand: 'huh' }, { set: 'rexall/sem' }),
+    run('resolver add', document, { operand: 'huh' }, { set: 'brand-a/sem' }),
   ).rejects.toThrow(/unexpected operand 'huh'/);
 });
 
 test('add -m creates the modifier around its first context, default included', async () => {
-  const document = tamblyn();
+  const document = consumer();
   const result = await run(
     'resolver add',
     document,
     { operand: 'light' },
-    { modifier: 'rexall/theme/light' },
+    { modifier: 'brand-a/theme/light' },
   );
   expect(result?.summary).toContain(
-    'created modifier theme with context light (default) in rexall',
+    'created modifier theme with context light (default) in brand-a',
   );
-  const doc = resolverOf(document, 'rexall');
+  const doc = resolverOf(document, 'brand-a');
   expect(doc.modifiers.theme).toEqual({
     contexts: { light: [{ $ref: 'light.json' }] },
     default: 'light',
@@ -120,7 +125,7 @@ test('add -m creates the modifier around its first context, default included', a
 });
 
 test('add -m on an existing modifier adds the context; bare -m and duplicates refuse', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver add',
     document,
@@ -133,7 +138,7 @@ test('add -m on an existing modifier adds the context; bare -m and duplicates re
     { operand: 'dark' },
     { modifier: 'theme/dark' },
   );
-  const doc = resolverOf(document, 'rexall');
+  const doc = resolverOf(document, 'brand-a');
   expect(Object.keys(doc.modifiers.theme?.contexts ?? {})).toEqual([
     'light',
     'dark',
@@ -144,7 +149,7 @@ test('add -m on an existing modifier adds the context; bare -m and duplicates re
   ).toHaveLength(1);
 
   await expect(
-    run('resolver add', document, {}, { modifier: 'rexall/theme' }),
+    run('resolver add', document, {}, { modifier: 'brand-a/theme' }),
   ).rejects.toThrow(/needs at least one context — address one/);
   await expect(
     run(
@@ -157,7 +162,7 @@ test('add -m on an existing modifier adds the context; bare -m and duplicates re
 });
 
 test('add -m warns when a created modifier near-misses an existing sibling', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver add',
     document,
@@ -181,7 +186,7 @@ test('add -m warns when a created modifier near-misses an existing sibling', asy
 test('remove drops a resolver, a set entry with its order ref, and a modifier', async () => {
   const document = newDocument({
     resolvers: {
-      rexall: {
+      'brand-a': {
         version: '2025.10',
         sets: {
           core: { sources: [{ $ref: 'core.json' }] },
@@ -202,7 +207,7 @@ test('remove drops a resolver, a set entry with its order ref, and a modifier', 
           { $ref: '#/modifiers/theme' },
         ],
       },
-      lilly: {
+      'brand-b': {
         version: '2025.10',
         sets: {},
         modifiers: {},
@@ -211,32 +216,32 @@ test('remove drops a resolver, a set entry with its order ref, and a modifier', 
     },
   });
 
-  await run('resolver remove', document, {}, { set: 'rexall/sem' });
-  let doc = resolverOf(document, 'rexall');
+  await run('resolver remove', document, {}, { set: 'brand-a/sem' });
+  let doc = resolverOf(document, 'brand-a');
   expect(doc.sets.sem).toBeUndefined();
   expect(doc.resolutionOrder).toEqual([
     { $ref: '#/sets/core' },
     { $ref: '#/modifiers/theme' },
   ]);
 
-  await run('resolver remove', document, {}, { modifier: 'rexall/theme' });
-  doc = resolverOf(document, 'rexall');
+  await run('resolver remove', document, {}, { modifier: 'brand-a/theme' });
+  doc = resolverOf(document, 'brand-a');
   expect(doc.modifiers.theme).toBeUndefined();
   expect(doc.resolutionOrder).toEqual([{ $ref: '#/sets/core' }]);
 
-  const result = await run('resolver remove', document, { name: 'lilly' });
+  const result = await run('resolver remove', document, { name: 'brand-b' });
   expect(result?.summary).toContain('export/unknown-composition');
-  expect(document.getResolvers().has('lilly')).toBe(false);
+  expect(document.getResolvers().has('brand-b')).toBe(false);
 
   await expect(
     run('resolver remove', document, { name: 'lily' }),
   ).rejects.toThrow(
-    /no resolver 'lily' — did you mean 'rexall'\?|no resolver 'lily'/,
+    /no resolver 'lily' — did you mean 'brand-a'\?|no resolver 'lily'/,
   );
 });
 
 test('remove -m context guards: the last context and the default are refused', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver add',
     document,
@@ -258,32 +263,37 @@ test('remove -m context guards: the last context and the default are refused', a
   ).rejects.toThrow(/the default context.*retarget first/);
 
   await run('resolver remove', document, {}, { modifier: 'theme/dark' });
-  const doc = resolverOf(document, 'rexall');
+  const doc = resolverOf(document, 'brand-a');
   expect(Object.keys(doc.modifiers.theme?.contexts ?? {})).toEqual(['light']);
 });
 
 // ── push / pop ───────────────────────────────────────────────────────────────
 
 test('push appends comma-delimited sources in order; duplicates and unknown files refuse', async () => {
-  const document = tamblyn();
+  const document = consumer();
   const result = await run(
     'resolver push',
     document,
     { sources: 'sem, dark' },
-    { set: 'rexall/core' },
+    { set: 'brand-a/core' },
   );
-  expect(result?.summary).toBe('pushed 2 source(s) onto rexall/core');
-  expect(resolverOf(document, 'rexall').sets.core?.sources).toEqual([
+  expect(result?.summary).toBe('pushed 2 source(s) onto brand-a/core');
+  expect(resolverOf(document, 'brand-a').sets.core?.sources).toEqual([
     { $ref: 'core.json' },
     { $ref: 'sem.json' },
     { $ref: 'dark.json' },
   ]);
 
   await expect(
-    run('resolver push', document, { sources: 'sem' }, { set: 'rexall/core' }),
+    run('resolver push', document, { sources: 'sem' }, { set: 'brand-a/core' }),
   ).rejects.toThrow(/already sources sem.json/);
   await expect(
-    run('resolver push', document, { sources: 'nope' }, { set: 'rexall/core' }),
+    run(
+      'resolver push',
+      document,
+      { sources: 'nope' },
+      { set: 'brand-a/core' },
+    ),
   ).rejects.toThrow(/no token set file/);
   await expect(
     run('resolver push', document, { sources: 'sem' }, {}),
@@ -291,7 +301,7 @@ test('push appends comma-delimited sources in order; duplicates and unknown file
 });
 
 test('push reaches a context source list through -m', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver add',
     document,
@@ -302,10 +312,10 @@ test('push reaches a context source list through -m', async () => {
     'resolver push',
     document,
     { sources: 'dark,sem' },
-    { modifier: 'rexall/theme/light' },
+    { modifier: 'brand-a/theme/light' },
   );
   expect(
-    resolverOf(document, 'rexall').modifiers.theme?.contexts.light,
+    resolverOf(document, 'brand-a').modifiers.theme?.contexts.light,
   ).toEqual([
     { $ref: 'light.json' },
     { $ref: 'dark.json' },
@@ -314,39 +324,39 @@ test('push reaches a context source list through -m', async () => {
 });
 
 test('pop takes the last by default, an index, or a name — and refuses the last source', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver push',
     document,
     { sources: 'sem,dark,light' },
-    { set: 'rexall/core' },
+    { set: 'brand-a/core' },
   );
 
   await expect(
-    run('resolver pop', document, { which: '9' }, { set: 'rexall/core' }),
+    run('resolver pop', document, { which: '9' }, { set: 'brand-a/core' }),
   ).rejects.toThrow(/out of range/);
 
-  let result = await run('resolver pop', document, {}, { set: 'rexall/core' });
-  expect(result?.summary).toBe('popped light from rexall/core');
+  let result = await run('resolver pop', document, {}, { set: 'brand-a/core' });
+  expect(result?.summary).toBe('popped light from brand-a/core');
 
   result = await run(
     'resolver pop',
     document,
     { which: '1' },
-    { set: 'rexall/core' },
+    { set: 'brand-a/core' },
   );
-  expect(result?.summary).toBe('popped sem from rexall/core');
+  expect(result?.summary).toBe('popped sem from brand-a/core');
 
   result = await run(
     'resolver pop',
     document,
     { which: 'dark' },
-    { set: 'rexall/core' },
+    { set: 'brand-a/core' },
   );
-  expect(result?.summary).toBe('popped dark from rexall/core');
+  expect(result?.summary).toBe('popped dark from brand-a/core');
 
   await expect(
-    run('resolver pop', document, {}, { set: 'rexall/core' }),
+    run('resolver pop', document, {}, { set: 'brand-a/core' }),
   ).rejects.toThrow(/popping the last would leave it sourcing nothing/);
 });
 
@@ -355,7 +365,7 @@ test('pop takes the last by default, an index, or a name — and refuses the las
 function ordered(): Document {
   return newDocument({
     resolvers: {
-      rexall: {
+      'brand-a': {
         version: '2025.10',
         sets: {
           core: { sources: [{ $ref: 'core.json' }] },
@@ -375,58 +385,58 @@ function ordered(): Document {
 
 test('order places by name, supports comma placements, moves, and swaps', async () => {
   let document = ordered();
-  await run('resolver order', document, { target: 'rexall', a: 'dark@{0}' });
+  await run('resolver order', document, { target: 'brand-a', a: 'dark@{0}' });
   expect(
-    resolverOf(document, 'rexall').resolutionOrder.map((e) => e.$ref),
+    resolverOf(document, 'brand-a').resolutionOrder.map((e) => e.$ref),
   ).toEqual(['#/sets/dark', '#/sets/core', '#/sets/sem']);
 
   document = ordered();
   await run('resolver order', document, {
-    target: 'rexall',
+    target: 'brand-a',
     a: 'dark@{0},sem@{2}',
   });
   expect(
-    resolverOf(document, 'rexall').resolutionOrder.map((e) => e.$ref),
+    resolverOf(document, 'brand-a').resolutionOrder.map((e) => e.$ref),
   ).toEqual(['#/sets/dark', '#/sets/core', '#/sets/sem']);
 
   document = ordered();
-  await run('resolver order', document, { target: 'rexall', a: '0', b: '2' });
+  await run('resolver order', document, { target: 'brand-a', a: '0', b: '2' });
   expect(
-    resolverOf(document, 'rexall').resolutionOrder.map((e) => e.$ref),
+    resolverOf(document, 'brand-a').resolutionOrder.map((e) => e.$ref),
   ).toEqual(['#/sets/sem', '#/sets/dark', '#/sets/core']);
 
   document = ordered();
   await run(
     'resolver order',
     document,
-    { target: 'rexall', a: '0', b: '2' },
+    { target: 'brand-a', a: '0', b: '2' },
     { swap: true },
   );
   expect(
-    resolverOf(document, 'rexall').resolutionOrder.map((e) => e.$ref),
+    resolverOf(document, 'brand-a').resolutionOrder.map((e) => e.$ref),
   ).toEqual(['#/sets/dark', '#/sets/sem', '#/sets/core']);
 });
 
 test('order refuses bad placements, unknown names, out-of-range, and empty operands', async () => {
   const document = ordered();
   await expect(
-    run('resolver order', document, { target: 'rexall', a: 'sem@{9}' }),
+    run('resolver order', document, { target: 'brand-a', a: 'sem@{9}' }),
   ).rejects.toThrow(/out of range/);
   await expect(
-    run('resolver order', document, { target: 'rexall', a: 'nope@{0}' }),
+    run('resolver order', document, { target: 'brand-a', a: 'nope@{0}' }),
   ).rejects.toThrow(/no item 'nope'/);
   await expect(
-    run('resolver order', document, { target: 'rexall', a: 'sem@0' }),
+    run('resolver order', document, { target: 'brand-a', a: 'sem@0' }),
   ).rejects.toThrow(/bad placement/);
   await expect(
-    run('resolver order', document, { target: 'rexall' }),
+    run('resolver order', document, { target: 'brand-a' }),
   ).rejects.toThrow(/placements .*a move .*or a swap/);
 });
 
 test('a name in both branches is ambiguous — the sets/ and modifiers/ prefixes resolve it', async () => {
   const document = newDocument({
     resolvers: {
-      rexall: {
+      'brand-a': {
         version: '2025.10',
         sets: { brand: { sources: [{ $ref: 'core.json' }] } },
         modifiers: {
@@ -446,32 +456,32 @@ test('a name in both branches is ambiguous — the sets/ and modifiers/ prefixes
     },
   });
   await expect(
-    run('resolver order', document, { target: 'rexall', a: 'brand@{0}' }),
+    run('resolver order', document, { target: 'brand-a', a: 'brand@{0}' }),
   ).rejects.toThrow(/ambiguous.*sets\/brand or modifiers\/brand/);
   await run('resolver order', document, {
-    target: 'rexall',
+    target: 'brand-a',
     a: 'modifiers/brand@{0}',
   });
   expect(
-    resolverOf(document, 'rexall').resolutionOrder.map((e) => e.$ref),
+    resolverOf(document, 'brand-a').resolutionOrder.map((e) => e.$ref),
   ).toEqual(['#/modifiers/brand', '#/sets/brand']);
 });
 
 test('order reaches a source list through -s', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver push',
     document,
     { sources: 'sem,dark' },
-    { set: 'rexall/core' },
+    { set: 'brand-a/core' },
   );
   await run(
     'resolver order',
     document,
     { target: 'dark@{0}' },
-    { set: 'rexall/core' },
+    { set: 'brand-a/core' },
   );
-  expect(resolverOf(document, 'rexall').sets.core?.sources).toEqual([
+  expect(resolverOf(document, 'brand-a').sets.core?.sources).toEqual([
     { $ref: 'dark.json' },
     { $ref: 'core.json' },
     { $ref: 'sem.json' },
@@ -481,7 +491,7 @@ test('order reaches a source list through -s', async () => {
 // ── default / list / round-trip ──────────────────────────────────────────────
 
 test('default retargets and guards', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver add',
     document,
@@ -499,21 +509,21 @@ test('default retargets and guards', async () => {
     'resolver default',
     document,
     {},
-    { modifier: 'rexall/theme/dark' },
+    { modifier: 'brand-a/theme/dark' },
   );
-  expect(result?.summary).toBe('default of rexall/theme is now dark');
-  expect(resolverOf(document, 'rexall').modifiers.theme?.default).toBe('dark');
+  expect(result?.summary).toBe('default of brand-a/theme is now dark');
+  expect(resolverOf(document, 'brand-a').modifiers.theme?.default).toBe('dark');
 
   await expect(
-    run('resolver default', document, {}, { modifier: 'rexall/theme/nope' }),
+    run('resolver default', document, {}, { modifier: 'brand-a/theme/nope' }),
   ).rejects.toThrow(/no context 'nope'/);
   await expect(
-    run('resolver default', document, {}, { modifier: 'rexall/theme' }),
+    run('resolver default', document, {}, { modifier: 'brand-a/theme' }),
   ).rejects.toThrow(/default addresses a context/);
 });
 
 test('list shows every level', async () => {
-  const document = tamblyn();
+  const document = consumer();
   await run(
     'resolver add',
     document,
@@ -528,9 +538,9 @@ test('list shows every level', async () => {
   );
 
   const all = await run('resolver list', document);
-  expect(all?.summary).toBe('rexall — 1 set(s), 1 modifier(s)');
+  expect(all?.summary).toBe('brand-a — 1 set(s), 1 modifier(s)');
 
-  const one = await run('resolver list', document, { name: 'rexall' });
+  const one = await run('resolver list', document, { name: 'brand-a' });
   expect(one?.summary).toContain('sets: core');
   expect(one?.summary).toContain('theme (2 context(s), default light)');
   expect(one?.summary).toContain('order: sets/core, modifiers/theme');
@@ -539,7 +549,7 @@ test('list shows every level', async () => {
     'resolver list',
     document,
     {},
-    { modifier: 'rexall/theme' },
+    { modifier: 'brand-a/theme' },
   );
   expect(mod?.summary).toBe(
     'contexts: light (1 source(s)) [default], dark (1 source(s))',
@@ -549,15 +559,15 @@ test('list shows every level', async () => {
     'resolver list',
     document,
     {},
-    { set: 'rexall/core' },
+    { set: 'brand-a/core' },
   );
-  expect(sources?.summary).toBe('sources of rexall/core: core');
+  expect(sources?.summary).toBe('sources of brand-a/core: core');
 });
 
 test('editing preserves pass-through fields — the snapshot is cloned, never mutated', async () => {
   const document = newDocument({
     resolvers: {
-      rexall: {
+      'brand-a': {
         version: '2025.10',
         name: 'authored-name',
         description: 'authored',
@@ -568,9 +578,9 @@ test('editing preserves pass-through fields — the snapshot is cloned, never mu
       },
     },
   });
-  const before = resolverOf(document, 'rexall');
-  await run('resolver add', document, {}, { set: 'rexall/sem' });
-  const after = resolverOf(document, 'rexall');
+  const before = resolverOf(document, 'brand-a');
+  await run('resolver add', document, {}, { set: 'brand-a/sem' });
+  const after = resolverOf(document, 'brand-a');
   expect(after.description).toBe('authored');
   expect(after.$extensions).toEqual({ 'vendor.thing': true });
   // The pre-edit snapshot did not gain the set — the verb edited a clone.
@@ -579,9 +589,9 @@ test('editing preserves pass-through fields — the snapshot is cloned, never mu
 
 test('a nested set writes an RFC 6901-escaped order ref and removes cleanly', async () => {
   const document = newDocument({
-    sets: ['core', 'brands/lilly'],
+    sets: ['core', 'brands/brand-b'],
     resolvers: {
-      rexall: {
+      'brand-a': {
         version: '2025.10',
         sets: { core: { sources: [{ $ref: 'core.json' }] } },
         modifiers: {},
@@ -589,19 +599,19 @@ test('a nested set writes an RFC 6901-escaped order ref and removes cleanly', as
       },
     },
   });
-  await run('resolver add', document, {}, { set: 'rexall/brands/lilly' });
-  let doc = resolverOf(document, 'rexall');
-  expect(doc.sets['brands/lilly']).toEqual({
-    sources: [{ $ref: 'brands/lilly.json' }],
+  await run('resolver add', document, {}, { set: 'brand-a/brands/brand-b' });
+  let doc = resolverOf(document, 'brand-a');
+  expect(doc.sets['brands/brand-b']).toEqual({
+    sources: [{ $ref: 'brands/brand-b.json' }],
   });
   expect(doc.resolutionOrder.at(-1)).toEqual({
-    $ref: '#/sets/brands~1lilly',
+    $ref: '#/sets/brands~1brand-b',
   });
 
-  const list = await run('resolver list', document, { name: 'rexall' });
-  expect(list?.summary).toContain('sets/brands/lilly');
+  const list = await run('resolver list', document, { name: 'brand-a' });
+  expect(list?.summary).toContain('sets/brands/brand-b');
 
-  await run('resolver remove', document, {}, { set: 'rexall/brands/lilly' });
-  doc = resolverOf(document, 'rexall');
+  await run('resolver remove', document, {}, { set: 'brand-a/brands/brand-b' });
+  doc = resolverOf(document, 'brand-a');
   expect(doc.resolutionOrder).toEqual([{ $ref: '#/sets/core' }]);
 });

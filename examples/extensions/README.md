@@ -82,7 +82,7 @@ document:
 
 `color.teal` holds no stops — it is a group carrying a
 `org.vertekum.generate/ramp` payload (`@vertekum/ext-token-ramp`): an anchor
-referencing `{brand.poolside}` and a scalar naming the steps. The stops are
+referencing `{brand.accent}` and a scalar naming the steps. The stops are
 **generated** into the model — aliasable, validated, exported to css — while the
 file stores only the payload. Editing a stop directly is refused;
 `vertekum ramp build` writes them as real tokens instead, and

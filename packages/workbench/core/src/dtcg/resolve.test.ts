@@ -213,16 +213,16 @@ test('nested set names round-trip resolutionOrder refs via RFC 6901 escaping, to
   const { escapePointerSegment, orderSetName, resolveOrder } = await import(
     './resolve'
   );
-  expect(escapePointerSegment('brands/rexall')).toBe('brands~1rexall');
-  expect(orderSetName('#/sets/brands~1rexall')).toBe('brands/rexall');
+  expect(escapePointerSegment('brands/brand-a')).toBe('brands~1brand-a');
+  expect(orderSetName('#/sets/brands~1brand-a')).toBe('brands/brand-a');
   // Hand-authored unescaped refs keep working.
-  expect(orderSetName('#/sets/brands/rexall')).toBe('brands/rexall');
+  expect(orderSetName('#/sets/brands/brand-a')).toBe('brands/brand-a');
 
   const doc = {
     version: '2025.10' as const,
-    sets: { 'brands/rexall': { sources: [{ $ref: 'brands/rexall.json' }] } },
+    sets: { 'brands/brand-a': { sources: [{ $ref: 'brands/brand-a.json' }] } },
     modifiers: {},
-    resolutionOrder: [{ $ref: '#/sets/brands~1rexall' }],
+    resolutionOrder: [{ $ref: '#/sets/brands~1brand-a' }],
   };
-  expect(resolveOrder(doc)).toEqual(['brands/rexall.json']);
+  expect(resolveOrder(doc)).toEqual(['brands/brand-a.json']);
 });
