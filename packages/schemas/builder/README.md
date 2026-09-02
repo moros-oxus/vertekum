@@ -62,6 +62,7 @@ root = color.<property>.<role>?.<emphasis>?.<state>?
 - [`schema build`](./docs/build.md) — the command, the sweep, the ownership stamp, the
   `--check` CI gate, programmatic use.
 - [`schema lint`](./docs/lint.md) — validate the `.dfn` sources themselves: fragments
+- [`schema mock`](./docs/mock.md) — render the granted matrix: name listings, sample token files, deliberate breakage.
   included, every production, findings collected with positions; `--fix` repairs the
   mechanical ones.
 - [`schema fmt`](./docs/format.md) — canonical formatting: JS-literal blocks, indent

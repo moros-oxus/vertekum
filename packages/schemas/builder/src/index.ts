@@ -24,6 +24,13 @@ export const SchemaBuilderSettings = z.object({
    * A file's `id` pragma wins. Unset: no `$id` unless the pragma supplies one.
    */
   schemaId: z.string().optional(),
+  /** `schema mock` output: where mocks land, and a name-glob → DTCG `$type` map. */
+  mock: z
+    .object({
+      out: z.string().default('./mocks'),
+      types: z.record(z.string()).optional(),
+    })
+    .default({}),
 });
 
 export const schemaBuilderManifest = {

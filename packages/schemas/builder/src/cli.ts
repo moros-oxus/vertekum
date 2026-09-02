@@ -12,6 +12,16 @@ import { emit, isStamped } from './emit';
 import { DfnError } from './error';
 import { fixSource, formatSource, resolveIndent } from './format';
 import { lintModule } from './lint';
+import {
+  breakTokens,
+  fullPaths,
+  leastPaths,
+  mockTokens,
+  renderNames,
+  renderTokens,
+  rng,
+  typeResolver,
+} from './mock';
 import { type ResolvedModule, resolveModule } from './resolve';
 
 /**
@@ -37,6 +47,7 @@ function settingsOf(ctx: { project: unknown }): {
   out?: string;
   link: boolean;
   schemaId?: string;
+  mock: { out: string; types?: Record<string, string> };
 } {
   const kernel = (ctx.project as ProjectDir).kernel;
   const slice = kernel?.config.get<{
@@ -44,12 +55,17 @@ function settingsOf(ctx: { project: unknown }): {
     out?: string;
     link?: boolean;
     schemaId?: string;
+    mock?: { out?: string; types?: Record<string, string> };
   }>('vtk.schema-builder');
   return {
     source: slice?.source ?? './schemas',
     out: slice?.out,
     link: slice?.link === true,
     schemaId: slice?.schemaId,
+    mock: {
+      out: slice?.mock?.out ?? './mocks',
+      ...(slice?.mock?.types ? { types: slice.mock.types } : {}),
+    },
   };
 }
 
@@ -493,5 +509,137 @@ export const schemaBuildCommand: CommandDescriptor = {
       ...skipped.map((f) => `${f} has local edits (no stamp) — left as is`),
     ];
     return { summary: notes.join('\n'), files, data: { skipped, fragments } };
+  },
+};
+
+/**
+ * `vertekum schema mock` — make the granted matrix tangible: a names listing, a usable sample
+ * token file, and (with `--break`) a deliberately broken sibling that `check` must catch.
+ * Coverage `least` exercises every parent→child name adjacency once; `full` is the whole
+ * matrix. Deterministic at a fixed `--seed`, so mocks are diff-stable.
+ */
+export const schemaMockCommand: CommandDescriptor = {
+  name: 'schema mock',
+  description:
+    'generate the name matrix and sample token files a vocabulary grants',
+  args: [
+    {
+      name: 'module',
+      required: false,
+      description:
+        "a .dfn file or directory; default: the configured source ('./schemas')",
+    },
+  ],
+  options: [
+    {
+      flag: '--style <style>',
+      description: "'names' (markdown) or 'tokens' (DTCG sample); default both",
+    },
+    {
+      flag: '--coverage <coverage>',
+      description:
+        "'least' (every name adjacency once; default) or 'full' (the whole matrix)",
+    },
+    {
+      flag: '--break <p>',
+      description:
+        'probability 0..1 that each token breaks (name or value) — emitted as a separate *.broken.tokens.json',
+    },
+    {
+      flag: '--type <type>',
+      description: "fallback DTCG $type for mock tokens (default 'color')",
+    },
+    {
+      flag: '--seed <n>',
+      description: 'RNG seed for the breakage pass (default 1)',
+    },
+  ],
+  run(ctx): CommandResult {
+    const { projectDir } = ctx.project as ProjectDir;
+    const settings = settingsOf(ctx);
+    const style = (ctx.options.style as string | undefined) ?? 'both';
+    if (!['names', 'tokens', 'both'].includes(style)) {
+      throw new Error(`--style must be 'names' or 'tokens', got '${style}'`);
+    }
+    const coverage = (ctx.options.coverage as string | undefined) ?? 'least';
+    if (!['least', 'full'].includes(coverage)) {
+      throw new Error(
+        `--coverage must be 'least' or 'full', got '${coverage}'`,
+      );
+    }
+    const breakP = Number((ctx.options.break as string | undefined) ?? '0');
+    if (!Number.isFinite(breakP) || breakP < 0 || breakP > 1) {
+      throw new Error(`--break must be a probability 0..1`);
+    }
+    const seed = Number((ctx.options.seed as string | undefined) ?? '1');
+    const typeOf = typeResolver(
+      settings.mock.types,
+      ctx.options.type as string | undefined,
+    );
+
+    const { modules, explicitFile, root } = resolveModules(
+      projectDir,
+      ctx.args.module,
+      settings.source,
+    );
+    if (modules.length === 0) {
+      return { summary: 'no .dfn modules found', files: [] };
+    }
+
+    const files: Array<{ path: string; content: string }> = [];
+    const skipped: string[] = [];
+    let names = 0;
+    let tokensOut = 0;
+
+    for (const modulePath of modules) {
+      const resolved = resolveModule(modulePath);
+      if (natureOf(resolved) === 'inline' || !resolved.module.root) {
+        // Inline modules never emit; a rootless fragment has no matrix of its own. In a sweep
+        // both are notices; an explicit fragment is worth an error.
+        if (explicitFile) {
+          throw new Error(
+            `${relative(projectDir, modulePath)} declares no root — nothing to mock`,
+          );
+        }
+        skipped.push(relative(projectDir, modulePath));
+        continue;
+      }
+      const tree = build(resolved);
+      const paths = coverage === 'full' ? fullPaths(tree) : leastPaths(tree);
+      const rel = relative(root, modulePath).replace(/\.dfn$/, '');
+      const base = join(settings.mock.out, rel);
+      const moduleName = rel.split('/').pop() as string;
+
+      if (style !== 'tokens') {
+        files.push({
+          path: `${base}.names.md`,
+          content: renderNames(moduleName, coverage, paths),
+        });
+        names += paths.length;
+      }
+      if (style !== 'names') {
+        const tokens = mockTokens(paths, typeOf);
+        files.push({
+          path: `${base}.mock.tokens.json`,
+          content: renderTokens(tokens),
+        });
+        tokensOut += tokens.length;
+        if (breakP > 0) {
+          const broken = breakTokens(tokens, breakP, rng(seed));
+          files.push({
+            path: `${base}.broken.tokens.json`,
+            content: renderTokens(broken),
+          });
+        }
+      }
+    }
+
+    const parts = [
+      `mocked ${files.length} file(s) (${coverage})`,
+      style !== 'tokens' ? `${names} name(s)` : null,
+      style !== 'names' ? `${tokensOut} token(s)` : null,
+      skipped.length > 0 ? `skipped ${skipped.join(', ')}` : null,
+    ].filter(Boolean);
+    return { summary: parts.join(' — '), files };
   },
 };

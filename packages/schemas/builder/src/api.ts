@@ -1,5 +1,10 @@
 import type { ActivateContext } from '@vertekum/core';
-import { schemaBuildCommand, schemaFmtCommand, schemaLintCommand } from './cli';
+import {
+  schemaBuildCommand,
+  schemaFmtCommand,
+  schemaLintCommand,
+  schemaMockCommand,
+} from './cli';
 import type { schemaBuilderManifest } from './index';
 
 export {
@@ -33,4 +38,5 @@ export function activate(
   ctx.commands.register(schemaBuildCommand);
   ctx.commands.register(schemaLintCommand);
   ctx.commands.register(schemaFmtCommand);
+  ctx.commands.register(schemaMockCommand);
 }
