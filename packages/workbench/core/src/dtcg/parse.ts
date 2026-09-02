@@ -82,11 +82,13 @@ function vtkBucket(ext: DtcgNode | undefined): DtcgNode | undefined {
  */
 /**
  * The carrier rule (extension-held token data): a node that is not a token, has no non-`$`
- * children and no `$root`, and whose `$extensions` carries exactly ONE registered codec key,
- * materializes into an ordinary token via that codec. Anything else — children present, `$value`
- * beside the key, two registered keys — is left as authored: the payload is inert group data
- * there, and the malformed-carrier diagnostic belongs to the owning extension's schema binding,
- * which can say WHY, not to a silent parse rule.
+ * children, and whose `$extensions` carries exactly ONE registered codec key, is a carrier.
+ * `$root` is permitted for GROUP codecs — the root token is the group's own value and parses as
+ * usual, with the generated children appearing beside it (a ramp group whose anchor swatch is its
+ * `$root`) — but declines VALUE codecs, whose node must itself become a token. Anything else —
+ * children present, `$value` beside the key, two registered keys — is left as authored: the
+ * payload is inert group data there, and the malformed-carrier diagnostic belongs to the owning
+ * extension's schema binding, which can say WHY, not to a silent parse rule.
  */
 function carrierOf(
   node: DtcgNode,
@@ -97,10 +99,10 @@ function carrierOf(
   for (const key of Object.keys(node)) {
     if (!key.startsWith('$')) return null;
   }
-  if (ROOT_TOKEN in node) return null;
   const matches = codecs.filter((codec) => codec.key in (ext as DtcgNode));
   if (matches.length !== 1) return null;
   const codec = matches[0] as TokenCodec;
+  if (!isGroupCodec(codec) && ROOT_TOKEN in node) return null;
   return { codec, payload: (ext as DtcgNode)[codec.key] };
 }
 
@@ -151,8 +153,22 @@ function walk(
   const carrier = path.length > 0 ? carrierOf(node, codecs) : null;
   if (carrier && isGroupCodec(carrier.codec)) {
     // Group carriers expand AFTER the whole collection is walked, so an anchor can reference a
-    // real token anywhere in it (two-pass parse).
+    // real token anywhere in it (two-pass parse). A `$root` token on the carrier still parses —
+    // it is the group's own value, not a generated child.
     pending.push({ codec: carrier.codec, payload: carrier.payload, set, path });
+    const root = node[ROOT_TOKEN];
+    if (root && typeof root === 'object') {
+      const groupType = typeof node.$type === 'string' ? node.$type : inherited;
+      walk(
+        root as DtcgNode,
+        [...path, ROOT_TOKEN],
+        out,
+        set,
+        codecs,
+        pending,
+        groupType,
+      );
+    }
     return;
   }
   if (carrier && !isGroupCodec(carrier.codec)) {
@@ -261,6 +277,7 @@ export function parseCollection(
       );
       if (!children) continue;
       for (const [name, fields] of Object.entries(children)) {
+        if (name === ROOT_TOKEN) continue; // the group's own value is never a generated child
         const path = [...expansion.path, name];
         out.push({
           id: tokenId(expansion.set, path),

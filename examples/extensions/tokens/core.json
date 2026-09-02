@@ -6,6 +6,15 @@
           "anchor": "{brand.accent}",
           "scalar": "100-500/100"
         }
+      },
+      "$root": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [0.6884, 0.1148, 188.2],
+          "alpha": 1,
+          "hex": "#1DB1A8"
+        }
       }
     }
   },

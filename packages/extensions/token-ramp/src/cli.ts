@@ -85,6 +85,7 @@ export function rampBuildCommand(
         const committed = computed.filter((r) => r.children).length;
         return {
           summary: `${committed} committed ramp(s) fresh, ${computed.length - committed} virtual`,
+          data: { ramps: rampData(computed) },
         };
       }
 
@@ -104,9 +105,35 @@ export function rampBuildCommand(
       document.apply(restoreFiles(next));
       return {
         summary: `built ${computed.length} ramp(s), ${stops} stop(s)`,
+        data: { ramps: rampData(computed) },
       };
     },
   };
+}
+
+/**
+ * The machine-readable result both modes emit under `--json`: every ramp's computed stops. A
+ * first-class value source — documentation pipelines read this instead of parsing CSS.
+ */
+function rampData(
+  computed: Array<{
+    set: string;
+    path: string[];
+    children: boolean;
+    stops: Record<string, unknown>;
+  }>,
+): Array<{
+  set: string;
+  path: string;
+  committed: boolean;
+  stops: Record<string, unknown>;
+}> {
+  return computed.map((ramp) => ({
+    set: ramp.set,
+    path: ramp.path.join('.'),
+    committed: ramp.children,
+    stops: ramp.stops,
+  }));
 }
 
 function nodeAt(

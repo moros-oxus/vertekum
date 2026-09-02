@@ -66,6 +66,7 @@ The carrier rule at parse is strict; everything it refuses is left as authored:
 | Node shape | Outcome |
 | --- | --- |
 | only `$`-keys, one registered codec key | materialized (value codec) or expanded (group codec) |
+| …with a `$root` token | expanded (group codec — the root token parses beside the generated children); declined for value codecs |
 | has non-`$` children | a group; the payload is inert data |
 | has `$value`/`$ref` beside the key | an ordinary token; the key rides as a foreign extension |
 | carries two registered codec keys | left a group |

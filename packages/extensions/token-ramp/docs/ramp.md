@@ -96,4 +96,6 @@ aliases, validation, and export — but are written nowhere; the payload is the 
 storage, and editing a stop directly is refused. `vertekum ramp build` **commits**
 them as real tokens (a group with children is never expanded twice), and
 `ramp build --check` fails when committed stops no longer match their payload — the
-CI guard for a moved anchor.
+CI guard for a moved anchor. Under `--json`, both modes emit every computed stop as
+`data.ramps` — the machine-readable value source. A ramp group may also carry its
+own `$root` token; it parses as the group's value beside the generated stops.

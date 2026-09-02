@@ -12,10 +12,25 @@ test('a virtual ramp exports, refuses edits, commits via ramp build, and --check
   const cwd = await fixture();
 
   // Virtual: generated stops reach the css output; the anchor step is the brand hex verbatim.
+  // The group's own $root token exports beside them (the consumer field report: a $root-bearing
+  // ramp group must generate, not silently decline).
   await run('node', [bin, 'build'], { cwd });
   const css = await readFile(join(cwd, 'build/css/tokens.css'), 'utf8');
+  expect(css).toMatch(/--color-teal: oklch/);
   expect(css).toMatch(/--color-teal-100: oklch/);
   expect(css).toMatch(/--color-teal-300: oklch\(0\.6884 0\.1148 188\.2\)/);
+
+  // --dry-run --json emits the computed stops — a value source that needs no CSS parsing.
+  const probe = await run(
+    'node',
+    [bin, 'ramp', 'build', '--dry-run', '--json'],
+    { cwd },
+  );
+  const ramps = JSON.parse(probe.stdout).data.ramps;
+  expect(ramps).toHaveLength(1);
+  expect(ramps[0].path).toBe('color.teal');
+  expect(ramps[0].committed).toBe(false);
+  expect(ramps[0].stops['300'].hex).toBe('#1DB1A8');
 
   // Generated tokens are views — the verbs say where the truth lives.
   const refused = await run(
