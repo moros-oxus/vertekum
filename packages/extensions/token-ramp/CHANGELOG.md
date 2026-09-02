@@ -1,5 +1,12 @@
 # @vertekum/ext-token-ramp
 
+## 0.3.10
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/core@0.3.10
+
 ## 0.3.9
 
 ### Patch Changes
