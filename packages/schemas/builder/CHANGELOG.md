@@ -1,5 +1,13 @@
 # @vertekum/schema-builder
 
+## 0.3.10
+
+### Patch Changes
+
+- [`351366b`](https://github.com/moros-oxus/vertekum/commit/351366b8a92c60e9186cb0c74d774000c0d5366c) Thanks [@tschemmer](https://github.com/tschemmer)! - Emitted schemas share repeated subtrees: identical tails (optional-slot syntagms expand them once per branch) hoist into `$defs` as content-named `shared-*` entries. A consumer module that emitted 12 MB with 22k ref-sites — enough to overflow ajv's call stack at validation — now emits ~30 KB with identical validation behaviour.
+- Updated dependencies []:
+  - @vertekum/core@0.3.10
+
 ## 0.3.9
 
 ### Patch Changes
