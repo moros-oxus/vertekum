@@ -1,5 +1,13 @@
 # @vertekum/schema-builder
 
+## 0.3.11
+
+### Patch Changes
+
+- [`6265f42`](https://github.com/moros-oxus/vertekum/commit/6265f4285ed7b2e9a5e1dd2f6801911ddf9247d0) Thanks [@tschemmer](https://github.com/tschemmer)! - `vertekum schema mock` renders the matrix a vocabulary grants: a grouped name listing (`--style names`), a sample DTCG token file with per-type default values (`--style tokens`; types via the `mock.types` glob map, then `--type`), at `least` (every name adjacency once) or `full` (the whole matrix) coverage — and with `--break <p>`, a separate deliberately-broken sibling file that `check` must refuse. Deterministic at a fixed `--seed`; outputs land in the configured `mock.out`.
+- Updated dependencies []:
+  - @vertekum/core@0.3.11
+
 ## 0.3.10
 
 ### Patch Changes

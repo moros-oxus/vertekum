@@ -1,5 +1,12 @@
 # @vertekum/ext-export-terrazzo
 
+## 0.3.11
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/core@0.3.11
+
 ## 0.3.10
 
 ### Patch Changes
