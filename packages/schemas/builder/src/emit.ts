@@ -1,4 +1,5 @@
 import type { PatternRef, TreeNode } from './build';
+import { dedupeSubtrees } from './dedupe';
 import type { ResolvedModule } from './resolve';
 
 /**
@@ -229,6 +230,9 @@ export function emit(tree: TreeNode | undefined, options: EmitOptions): string {
       document.unevaluatedProperties = body.unevaluatedProperties;
     }
   }
+
+  // Structural sharing: repeated tails (optional-slot syntagms) hoist into $defs once.
+  dedupeSubtrees(document as Record<string, unknown>);
 
   return `${JSON.stringify(document, null, 2)}\n`;
 }

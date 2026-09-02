@@ -23,9 +23,10 @@ function granted(schema: Record<string, unknown>): Set<string> {
   const names = new Set<string>();
   const defs = (schema.$defs ?? {}) as Record<string, unknown>;
   const resolve = (node: unknown): Record<string, unknown> => {
-    const position = node as Record<string, unknown>;
-    if (typeof position.$ref === 'string') {
-      return defs[position.$ref.split('/').pop() as string] as Record<
+    let position = node as Record<string, unknown>;
+    // Follow local def chains — structural sharing (`shared-*`) can stack refs.
+    for (let hops = 0; hops < 8 && typeof position.$ref === 'string'; hops++) {
+      position = defs[position.$ref.split('/').pop() as string] as Record<
         string,
         unknown
       >;

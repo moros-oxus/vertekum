@@ -678,3 +678,30 @@ test('a keyed fragment resolves to its own same-name production, shadow-proof', 
   const tree = build(resolveModule(join(dir, 'main.dfn')));
   expect(names(tree.children.get('t') as TreeNode)).toEqual(['subtle', 'bold']);
 });
+
+test('repeated large tails hoist into shared $defs — the 12 MB explosion guard', () => {
+  // Optional slots repeat the tail under every sibling name; enough names to push each
+  // repeated tail past the hoist threshold.
+  const wide = Array.from({ length: 24 }, (_, i) => `name${i}`).join(' | ');
+  const source = [
+    'scope "document"',
+    `tail = [${wide}]`,
+    `mid = [alpha | beta | gamma | delta]`,
+    `slot = [one | two | three]`,
+    // A MODIFIED ref always expands inline — the duplication engine of the 12 MB case.
+    'root = color.<slot>?.<mid>.<tail ![name0]>?',
+  ].join('\n');
+  const dir = fixture({ 'wide.dfn': source });
+  const schema = JSON.parse(buildModule(join(dir, 'wide.dfn')).content);
+  const shared = Object.keys(schema.$defs ?? {}).filter((k) =>
+    k.startsWith('shared-'),
+  );
+  expect(shared.length).toBeGreaterThan(0);
+  // The document stays compact: the tail enumeration appears once per DISTINCT content
+  // (the pattern def, and the modified expansion) — never once per branch.
+  const text = JSON.stringify(schema);
+  const occurrences = text.split('"name23"').length - 1;
+  expect(occurrences).toBeLessThanOrEqual(2);
+  // Hoisted refs point at real defs.
+  for (const name of shared) expect(schema.$defs[name]).toBeTruthy();
+});
