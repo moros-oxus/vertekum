@@ -1,5 +1,13 @@
 # @vertekum/core
 
+## 0.3.8
+
+### Patch Changes
+
+- [`18e8a1f`](https://github.com/moros-oxus/vertekum/commit/18e8a1fd3343e7dc530188d0b6f094d1dbf92e06) Thanks [@tschemmer](https://github.com/tschemmer)! - `{group}` references resolve to the group's `$root` token, as the spec intends — `$root` never appears in a reference (the format schema forbids `$` segments), exactly as it never appears in an exported name. Previously a `$root` token could not be legally referenced at all.
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.3.8
+
 ## 0.3.7
 
 ### Patch Changes
