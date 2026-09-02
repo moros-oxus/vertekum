@@ -1,5 +1,13 @@
 # @vertekum/core
 
+## 0.3.9
+
+### Patch Changes
+
+- [`a35485a`](https://github.com/moros-oxus/vertekum/commit/a35485a227a9e94271b041bc020f8edf28e0137b) Thanks [@tschemmer](https://github.com/tschemmer)! - A group codec's carrier may hold a `$root` token — the root parses as the group's own value and the generated children appear beside it (previously such a group silently generated nothing). `ramp build` now emits every computed stop as `data.ramps` under `--json`, making `--dry-run --json` a first-class value source.
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.3.9
+
 ## 0.3.8
 
 ### Patch Changes
