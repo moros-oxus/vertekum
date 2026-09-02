@@ -54,9 +54,11 @@ names that are simultaneously a value and an ancestor — `color.text` alongside
 }
 ```
 
-`$root` is part of the reference path (`{color.text.$root}` resolves; `{color.text}` does
-not) but it is an encoding detail, not a name: on export the token is emitted under the
-group's own path — `color.text`, which is what the design system called it all along.
+`$root` is an encoding detail, not a name — it never appears in a reference or an
+exported name. `{color.text}` resolves to the group's `$root` value (the format
+schema forbids `$` segments in references, so `{color.text.$root}` is not legal
+DTCG), and on export the token is emitted under the group's own path — `color.text`,
+which is what the design system called it all along.
 
 ## Values
 

@@ -57,3 +57,43 @@ test('flatten derefs resolvable refs and keeps unresolvable ones as-is', () => {
   const out = flatten([brand, primary, dangling]);
   expect(out.map((t) => t.value)).toEqual(['#f00', '#f00', '{nope}']);
 });
+
+test('a group path resolves to its $root token — $root never appears in the reference', () => {
+  const tokens: Token[] = [
+    {
+      id: 'core:color.steel.$root',
+      path: ['color', 'steel', '$root'],
+      type: 'color',
+      value: '#5f6a7b',
+      set: 'core',
+    },
+    {
+      id: 'core:color.steel.subtle',
+      path: ['color', 'steel', 'subtle'],
+      type: 'color',
+      value: '#aec3d9',
+      set: 'core',
+    },
+    {
+      id: 'sem:border.default',
+      path: ['border', 'default'],
+      type: 'color',
+      value: '{color.steel}',
+      set: 'sem',
+    },
+    {
+      id: 'sem:border.chain',
+      path: ['border', 'chain'],
+      type: 'color',
+      value: '{border.default}',
+      set: 'sem',
+    },
+  ];
+  const byPath = indexByPath(tokens);
+  // The group path addresses the root token; the literal path keeps working too.
+  expect(byPath.get('color.steel')?.id).toBe('core:color.steel.$root');
+  expect(byPath.get('color.steel.$root')?.id).toBe('core:color.steel.$root');
+  // Resolution follows through chains.
+  expect(resolveValue(tokens[2] as Token, byPath)).toBe('#5f6a7b');
+  expect(resolveValue(tokens[3] as Token, byPath)).toBe('#5f6a7b');
+});

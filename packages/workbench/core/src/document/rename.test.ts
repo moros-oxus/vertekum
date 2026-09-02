@@ -178,3 +178,27 @@ test('a group rename rewrites pointers through the group prefix', () => {
     expect.objectContaining({ ref: '#/colour/text' }),
   ]);
 });
+
+test('renaming a group rewrites {group} aliases that resolve through its $root', () => {
+  const tokens: Token[] = [
+    {
+      id: 'core:color.steel.$root',
+      path: ['color', 'steel', '$root'],
+      type: 'color',
+      value: '#5f6a7b',
+      set: 'core',
+    },
+    {
+      id: 'sem:border.default',
+      path: ['border', 'default'],
+      type: 'color',
+      value: '{color.steel}',
+      set: 'sem',
+    },
+  ];
+  const plan = planRename(tokens, ['color', 'steel'], ['color', 'metal']);
+  expect(plan.collisions).toEqual([]);
+  expect(plan.rewritten).toEqual([
+    { id: 'sem:border.default', set: 'sem', value: '{color.metal}' },
+  ]);
+});

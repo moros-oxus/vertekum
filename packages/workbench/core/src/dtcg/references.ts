@@ -1,4 +1,5 @@
 import type { Token } from '../document/types';
+import { ROOT_TOKEN } from './parse';
 
 /** True when a value is a DTCG reference — a non-empty string wrapped in braces, e.g. `{color.brand}`. */
 export function isReference(value: unknown): boolean {
@@ -16,6 +17,17 @@ export function referenceToPath(value: unknown): string {
 export function indexByPath(tokens: Token[]): Map<string, Token> {
   const map = new Map<string, Token>();
   for (const token of tokens) map.set(token.path.join('.'), token);
+  // A `$root` token is ALSO addressable by its group's path: `{color.steel}` resolves to
+  // `color.steel.$root`. That is the spec's design — `$root` never appears in a reference (the
+  // format schema forbids `$` segments), exactly as it never appears in an exported name.
+  // Collision-safe by construction: DTCG forbids a node being both token and group, so the group
+  // path cannot name a real token. Registered after the literal paths so an explicit token always
+  // wins over a root fallback across sets.
+  for (const token of tokens) {
+    if (token.path.at(-1) !== ROOT_TOKEN) continue;
+    const group = token.path.slice(0, -1).join('.');
+    if (!map.has(group)) map.set(group, token);
+  }
   return map;
 }
 

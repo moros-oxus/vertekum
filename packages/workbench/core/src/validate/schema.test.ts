@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { DTCG_TOKEN_SCHEMA } from './dtcg-schema';
-import { validateFiles } from './schema';
+import { type SchemaBinding, validateFiles } from './schema';
 import type { Diagnostic } from './validator';
 
 /** Index access is `| undefined` under noUncheckedIndexedAccess; assert presence once, here. */
