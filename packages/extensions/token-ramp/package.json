@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/ext-token-ramp",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "Vertekum extension: generate colour ramps from a single brand anchor — a fixed lightness ladder with chroma arched through the anchor",
   "license": "Apache-2.0",
   "keywords": [

@@ -1,5 +1,13 @@
 # @vertekum/schema-builder
 
+## 0.3.12
+
+### Patch Changes
+
+- [`bcb1f46`](https://github.com/moros-oxus/vertekum/commit/bcb1f46b9491f24560d88d7a1b416bd13dd553a4) Thanks [@tschemmer](https://github.com/tschemmer)! - A configured schema that compiles but crashes during validation (a ref cycle, a validator too large for the stack) now surfaces as a `schema/invalid-schema` diagnostic naming the binding and file instead of taking every command down — so `schema build` can always regenerate a broken artifact. The builder's emit dedupe also hoists subtrees repeated as a single shared object reference, which previously escaped structural sharing entirely.
+- Updated dependencies [[`bcb1f46`](https://github.com/moros-oxus/vertekum/commit/bcb1f46b9491f24560d88d7a1b416bd13dd553a4)]:
+  - @vertekum/core@0.3.12
+
 ## 0.3.11
 
 ### Patch Changes
