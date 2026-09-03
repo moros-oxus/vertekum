@@ -355,7 +355,25 @@ export async function validateFiles(
     for (const entry of compiled) {
       if ((entry.binding.target ?? 'tokens') !== kind) continue;
       if (!entry.match.some((pattern) => pattern.test(name))) continue;
-      if (entry.validate(files[name])) continue;
+      let valid: boolean;
+      try {
+        valid = entry.validate(files[name]);
+      } catch (error) {
+        // A schema can compile and still be unexecutable — a ref cycle that consumes no data,
+        // or a validator too large for the stack. One broken binding must not take the whole
+        // run down: every command validates, so a crash here wedges the CLI entirely —
+        // including the command that would rebuild the artifact.
+        diagnostics.push({
+          code: 'schema/invalid-schema',
+          severity: 'error',
+          message: `binding '${entry.binding.domain ?? entry.binding.match}' crashed while validating ${name}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          source: 'core',
+        });
+        continue;
+      }
+      if (valid) continue;
       const errors =
         (entry.validate as unknown as { errors?: SchemaError[] }).errors ?? [];
       for (const error of curate(errors)) {

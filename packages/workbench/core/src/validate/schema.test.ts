@@ -180,6 +180,27 @@ test('a schema that is not valid JSON Schema is reported, not thrown', async () 
   expect(diagnostics[0]?.message).toContain('broken');
 });
 
+test('a schema that compiles but crashes on validate is reported, not thrown', async () => {
+  // A pure ref cycle consumes no data: ajv compiles it, but the first validate call
+  // recurses without descending and overflows the stack.
+  const cyclic = {
+    $ref: '#/$defs/loop',
+    $defs: { loop: { anyOf: [{ $ref: '#/$defs/loop' }] } },
+  };
+  const diagnostics = await validateFiles(
+    { 'core.json': { color: { text: { bland: {} } } } },
+    [
+      { match: '*', schema: cyclic, domain: 'cyclic' },
+      { match: '*', schema: HOUSE, domain: 'house' },
+    ],
+  );
+
+  const crashed = diagnostics.find((d) => d.code === 'schema/invalid-schema');
+  expect(crashed?.message).toContain('cyclic');
+  expect(crashed?.message).toContain('core.json');
+  expect(diagnostics.some((d) => d.code.startsWith('house/'))).toBe(true);
+});
+
 test('one invalid binding does not stop the others from running', async () => {
   const diagnostics = await validateFiles(
     { 'core.json': { color: { text: { bland: {} } } } },

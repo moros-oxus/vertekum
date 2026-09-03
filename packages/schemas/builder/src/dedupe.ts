@@ -85,10 +85,34 @@ function visitChildren(
 }
 
 /**
+ * Break object-identity sharing: a subtree reachable from two schema positions as the SAME
+ * reference serializes twice but signs once (the memo is identity-keyed), so it would land in
+ * a bucket of one and never hoist. Copying the re-encountered node makes every position a
+ * distinct object, after which occurrence counting is simply object counting.
+ */
+function unshare(document: Json): void {
+  const seen = new Set<Json>();
+  const walk = (node: Json): void => {
+    visitChildren(node, (child, replace) => {
+      if (seen.has(child)) {
+        const copy = JSON.parse(JSON.stringify(child)) as Json;
+        replace(copy);
+        walk(copy);
+        return;
+      }
+      seen.add(child);
+      walk(child);
+    });
+  };
+  walk(document);
+}
+
+/**
  * Hoist repeated subtrees of `document` into its `$defs`, in place. Iterates to a fixpoint:
  * hoisting inner duplicates makes outer subtrees identical, which the next round catches.
  */
 export function dedupeSubtrees(document: Json): void {
+  unshare(document);
   const defs = (): Json => {
     if (!document.$defs || typeof document.$defs !== 'object') {
       document.$defs = {};

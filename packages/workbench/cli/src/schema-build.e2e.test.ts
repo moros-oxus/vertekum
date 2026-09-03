@@ -59,6 +59,46 @@ test('a rootless module emits defs; scope "inline" is skipped and errors when na
   ).rejects.toMatchObject({ code: 1 });
 }, 60_000);
 
+test('a poisoned configured schema is a diagnostic, and schema build replaces it', async () => {
+  // The consumer deadlock: a configured schema artifact that ajv compiles but cannot execute
+  // (here a ref cycle that consumes no data) used to crash EVERY command with a bare
+  // RangeError — including `schema build`, the one command that would regenerate the file.
+  const cwd = await exampleFixture('vtk-sbuild-', 'schemas');
+  const stamp = JSON.parse(await readFile(join(cwd, HOUSE), 'utf8')).$comment;
+  await writeFile(
+    join(cwd, HOUSE),
+    `${JSON.stringify(
+      {
+        $comment: stamp, // still stamped: the builder's to overwrite
+        $ref: '#/$defs/loop',
+        $defs: { loop: { anyOf: [{ $ref: '#/$defs/loop' }] } },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
+  // check survives it: exit 1 with a diagnostic naming the binding, not a stack trace.
+  const error = await run('node', [bin, 'check', '--json'], { cwd }).catch(
+    (e) => e,
+  );
+  expect(error.code).toBe(1);
+  const result = JSON.parse(error.stdout);
+  const diagnostic = result.diagnostics.find(
+    (d: { code: string }) => d.code === 'schema/invalid-schema',
+  );
+  expect(diagnostic.message).toContain('vocabulary');
+  expect(diagnostic.message).toContain('house.json');
+
+  // And the repair command runs: the fresh artifact replaces the poisoned one.
+  const { stdout } = await run('node', [bin, 'schema', 'build'], { cwd });
+  expect(stdout).toContain('built 1 module(s)');
+  const rebuilt = await readFile(join(cwd, HOUSE), 'utf8');
+  expect(rebuilt).not.toContain('#/$defs/loop');
+
+  await run('node', [bin, 'check', '--json'], { cwd });
+}, 60_000);
+
 test('a built file whose stamp was removed is never overwritten', async () => {
   const cwd = await exampleFixture('vtk-sbuild-', 'schemas');
   const path = join(cwd, HOUSE);

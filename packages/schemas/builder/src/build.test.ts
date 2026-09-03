@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { assertOpenSetsAreNameSets, build, type TreeNode } from './build';
 import { buildModule } from './cli';
+import { dedupeSubtrees } from './dedupe';
 import { isStamped } from './emit';
 import { parse } from './parser';
 import { resolveModule } from './resolve';
@@ -704,4 +705,35 @@ test('repeated large tails hoist into shared $defs — the 12 MB explosion guard
   expect(occurrences).toBeLessThanOrEqual(2);
   // Hoisted refs point at real defs.
   for (const name of shared) expect(schema.$defs[name]).toBeTruthy();
+});
+
+test('a subtree repeated as one shared reference dedupes like distinct objects', () => {
+  // The signature memo is identity-keyed: without unsharing, a reference-shared repeat
+  // signs once, lands in a bucket of one, and never hoists — while JSON.stringify
+  // materializes it once per occurrence.
+  const big = (): Record<string, unknown> => {
+    const properties: Record<string, unknown> = {};
+    for (let i = 0; i < 40; i++) {
+      properties[`key-${i}`] = { type: 'object', title: `t${i}` };
+    }
+    return { type: 'object', properties };
+  };
+
+  const distinct: Record<string, unknown> = {
+    properties: { a: big(), b: big() },
+  };
+  dedupeSubtrees(distinct);
+
+  const shared = big();
+  const aliased: Record<string, unknown> = {
+    properties: { a: shared, b: shared },
+  };
+  dedupeSubtrees(aliased);
+
+  expect(JSON.stringify(aliased)).toEqual(JSON.stringify(distinct));
+  expect(
+    Object.keys((aliased.$defs as Record<string, unknown>) ?? {}).filter((k) =>
+      k.startsWith('shared-'),
+    ),
+  ).toHaveLength(1);
 });
