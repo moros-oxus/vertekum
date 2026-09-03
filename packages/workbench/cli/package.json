@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/cli",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "Headless CLI for Vertekum — build, check, describe, and extension-contributed commands over DTCG token projects",
   "license": "Apache-2.0",
   "keywords": [

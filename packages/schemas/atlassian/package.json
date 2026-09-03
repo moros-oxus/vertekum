@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/schema-atlassian",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "The Atlassian Design System token vocabulary as JSON Schema files",
   "license": "MIT",
   "keywords": [
