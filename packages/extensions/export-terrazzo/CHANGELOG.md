@@ -1,5 +1,13 @@
 # @vertekum/ext-export-terrazzo
 
+## 0.3.14
+
+### Patch Changes
+
+- [`0649de6`](https://github.com/moros-oxus/vertekum/commit/0649de64a8eeec61a64a03a982b622cd5addec17) Thanks [@tschemmer](https://github.com/tschemmer)! - A reference is now exactly one curly alias — a multi-brace string like `{a} {b}` is a plain value (typically shorthand for the command extension chain), never a single reference, so pure-reference shorthands reach `token add`/`token set` chain links instead of being swallowed. The kernel also seeds the exporter registry before extensions activate, retiring the get-or-create ritual: an exporter extension just get()s `EXPORTER_SERVICE` and registers, and `build` reports "no exporters registered" when the registry is empty.
+- Updated dependencies [[`0649de6`](https://github.com/moros-oxus/vertekum/commit/0649de64a8eeec61a64a03a982b622cd5addec17)]:
+  - @vertekum/core@0.3.14
+
 ## 0.3.13
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @vertekum/ext-token-ramp
 
+## 0.3.14
+
+### Patch Changes
+
+- Updated dependencies [[`0649de6`](https://github.com/moros-oxus/vertekum/commit/0649de64a8eeec61a64a03a982b622cd5addec17)]:
+  - @vertekum/core@0.3.14
+
 ## 0.3.13
 
 ### Patch Changes
