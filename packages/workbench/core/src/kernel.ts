@@ -62,7 +62,12 @@ function attributeCommands(
       contrib.commands.push(command.name);
       commands.register(command);
     },
+    extend(name, extension) {
+      contrib.commands.push(`${name} (extended)`);
+      commands.extend(name, extension);
+    },
     list: () => commands.list(),
+    extensionsOf: (name) => commands.extensionsOf(name),
   };
 }
 

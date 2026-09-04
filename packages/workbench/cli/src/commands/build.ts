@@ -78,6 +78,9 @@ export async function runBuild(options: BuildOptions): Promise<number> {
     resolvers: project.document.getResolvers(),
     files: project.document.getFiles(),
     only: options.target,
+    // The build command's extension chain: handlers present tokens at interchange (core
+    // consults them once per staged token), so a custom type reaches every exporter.
+    extensions: project.kernel.commands.extensionsOf('build'),
   });
 
   if (!options.dryRun) {

@@ -54,3 +54,13 @@ A contributed command is part of an extension (the full contract lives with
 
 Keeping handlers pure like this is exactly what makes the guarantees above hold for
 every command, whoever wrote it.
+
+## Extending an existing command
+
+An extension can also join the **chain** of a command that already exists —
+`ctx.commands.extend(name, link)` — to specialize how it applies its work: teach
+`token add`/`token set` a custom type's short form (or infer the type from the
+tree and the value's shape), or present a custom type at `build` so exporters
+render it. A link proposes, passes, or refuses; a refusal is the verb error
+(exit `1`), and any options a link declares join the command's flag set. The
+contracts live with `@vertekum/core` (its `docs/commands.md`).

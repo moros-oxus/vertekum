@@ -181,6 +181,15 @@ export function attachCommands(program: Command, project: Project): void {
     for (const option of descriptor.options ?? []) {
       command.option(option.flag, option.description);
     }
+    // Options declared by chain links (ctx.commands.extend): declaration is static so the full
+    // flag set exists at parse time, before any handler has seen a value.
+    for (const extension of project.kernel.commands.extensionsOf(
+      descriptor.name,
+    )) {
+      for (const option of extension.options ?? []) {
+        command.option(option.flag, option.description);
+      }
+    }
     command.option('--dry-run', 'make no changes on disk');
     command.option('--json', 'emit machine-readable output');
     // Declared so it appears in help and is not rejected as unknown; the value is read from argv

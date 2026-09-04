@@ -127,13 +127,17 @@ export type {
   CommandArg,
   CommandContext,
   CommandDescriptor,
+  CommandExtension,
   CommandRegistry,
   CommandResult,
   Extension,
   ExtensionContext,
   ExtensionContributions,
   InstalledExtension,
+  InterchangePresentationContext,
   ServiceRegistry,
+  ValuePreparationContext,
+  ValueProposal,
 } from './shell/types';
 export type { FileStore, StorageProvider } from './storage/provider';
 export { createStorageProvider, serializeDocument } from './storage/provider';

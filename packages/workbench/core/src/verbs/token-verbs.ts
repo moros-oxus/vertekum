@@ -12,8 +12,13 @@ import type { Token } from '../document/types';
 import { isReference } from '../dtcg/references';
 import { DEFAULT_SET } from '../dtcg/serialize';
 import { parseValueInput } from '../dtcg/values';
-import type { CommandDescriptor } from '../shell/types';
+import type {
+  CommandDescriptor,
+  ValuePreparationContext,
+  ValueProposal,
+} from '../shell/types';
 import {
+  commandExtensionsOf,
   documentOf,
   inheritedTypeAt,
   isGroupPath,
@@ -46,29 +51,74 @@ const ACCEPTED: Record<string, string> = {
     "a number with a spec unit ('200ms', '0.2s'), or a JSON value object",
 };
 
+/** What `prepareValue` settles: the effective type, what the chain proposed, and the value. */
+interface PreparedValue {
+  /** Effective type: explicit ?? chain-proposed ?? inherited. */
+  type?: string;
+  /** The chain's type proposal, when one was made — the caller decides whether it is stored. */
+  chainType?: string;
+  value: unknown;
+}
+
 /**
- * Short form in, spec form stored: transform a string input into the 2025.10 value object by the
- * token's EFFECTIVE type. References pass through untouched (aliases are strings by spec), JSON
- * objects pass through trusted (the base binding validates them), and unparseable input for a
+ * Short form in, spec form stored — with the command extension chain consulted first.
+ *
+ * References pass through untouched (aliases are strings by spec) and JSON objects pass through
+ * trusted (the base binding validates them) — neither reaches the chain. A plain string flows
+ * down the chain as a `ValuePreparationContext`: each handler proposes a type and/or value,
+ * passes, or refuses by throwing. A partial proposal is idiomatic — propose a type alone and the
+ * built-in transform parses the value downstream. After the chain, an unclaimed value goes
+ * through the built-in short-form transforms by the effective type, and unparseable input for a
  * transforming type is a verb error naming the accepted forms — never a silent string write for
  * the gate to refuse with a schema message.
  */
-async function toStoredValue(
+async function prepareValue(
   ctx: Parameters<CommandDescriptor['run']>[0],
-  type: string,
-  raw: string,
-): Promise<unknown> {
-  const parsed = parseValue(raw);
-  if (typeof parsed !== 'string' || isReference(parsed)) return parsed;
+  input: {
+    verb: string;
+    set: string;
+    path: string[];
+    explicit?: string;
+    inherited?: string;
+    raw: string;
+  },
+): Promise<PreparedValue> {
+  const parsed = parseValue(input.raw);
+  if (typeof parsed !== 'string' || isReference(parsed)) {
+    return { type: input.explicit ?? input.inherited, value: parsed };
+  }
+
+  const context: ValuePreparationContext = {
+    document: documentOf(ctx),
+    set: input.set,
+    path: input.path,
+    type: { explicit: input.explicit, inherited: input.inherited },
+    value: { original: input.raw, current: parsed },
+  };
+  let claimed = false;
+  for (const link of commandExtensionsOf(ctx, input.verb)) {
+    const proposal = (await link.handle(context)) as ValueProposal | undefined;
+    if (!proposal) continue;
+    if (proposal.type !== undefined) context.type.current = proposal.type;
+    if (proposal.value !== undefined) {
+      context.value.current = proposal.value;
+      claimed = true;
+    }
+  }
+
+  const chainType = context.type.current;
+  const type = input.explicit ?? chainType ?? input.inherited;
+  if (claimed) return { type, chainType, value: context.value.current };
+  if (type === undefined) return { type, chainType, value: parsed };
 
   const object = await parseValueInput(type, parsed, valueOptionsOf(ctx));
-  if (object !== undefined) return object;
+  if (object !== undefined) return { type, chainType, value: object };
   if (TRANSFORMED.has(type)) {
     throw new Error(
       `'${parsed}' is not a valid ${type} value — expected ${ACCEPTED[type]}`,
     );
   }
-  return parsed;
+  return { type, chainType, value: parsed };
 }
 
 /**
@@ -132,7 +182,17 @@ export const tokenVerbs: CommandDescriptor[] = [
       // token silently decide the type of everything added beside it.
       const explicit = ctx.options.type as string | undefined;
       const inherited = inheritedTypeAt(document, set, segments);
-      const effective = explicit ?? inherited;
+      // The chain runs BEFORE the missing-type refusal, so a handler can settle what neither the
+      // flag nor a group did — and before the built-in transforms, so it can claim the value.
+      const prepared = await prepareValue(ctx, {
+        verb: 'token add',
+        set,
+        path: segments,
+        explicit,
+        inherited,
+        raw: requireArg(ctx, 'value'),
+      });
+      const effective = prepared.type;
       if (!effective) {
         const parent = segments.slice(0, -1).join('.');
         throw new Error(
@@ -142,15 +202,22 @@ export const tokenVerbs: CommandDescriptor[] = [
         );
       }
 
+      // An inherited type is left INHERITED. Writing `$type` onto the token would copy a
+      // declaration the group already makes, and the copy would not follow if the group's type
+      // ever changed — `tokenNode` omits the key when the type is `''`. A chain-proposed type IS
+      // written when it differs from the inheritance: that difference is the proposal's point.
+      const stored =
+        explicit ??
+        (prepared.chainType !== undefined && prepared.chainType !== inherited
+          ? prepared.chainType
+          : '');
+
       document.apply(
         addToken({
           id: tokenId(set, segments),
           path: segments,
-          // An inherited type is left INHERITED. Writing `$type` onto the token would copy a
-          // declaration the group already makes, and the copy would not follow if the group's type
-          // ever changed — `tokenNode` omits the key when the type is `''`.
-          type: explicit ?? '',
-          value: await toStoredValue(ctx, effective, requireArg(ctx, 'value')),
+          type: stored,
+          value: prepared.value,
           set,
           ...(ctx.options.description
             ? { description: ctx.options.description as string }
@@ -159,7 +226,7 @@ export const tokenVerbs: CommandDescriptor[] = [
       );
 
       return {
-        summary: `added ${path} (${effective}${explicit ? '' : ', inherited'}) to ${set}`,
+        summary: `added ${path} (${effective}${stored ? '' : ', inherited'}) to ${set}`,
       };
     },
   },
@@ -225,17 +292,31 @@ export const tokenVerbs: CommandDescriptor[] = [
       }
 
       // The transform keys on what the token IS BECOMING: an explicit --type wins, else the
-      // token's effective type (parse already resolved inheritance into token.type).
-      const effective = type ?? token.type;
+      // chain's proposal, else the token's effective type (parse already resolved inheritance
+      // into token.type).
+      const prepared =
+        value !== undefined
+          ? await prepareValue(ctx, {
+              verb: 'token set',
+              set: token.set ?? DEFAULT_SET,
+              path: token.path,
+              explicit: type,
+              inherited: token.type,
+              raw: value,
+            })
+          : undefined;
+      // A chain-proposed type that differs from what the token already is gets stored — the
+      // difference is the proposal's point (e.g. a shorthand upgrading a token's type).
+      const chainType =
+        prepared?.chainType !== undefined && prepared.chainType !== token.type
+          ? prepared.chainType
+          : undefined;
 
       // A value-only edit goes through updateTokenValue so it coalesces in the undo stack the same
       // way an editor keystroke does; anything touching other fields replaces the token wholesale.
-      if (type === undefined && description === undefined) {
+      if (type === undefined && description === undefined && !chainType) {
         document.apply(
-          updateTokenValue(
-            token.id,
-            await toStoredValue(ctx, effective, value ?? ''),
-          ),
+          updateTokenValue(token.id, (prepared as PreparedValue).value),
         );
         return { summary: `set ${path} = ${value}` };
       }
@@ -243,17 +324,19 @@ export const tokenVerbs: CommandDescriptor[] = [
       document.apply(
         replaceToken(token.id, {
           ...token,
-          ...(value !== undefined
-            ? { value: await toStoredValue(ctx, effective, value) }
-            : {}),
-          ...(type !== undefined ? { type } : {}),
+          ...(prepared !== undefined ? { value: prepared.value } : {}),
+          ...(type !== undefined
+            ? { type }
+            : chainType !== undefined
+              ? { type: chainType }
+              : {}),
           ...(description !== undefined ? { description } : {}),
         }),
       );
 
       const changed = [
         value !== undefined ? 'value' : null,
-        type !== undefined ? 'type' : null,
+        type !== undefined || chainType !== undefined ? 'type' : null,
         description !== undefined ? 'description' : null,
       ].filter(Boolean);
       return { summary: `set ${path}: ${changed.join(', ')}` };

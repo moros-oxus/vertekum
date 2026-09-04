@@ -1,8 +1,9 @@
 import { execFile } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
-import { bin, repoRoot } from './e2e-fixture';
+import { bin, exampleFixture, repoRoot } from './e2e-fixture';
 
 const run = promisify(execFile);
 
@@ -104,4 +105,43 @@ test('examples/extensions: describe shows the assembled bindings with origins', 
   // The patch documents merged away; the surviving dtcg-tokens binding is core's, patched.
   expect(schemas.filter((s) => s.id === 'dtcg-tokens')).toHaveLength(1);
   expect(schemas.map((s) => s.origin)).toContain('core');
+}, 60_000);
+
+const commandsExample = join(repoRoot, 'examples/commands');
+
+test('examples/commands: the chain infers, fills, refuses, and presents', async () => {
+  // Inference: no --type, a dimension group above, two entries → stored as `spacing`.
+  const inferred = await run(
+    'node',
+    [bin, 'token', 'add', 'space.stack', '4px 8px', '--dry-run'],
+    { cwd: commandsExample },
+  );
+  expect(inferred.stdout).toContain('added space.stack (spacing)');
+
+  // Partial proposal: no type anywhere — the link settles `dimension`, the built-in parses.
+  // Stock Vertekum refuses this for want of a type.
+  const filled = await run(
+    'node',
+    [bin, 'token', 'add', 'solo', '4px', '--dry-run'],
+    { cwd: commandsExample },
+  );
+  expect(filled.stdout).toContain('added solo (dimension)');
+
+  // Refusal comes from the extension's own error, not a schema message after the fact.
+  const refused = await run(
+    'node',
+    [bin, 'token', 'add', 'space.wild', '1px 2px 3px 4px 5px', '--dry-run'],
+    { cwd: commandsExample },
+  ).catch((e) => e);
+  expect(refused.code).toBe(1);
+  expect(refused.stderr).toContain('1–4');
+}, 60_000);
+
+test('examples/commands: build presents the custom type as one shorthand var', async () => {
+  const cwd = await exampleFixture('vtk-cmds-', 'commands');
+  await run('node', [bin, 'build'], { cwd });
+  const css = await readFile(join(cwd, 'build/css/tokens.css'), 'utf8');
+  expect(css).toContain('--space-inset: 0px 8px;');
+  // The sibling dimension is untouched by the chain.
+  expect(css).toContain('--space-gap: 8px;');
 }, 60_000);

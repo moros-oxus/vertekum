@@ -2,7 +2,7 @@ import type { Document } from '../document/document';
 import { setFileName } from '../document/files';
 import type { Token } from '../document/types';
 import type { DtcgNode } from '../dtcg/parse';
-import type { CommandContext } from '../shell/types';
+import type { CommandContext, CommandExtension } from '../shell/types';
 
 /**
  * `CommandContext.project` is typed `unknown` because core does not depend on the CLI's `Project`
@@ -82,6 +82,26 @@ export function valueOptionsOf(ctx: CommandContext): { colorSpace: string } {
     | { valueOptions?: { colorSpace: string } }
     | undefined;
   return project?.valueOptions ?? { colorSpace: 'oklch' };
+}
+
+/**
+ * The extension chain of a command, when a kernel is in reach. `CommandContext.project` is
+ * `unknown` (core does not depend on the CLI's `Project`), so this narrows the same way
+ * `documentOf` does — and a bare driver (tests, programmatic callers without a kernel) simply
+ * has no chain.
+ */
+export function commandExtensionsOf(
+  ctx: CommandContext,
+  name: string,
+): CommandExtension[] {
+  const project = ctx.project as
+    | {
+        kernel?: {
+          commands?: { extensionsOf?(name: string): CommandExtension[] };
+        };
+      }
+    | undefined;
+  return project?.kernel?.commands?.extensionsOf?.(name) ?? [];
 }
 
 /**

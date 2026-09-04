@@ -1,0 +1,10 @@
+{
+  "space": {
+    "$type": "dimension",
+    "gap": { "$value": { "value": 8, "unit": "px" } },
+    "inset": {
+      "$type": "spacing",
+      "$value": [{ "value": 0, "unit": "px" }, { "value": 8, "unit": "px" }]
+    }
+  }
+}

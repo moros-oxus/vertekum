@@ -76,6 +76,8 @@ The `dtcg` facade groups the token and resolver operations (`dtcg.tokens`, `dtcg
   see schema validation.)
 - [Resolvers and theming](./docs/resolvers.md) — compositions, modifiers, resolution.
 - [Export](./docs/export.md) — the exporter contract, targets, the run model.
+- [Commands](./docs/commands.md) — contributing new verbs and EXTENDING existing
+  ones: the command extension chain, its contracts, proposals and refusals.
 - [The core API](./docs/api.md) — direct headless use: the `dtcg` facade, the kernel,
   scales.
 

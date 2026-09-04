@@ -1,0 +1,17 @@
+{
+  "name": "@vertekum-example/commands",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The command extension chain in action: a local extension teaches `token add` a shorthand and type inference, and presents the custom type at export.",
+  "type": "module",
+  "scripts": {
+    "check": "vertekum check",
+    "build": "vertekum build"
+  },
+  "devDependencies": {
+    "@terrazzo/plugin-css": "^2.7.1",
+    "@vertekum/cli": "workspace:*",
+    "@vertekum/core": "workspace:*",
+    "@vertekum/ext-export-terrazzo": "workspace:*"
+  }
+}

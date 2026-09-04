@@ -1,6 +1,13 @@
 import { expect, test } from 'vitest';
 import { createDocument, type Document } from '../document/document';
-import type { CommandDescriptor } from '../shell/types';
+import { createCommandRegistry } from '../shell/command-registry';
+import type {
+  CommandDescriptor,
+  CommandExtension,
+  CommandRegistry,
+  ValuePreparationContext,
+  ValueProposal,
+} from '../shell/types';
 import { serializeDocument } from '../storage/provider';
 import { builtinCommands } from './index';
 
@@ -288,4 +295,193 @@ test('set remove will not silently discard the tokens it holds', async () => {
   await run('set remove', document, { name: 'core' }, { force: true });
   expect(document.getSets()).not.toContain('core');
   expect(document.getAllTokens()).toHaveLength(0);
+});
+
+// ---------------------------------------------------------------------------
+// The command extension chain (ctx.commands.extend) — value preparation.
+// ---------------------------------------------------------------------------
+
+/** A registry with the built-ins registered, plus the given chain links on `token add`/`token set`. */
+function chainedProject(
+  document: Document,
+  links: Array<CommandExtension<ValuePreparationContext, ValueProposal>>,
+): { document: Document; kernel: { commands: CommandRegistry } } {
+  const commands = createCommandRegistry();
+  for (const command of builtinCommands()) commands.register(command);
+  for (const link of links) {
+    commands.extend('token add', link as CommandExtension);
+    commands.extend('token set', link as CommandExtension);
+  }
+  return { document, kernel: { commands } };
+}
+
+async function runChained(
+  name: string,
+  project: ReturnType<typeof chainedProject>,
+  args: Record<string, string>,
+  options: Record<string, unknown> = {},
+): Promise<Awaited<ReturnType<CommandDescriptor['run']>>> {
+  return verb(name).run({ project, args, options });
+}
+
+/** The consumer-driver handler: 2–4 unit entries under a dimension group → a 'spacial' array. */
+const spacialHandler: CommandExtension<ValuePreparationContext, ValueProposal> =
+  {
+    handle(ctx) {
+      if (ctx.type.explicit !== undefined) return undefined;
+      const raw = ctx.value.current;
+      if (typeof raw !== 'string') return undefined;
+      const entries = raw.trim().split(/\s+/);
+      const dimension = /^(-?[\d.]+)(px|rem)$/;
+      if (
+        entries.length >= 2 &&
+        entries.length <= 4 &&
+        entries.every((e) => dimension.test(e) || e.startsWith('{')) &&
+        ctx.type.inherited === 'dimension'
+      ) {
+        return {
+          type: 'spacial',
+          value: entries.map((e) => {
+            const match = dimension.exec(e);
+            return match ? { value: Number(match[1]), unit: match[2] } : e;
+          }),
+        };
+      }
+      if (entries.length === 1 && dimension.test(raw)) {
+        // Propose the type alone and let the chain ride: the built-in parses '8px'.
+        return { type: 'dimension' };
+      }
+      return undefined;
+    },
+  };
+
+test('a chain handler infers a type from the tree and the value shape', async () => {
+  const document = createDocument();
+  document.hydrate({ 'core.json': { space: { $type: 'dimension' } } });
+  const project = chainedProject(document, [spacialHandler]);
+
+  await runChained('token add', project, {
+    path: 'space.inset',
+    value: '0px 8px',
+  });
+
+  const token = document
+    .getAllTokens()
+    .find((t) => t.path.join('.') === 'space.inset');
+  // The proposal differs from the inheritance, so the token carries its own $type.
+  expect(token?.type).toBe('spacial');
+  expect(token?.value).toEqual([
+    { value: 0, unit: 'px' },
+    { value: 8, unit: 'px' },
+  ]);
+});
+
+test('a partial proposal lets the chain ride: type settled, built-in parses the value', async () => {
+  const document = createDocument();
+  document.hydrate({ 'core.json': {} });
+  const project = chainedProject(document, [spacialHandler]);
+
+  // No --type, no group type: the handler's dimension proposal fills what neither flag nor
+  // group did, and the built-in transform parses the short form downstream.
+  await runChained('token add', project, { path: 'gap', value: '8px' });
+
+  const token = document.getAllTokens()[0];
+  expect(token?.type).toBe('dimension');
+  expect(token?.value).toEqual({ value: 8, unit: 'px' });
+});
+
+test('an explicit --type always beats a chain proposal', async () => {
+  const document = createDocument();
+  document.hydrate({ 'core.json': { space: { $type: 'dimension' } } });
+  const always: CommandExtension<ValuePreparationContext, ValueProposal> = {
+    handle: () => ({ type: 'spacial' }),
+  };
+  const project = chainedProject(document, [always]);
+
+  await runChained(
+    'token add',
+    project,
+    { path: 'space.gap', value: '4px' },
+    { type: 'dimension' },
+  );
+
+  const token = document.getAllTokens()[0];
+  // Stored explicitly, exactly as authored; the proposal changed nothing.
+  expect(token?.type).toBe('dimension');
+  expect(token?.value).toEqual({ value: 4, unit: 'px' });
+});
+
+test('a chain refusal is the verb error', async () => {
+  const document = createDocument();
+  document.hydrate({ 'core.json': { space: { $type: 'dimension' } } });
+  const strict: CommandExtension<ValuePreparationContext, ValueProposal> = {
+    handle(ctx) {
+      if ((ctx.value.current as string).split(/\s+/).length > 4) {
+        throw new Error(
+          'too many entries — expected 1–4 space-separated dimensions',
+        );
+      }
+      return undefined;
+    },
+  };
+  const project = chainedProject(document, [strict]);
+
+  await expect(
+    runChained('token add', project, {
+      path: 'space.inset',
+      value: '1px 2px 3px 4px 5px',
+    }),
+  ).rejects.toThrow(/1–4 space-separated/);
+});
+
+test('later links see what earlier links proposed', async () => {
+  const document = createDocument();
+  document.hydrate({ 'core.json': { space: { $type: 'dimension' } } });
+  const seen: Array<string | undefined> = [];
+  const first: CommandExtension<ValuePreparationContext, ValueProposal> = {
+    handle: () => ({ type: 'spacial' }),
+  };
+  const second: CommandExtension<ValuePreparationContext, ValueProposal> = {
+    handle(ctx) {
+      seen.push(ctx.type.current);
+      return undefined;
+    },
+  };
+  const project = chainedProject(document, [first, second]);
+
+  await runChained('token add', project, {
+    path: 'space.inset',
+    value: '{"value":1,"unit":"px"}',
+  });
+  // JSON objects never reach the chain; a plain string does.
+  expect(seen).toEqual([]);
+  await runChained('token add', project, {
+    path: 'space.other',
+    value: 'plain',
+  });
+  expect(seen).toEqual(['spacial']);
+});
+
+test('token set consults the chain and stores an upgraded type', async () => {
+  const document = createDocument();
+  document.hydrate({ 'core.json': { space: { $type: 'dimension' } } });
+  const project = chainedProject(document, [spacialHandler]);
+  await runChained(
+    'token add',
+    project,
+    { path: 'space.gap', value: '4px' },
+    { type: 'dimension' },
+  );
+
+  await runChained('token set', project, {
+    path: 'space.gap',
+    value: '4px 8px',
+  });
+
+  const token = document.getAllTokens()[0];
+  expect(token?.type).toBe('spacial');
+  expect(token?.value).toEqual([
+    { value: 4, unit: 'px' },
+    { value: 8, unit: 'px' },
+  ]);
 });

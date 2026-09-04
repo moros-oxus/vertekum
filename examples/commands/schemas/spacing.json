@@ -1,0 +1,36 @@
+{
+  "$comment": "A patch document declaring the `spacing` type: one to four dimension entries, CSS-shorthand style, each entry a dimension value or a curly reference. Registered by extensions/spacing-shorthand.ts.",
+  "$extends": {
+    "dtcg#tokenType": { "enum": ["spacing"] },
+    "dtcg#token": {
+      "allOf": [
+        {
+          "if": {
+            "properties": { "$type": { "const": "spacing" } },
+            "required": ["$type"]
+          },
+          "then": {
+            "properties": {
+              "$value": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "items": {
+                      "oneOf": [
+                        { "$ref": "dtcg#dimensionValue" },
+                        { "$ref": "dtcg#curlyBraceReference" }
+                      ]
+                    }
+                  },
+                  { "$ref": "dtcg#tokenValueReference" }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

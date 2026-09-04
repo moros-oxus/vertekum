@@ -3,7 +3,9 @@ import { emptyResolver } from '../document/resolver-types';
 import type { Token } from '../document/types';
 import type { DtcgNode } from '../dtcg/parse';
 import { interchangeFiles } from '../dtcg/serialize';
+import type { CommandExtension } from '../shell/types';
 import type { ExporterInput, ExporterService, OutputFile } from './exporter';
+import { presentInterchange } from './present';
 import { resolveExporterInput } from './resolve-input';
 
 /**
@@ -51,6 +53,8 @@ export async function runTargets(
     /** The collection's raw file trees, for exporters that hand files to an external tool. */
     files?: Record<string, DtcgNode>;
     only?: string[];
+    /** The `build` command's extension chain — consulted once per staged token (present.ts). */
+    extensions?: CommandExtension[];
   },
 ): Promise<TargetResult[]> {
   const selected = targets.filter((t) =>
@@ -59,10 +63,13 @@ export async function runTargets(
   // Exporters receive the INTERCHANGE form: codec carriers inlined as plain tokens, so a tool
   // that stages files verbatim (the terrazzo bridge) sees real tokens where the store holds
   // conformant empty-group carriers. Identity when no codec tokens exist.
-  const staged =
+  let staged =
     ctx.files === undefined
       ? undefined
       : interchangeFiles(ctx.files, ctx.tokens);
+  if (staged !== undefined && ctx.extensions?.length) {
+    staged = await presentInterchange(staged, ctx.tokens, ctx.extensions);
+  }
   const results: TargetResult[] = [];
   for (const target of selected) {
     const exporter = ctx.registry.get(target.exporter);
