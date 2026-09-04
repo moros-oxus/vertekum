@@ -1,0 +1,30 @@
+{
+  "version": "2025.10",
+  "name": "showcase",
+  "sets": {
+    "base": {
+      "sources": [{ "$ref": "core.json" }]
+    }
+  },
+  "modifiers": {
+    "color-mode": {
+      "contexts": {
+        "light": [],
+        "dark": [{ "$ref": "dark.json" }]
+      },
+      "default": "light"
+    },
+    "density": {
+      "contexts": {
+        "cozy": [],
+        "compact": [{ "$ref": "compact.json" }]
+      },
+      "default": "cozy"
+    }
+  },
+  "resolutionOrder": [
+    { "$ref": "#/sets/base" },
+    { "$ref": "#/modifiers/color-mode" },
+    { "$ref": "#/modifiers/density" }
+  ]
+}

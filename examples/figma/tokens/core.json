@@ -1,0 +1,31 @@
+{
+  "color": {
+    "$type": "color",
+    "accent": {
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.628, 0.258, 29.234],
+        "alpha": 1,
+        "hex": "#ff2200"
+      }
+    },
+    "text": { "$value": "{color.accent}" }
+  },
+  "space": {
+    "$type": "dimension",
+    "gap": { "$value": { "value": 0.5, "unit": "rem" } },
+    "inset": { "$value": { "value": 8, "unit": "px" } }
+  },
+  "typography": {
+    "body": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": ["Inter", "sans-serif"],
+        "fontSize": { "value": 16, "unit": "px" },
+        "fontWeight": 400,
+        "letterSpacing": { "value": 0, "unit": "px" },
+        "lineHeight": 1.4
+      }
+    }
+  }
+}

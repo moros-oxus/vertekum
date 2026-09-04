@@ -1,0 +1,32 @@
+{
+  "name": "tokens",
+  "collections": {
+    "base": {
+      "modes": {
+        "default": [
+          "base.default.tokens.json"
+        ]
+      }
+    },
+    "color-mode": {
+      "modes": {
+        "light": [
+          "color-mode.light.tokens.json"
+        ],
+        "dark": [
+          "color-mode.dark.tokens.json"
+        ]
+      }
+    },
+    "density": {
+      "modes": {
+        "cozy": [
+          "density.cozy.tokens.json"
+        ],
+        "compact": [
+          "density.compact.tokens.json"
+        ]
+      }
+    }
+  }
+}

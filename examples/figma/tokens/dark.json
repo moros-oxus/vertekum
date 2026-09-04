@@ -1,0 +1,13 @@
+{
+  "color": {
+    "$type": "color",
+    "accent": {
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.452, 0.213, 264.052],
+        "alpha": 1,
+        "hex": "#2244ff"
+      }
+    }
+  }
+}

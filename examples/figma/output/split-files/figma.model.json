@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "source": {
+    "composition": "showcase",
+    "generator": "@vertekum/ext-export-figma",
+    "notices": []
+  },
+  "collections": [
+    {
+      "name": "base",
+      "modes": [
+        "default"
+      ],
+      "variables": [
+        {
+          "name": "color/text",
+          "type": "COLOR",
+          "valuesByMode": {
+            "default": {
+              "r": 1,
+              "g": 0,
+              "b": 0,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{color.accent}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "default": "color/accent"
+          }
+        }
+      ]
+    },
+    {
+      "name": "color-mode",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "variables": [
+        {
+          "name": "color/accent",
+          "type": "COLOR",
+          "valuesByMode": {
+            "light": {
+              "r": 1,
+              "g": 0,
+              "b": 0,
+              "a": 1
+            },
+            "dark": {
+              "r": 0.073,
+              "g": 0.2627,
+              "b": 0.789,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.628,
+                0.258,
+                29.234
+              ],
+              "alpha": 1,
+              "hex": "#ff2200"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {}
+        }
+      ]
+    },
+    {
+      "name": "density",
+      "modes": [
+        "cozy",
+        "compact"
+      ],
+      "variables": [
+        {
+          "name": "space/gap",
+          "type": "FLOAT",
+          "valuesByMode": {
+            "cozy": 8,
+            "compact": 4
+          },
+          "source": {
+            "$type": "dimension",
+            "$value": {
+              "value": 0.5,
+              "unit": "rem"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {}
+        },
+        {
+          "name": "space/inset",
+          "type": "FLOAT",
+          "valuesByMode": {
+            "cozy": 8,
+            "compact": 4
+          },
+          "source": {
+            "$type": "dimension",
+            "$value": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {}
+        }
+      ]
+    }
+  ],
+  "styles": [
+    {
+      "kind": "text",
+      "name": "typography/body",
+      "properties": [
+        {
+          "property": "font-family",
+          "value": "Inter, sans-serif"
+        },
+        {
+          "property": "font-size",
+          "value": "16px"
+        },
+        {
+          "property": "font-weight",
+          "value": 400
+        },
+        {
+          "property": "letter-spacing",
+          "value": "0px"
+        },
+        {
+          "property": "line-height",
+          "value": 1.4
+        }
+      ],
+      "source": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": [
+            "Inter",
+            "sans-serif"
+          ],
+          "fontSize": {
+            "value": 16,
+            "unit": "px"
+          },
+          "fontWeight": 400,
+          "letterSpacing": {
+            "value": 0,
+            "unit": "px"
+          },
+          "lineHeight": 1.4
+        }
+      }
+    }
+  ]
+}

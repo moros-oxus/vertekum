@@ -1,0 +1,42 @@
+{
+  "name": "@vertekum/figma-dialect-microsoft",
+  "version": "0.0.0",
+  "description": "Figma dialect writer: reshapes the Figma-shaped model for the microsoft/figma-variables-import plugin lineage (sidecar manifest, one DTCG string-dialect file per collection-mode)",
+  "license": "Apache-2.0",
+  "keywords": [
+    "design-tokens",
+    "dtcg",
+    "figma",
+    "variables",
+    "dialect"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moros-oxus/vertekum.git",
+    "directory": "packages/extensions/figma-dialect-microsoft"
+  },
+  "homepage": "https://github.com/moros-oxus/vertekum",
+  "bugs": "https://github.com/moros-oxus/vertekum/issues",
+  "files": [
+    "CHANGELOG.md",
+    "src",
+    "tsconfig.json",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "@vertekum/ext-export-figma": "workspace:*"
+  },
+  "devDependencies": {
+    "@vertekum/ext-export-figma": "workspace:*"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vertekum:figma-model",
+  "title": "Figma-shaped model",
+  "description": "A resolved view of one composition in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version 1.",
+  "type": "object",
+  "required": ["version", "source", "collections", "styles"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "source": {
+      "type": "object",
+      "required": ["generator", "notices"],
+      "additionalProperties": false,
+      "properties": {
+        "composition": { "type": "string" },
+        "generator": { "type": "string" },
+        "notices": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "modes", "variables"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "modes": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1
+          },
+          "variables": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/variable" }
+          }
+        }
+      }
+    },
+    "styles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "name", "properties", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "enum": ["text", "effect"] },
+          "name": { "type": "string", "minLength": 1 },
+          "properties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["property", "value"],
+              "additionalProperties": false,
+              "properties": {
+                "property": { "type": "string" },
+                "value": {},
+                "variable": { "type": "string" }
+              }
+            }
+          },
+          "source": { "$ref": "#/$defs/source" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "variable": {
+      "type": "object",
+      "required": ["name", "type", "valuesByMode", "scopes", "codeSyntax"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["COLOR", "FLOAT", "STRING", "BOOLEAN"] },
+        "valuesByMode": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              { "type": "number" },
+              { "type": "string" },
+              { "type": "boolean" },
+              {
+                "type": "object",
+                "required": ["r", "g", "b", "a"],
+                "additionalProperties": false,
+                "properties": {
+                  "r": { "type": "number" },
+                  "g": { "type": "number" },
+                  "b": { "type": "number" },
+                  "a": { "type": "number" }
+                }
+              }
+            ]
+          }
+        },
+        "alias": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "source": { "$ref": "#/$defs/source" },
+        "scopes": { "type": "array", "items": { "type": "string" } },
+        "codeSyntax": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["$type", "$value"],
+      "additionalProperties": false,
+      "properties": {
+        "$type": { "type": "string" },
+        "$value": {}
+      }
+    }
+  }
+}

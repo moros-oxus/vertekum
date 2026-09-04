@@ -1,0 +1,31 @@
+{
+  "color": {
+    "text": {
+      "$value": "{color.accent}"
+    }
+  },
+  "typography": {
+    "body": {
+      "font-family": {
+        "$type": "string",
+        "$value": "Inter, sans-serif"
+      },
+      "font-size": {
+        "$type": "string",
+        "$value": "16px"
+      },
+      "font-weight": {
+        "$type": "string",
+        "$value": "400"
+      },
+      "letter-spacing": {
+        "$type": "string",
+        "$value": "0px"
+      },
+      "line-height": {
+        "$type": "string",
+        "$value": "1.4"
+      }
+    }
+  }
+}

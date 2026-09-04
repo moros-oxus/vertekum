@@ -87,6 +87,21 @@ importers:
         specifier: workspace:*
         version: link:../../packages/extensions/token-ramp
 
+  examples/figma:
+    devDependencies:
+      '@vertekum/cli':
+        specifier: workspace:*
+        version: link:../../packages/workbench/cli
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../packages/workbench/core
+      '@vertekum/ext-export-figma':
+        specifier: workspace:*
+        version: link:../../packages/extensions/export-figma
+      '@vertekum/figma-dialect-microsoft':
+        specifier: workspace:*
+        version: link:../../packages/extensions/figma-dialect-microsoft
+
   examples/outputs:
     devDependencies:
       '@terrazzo/plugin-css':
@@ -216,6 +231,19 @@ importers:
         specifier: workspace:*
         version: link:../../workbench/core
 
+  packages/extensions/export-figma:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../workbench/core
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
+
   packages/extensions/export-terrazzo:
     dependencies:
       '@terrazzo/parser':
@@ -231,6 +259,12 @@ importers:
       '@vertekum/core':
         specifier: workspace:*
         version: link:../../workbench/core
+
+  packages/extensions/figma-dialect-microsoft:
+    devDependencies:
+      '@vertekum/ext-export-figma':
+        specifier: workspace:*
+        version: link:../export-figma
 
   packages/extensions/release:
     dependencies:

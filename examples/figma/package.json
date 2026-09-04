@@ -1,0 +1,17 @@
+{
+  "name": "@vertekum-example/figma",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The figma exporter in action: a two-modifier composition resolved into the Figma-shaped model plus a Microsoft-manifest dialect for import.",
+  "type": "module",
+  "scripts": {
+    "check": "vertekum check",
+    "build": "vertekum build"
+  },
+  "devDependencies": {
+    "@vertekum/cli": "workspace:*",
+    "@vertekum/core": "workspace:*",
+    "@vertekum/ext-export-figma": "workspace:*",
+    "@vertekum/figma-dialect-microsoft": "workspace:*"
+  }
+}

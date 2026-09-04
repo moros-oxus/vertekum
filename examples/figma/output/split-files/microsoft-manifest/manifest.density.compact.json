@@ -1,0 +1,19 @@
+{
+  "name": "tokens",
+  "collections": {
+    "base": {
+      "modes": {
+        "default": [
+          "base.default.tokens.json"
+        ]
+      }
+    },
+    "density": {
+      "modes": {
+        "default": [
+          "density.compact.tokens.json"
+        ]
+      }
+    }
+  }
+}

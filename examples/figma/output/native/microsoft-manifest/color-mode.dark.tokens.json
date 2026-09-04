@@ -1,0 +1,8 @@
+{
+  "color": {
+    "accent": {
+      "$type": "color",
+      "$value": "#1343c9"
+    }
+  }
+}

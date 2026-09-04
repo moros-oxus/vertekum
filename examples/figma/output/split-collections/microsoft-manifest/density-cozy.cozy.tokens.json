@@ -1,0 +1,12 @@
+{
+  "space": {
+    "gap": {
+      "$type": "number",
+      "$value": 8
+    },
+    "inset": {
+      "$type": "number",
+      "$value": 8
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "tokens",
+  "collections": {
+    "base": {
+      "modes": {
+        "default": [
+          "base.default.tokens.json"
+        ]
+      }
+    },
+    "color-mode/light": {
+      "modes": {
+        "default": [
+          "color-mode-light.light.tokens.json"
+        ]
+      }
+    },
+    "color-mode/dark": {
+      "modes": {
+        "default": [
+          "color-mode-dark.dark.tokens.json"
+        ]
+      }
+    },
+    "density/cozy": {
+      "modes": {
+        "default": [
+          "density-cozy.cozy.tokens.json"
+        ]
+      }
+    },
+    "density/compact": {
+      "modes": {
+        "default": [
+          "density-compact.compact.tokens.json"
+        ]
+      }
+    }
+  }
+}

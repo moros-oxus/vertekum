@@ -1,0 +1,19 @@
+{
+  "name": "tokens",
+  "collections": {
+    "base": {
+      "modes": {
+        "default": [
+          "base.default.tokens.json"
+        ]
+      }
+    },
+    "color-mode": {
+      "modes": {
+        "default": [
+          "color-mode.dark.tokens.json"
+        ]
+      }
+    }
+  }
+}
