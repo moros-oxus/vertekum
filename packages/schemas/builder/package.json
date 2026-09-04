@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/schema-builder",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "description": "Declare token vocabularies as grammar; build them into JSON Schema files",
   "license": "Apache-2.0",
   "keywords": [

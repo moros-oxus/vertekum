@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/ext-export-figma",
-  "version": "0.0.0",
+  "version": "0.3.15",
   "description": "Vertekum extension: export a resolved, Figma-shaped model (collections, modes, variables, styles) with pluggable dialect writers for Figma importers",
   "license": "Apache-2.0",
   "keywords": [
