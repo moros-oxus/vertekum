@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/figma-dialect-microsoft",
-  "version": "0.0.0",
+  "version": "0.3.15",
   "description": "Figma dialect writer: reshapes the Figma-shaped model for the microsoft/figma-variables-import plugin lineage (sidecar manifest, one DTCG string-dialect file per collection-mode)",
   "license": "Apache-2.0",
   "keywords": [
