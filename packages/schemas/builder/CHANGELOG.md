@@ -1,5 +1,12 @@
 # @vertekum/schema-builder
 
+## 0.3.13
+
+### Patch Changes
+
+- Updated dependencies [[`def7e25`](https://github.com/moros-oxus/vertekum/commit/def7e25d2a77f892b233f4b2c6fce4705d4f2a19)]:
+  - @vertekum/core@0.3.13
+
 ## 0.3.12
 
 ### Patch Changes
