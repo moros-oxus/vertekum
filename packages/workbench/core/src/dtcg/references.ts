@@ -1,11 +1,16 @@
 import type { Token } from '../document/types';
 import { ROOT_TOKEN } from './parse';
 
-/** True when a value is a DTCG reference — a non-empty string wrapped in braces, e.g. `{color.brand}`. */
+/**
+ * True when a value is shaped like ONE DTCG curly alias — exactly one brace pair, non-empty
+ * interior, no interior braces, e.g. `{color.brand}`. Deliberately not path-grammar validation:
+ * `{not a real path}` stays a reference and fails resolution loudly (the schema owns grammar).
+ * What this refuses is multi-brace input like `{a} {b}` masquerading as a single alias — such a
+ * string is a plain value (typically a shorthand for the command extension chain), never one ref.
+ */
 export function isReference(value: unknown): boolean {
   if (typeof value !== 'string') return false;
-  const s = value.trim();
-  return s.length > 2 && s.startsWith('{') && s.endsWith('}');
+  return /^\{[^{}]+\}$/.test(value.trim());
 }
 
 /** The bare path of a reference (`{a.b}` → `a.b`); `''` when the value is not a reference. */

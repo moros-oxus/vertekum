@@ -65,9 +65,10 @@ export async function runBuild(options: BuildOptions): Promise<number> {
 
   const registry =
     project.kernel.services.get<ExporterService>(EXPORTER_SERVICE);
-  if (!registry) {
+  // The kernel seeds the registry, so it exists — what can be missing is exporters IN it.
+  if (!registry || registry.list().length === 0) {
     process.stderr.write(
-      'no exporter registry: add an exporter extension (e.g. @vertekum/ext-export-css or @vertekum/ext-export-terrazzo)\n',
+      'no exporters registered: add an exporter extension (e.g. @vertekum/ext-export-css or @vertekum/ext-export-terrazzo)\n',
     );
     return 2;
   }

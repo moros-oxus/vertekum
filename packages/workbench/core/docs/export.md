@@ -135,21 +135,15 @@ resolution engine rather than consuming pre-resolved bundles.
 
 ## Registering an exporter
 
-Exporters arrive as extensions. On activation, an extension registers into the shared
-registry published under the `exporter` service key — get-or-create, so it works
-regardless of where the extension sits in the config's `extensions` list:
+Exporters arrive as extensions. The kernel seeds the shared registry under the
+`exporter` service key before any extension activates — like the codec and
+schema-binding registries — so registration is one call, and where the extension
+sits in the config's `extensions` list never matters:
 
 ```ts
-import {
-  createExporterRegistry,
-  EXPORTER_SERVICE,
-  type ExporterService,
-} from '@vertekum/core';
+import { EXPORTER_SERVICE, type ExporterService } from '@vertekum/core';
 
 export function activate(ctx) {
-  const existing = ctx.services.get<ExporterService>(EXPORTER_SERVICE);
-  const registry = existing ?? createExporterRegistry();
-  registry.register(myExporter);
-  if (!existing) ctx.services.register(EXPORTER_SERVICE, registry);
+  ctx.services.get<ExporterService>(EXPORTER_SERVICE)?.register(myExporter);
 }
 ```

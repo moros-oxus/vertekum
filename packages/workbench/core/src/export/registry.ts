@@ -1,6 +1,6 @@
 import type { Exporter, ExporterService } from './exporter';
 
-/** An id-keyed exporter registry; exporter extensions get-or-create it (ADR-0023). `list()` returns a stable snapshot per generation. */
+/** An id-keyed exporter registry; the kernel seeds one under EXPORTER_SERVICE before extensions activate. `list()` returns a stable snapshot per generation. */
 export function createExporterRegistry(): ExporterService {
   const byId = new Map<string, Exporter>();
   const listeners = new Set<() => void>();

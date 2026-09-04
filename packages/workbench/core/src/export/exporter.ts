@@ -39,7 +39,7 @@ export interface Exporter {
   transform(input: ExporterInput): OutputFile[] | Promise<OutputFile[]>;
 }
 
-/** The registry (instance published by @vertekum/ext-export; consumed by the route or a headless runner). */
+/** The registry (seeded by the kernel; exporter extensions get() it and register their plugs). */
 export interface ExporterService {
   register(exporter: Exporter): void;
   get(id: string): Exporter | undefined;

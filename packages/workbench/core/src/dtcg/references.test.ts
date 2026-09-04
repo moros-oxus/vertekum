@@ -27,6 +27,13 @@ test('isReference recognizes brace-wrapped references, rejects the rest', () => 
   expect(isReference(16)).toBe(false);
   expect(isReference(null)).toBe(false);
   expect(isReference(undefined)).toBe(false);
+  // ONE alias, not "anything in braces": multi-brace strings are plain values (a shorthand for
+  // the command extension chain), never a single reference.
+  expect(isReference('{space.050} {space.100}')).toBe(false);
+  expect(isReference('{a}{b}')).toBe(false);
+  expect(isReference('{a{b}}')).toBe(false);
+  // Path grammar stays the schema's job — a junk interior is still reference-shaped (dangling).
+  expect(isReference('{not a real path}')).toBe(true);
 });
 
 test('referenceToPath returns the bare path for references, else empty', () => {

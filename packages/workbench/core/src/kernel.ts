@@ -9,6 +9,8 @@ import {
   TOKEN_CODEC_SERVICE,
 } from './document/codec';
 import { createDocument, type Document } from './document/document';
+import { EXPORTER_SERVICE } from './export/exporter';
+import { createExporterRegistry } from './export/registry';
 import { createCommandRegistry } from './shell/command-registry';
 import { createServiceRegistry } from './shell/service-registry';
 import type {
@@ -84,6 +86,10 @@ export function createKernel(): Kernel {
   // activates — registered on the raw services registry like the built-in verbs, unattributed.
   services.register(TOKEN_CODEC_SERVICE, codecs);
   services.register(SCHEMA_BINDING_SERVICE, createSchemaBindingRegistry());
+  // The exporter registry is core's interface (the curation-floor reframe): seeded here like the
+  // codec and schema-binding registries, so an exporter extension just get()s and registers —
+  // the historical get-or-create ritual (ext-export ownership, ADR-0023) is no longer needed.
+  services.register(EXPORTER_SERVICE, createExporterRegistry());
   // Core's own curation verbs, registered before any extension activates. They go through the same
   // registry contributed commands use, so a client sees one list and cannot tell a built-in verb
   // from a contributed one. Registered on the RAW registry, not an attributed wrapper — they belong

@@ -1,5 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import { z } from 'zod';
+import { EXPORTER_SERVICE, type ExporterService } from './export/exporter';
 import { createKernel } from './kernel';
 import type { Extension } from './shell/types';
 
@@ -152,4 +153,12 @@ test('the kernel seeds core’s curation verbs before any extension activates', 
     'resolver default',
     'resolver list',
   ]);
+});
+
+test('the kernel seeds the exporter registry before any extension activates', () => {
+  const kernel = createKernel();
+  const registry = kernel.services.get<ExporterService>(EXPORTER_SERVICE);
+  // Seeded and empty: an exporter extension get()s and registers — no get-or-create ritual.
+  expect(registry).toBeDefined();
+  expect(registry?.list()).toEqual([]);
 });

@@ -462,6 +462,43 @@ test('later links see what earlier links proposed', async () => {
   expect(seen).toEqual(['spacial']);
 });
 
+test('a pure-references shorthand reaches the chain; a single reference bypasses it', async () => {
+  const document = createDocument();
+  document.hydrate({ 'core.json': { space: { $type: 'dimension' } } });
+  const seen: unknown[] = [];
+  const refs: CommandExtension<ValuePreparationContext, ValueProposal> = {
+    handle(ctx) {
+      seen.push(ctx.value.current);
+      const entries = (ctx.value.current as string).split(/\s+/);
+      if (entries.length < 2) return undefined;
+      return { type: 'spacial', value: entries };
+    },
+  };
+  const project = chainedProject(document, [refs]);
+
+  // Two aliases are NOT one reference — the chain sees the shorthand and stores its proposal.
+  await runChained('token add', project, {
+    path: 'space.inset',
+    value: '{space.a} {space.b}',
+  });
+  const inset = document
+    .getAllTokens()
+    .find((t) => t.path.join('.') === 'space.inset');
+  expect(inset?.type).toBe('spacial');
+  expect(inset?.value).toEqual(['{space.a}', '{space.b}']);
+
+  // One alias IS a reference: it passes through before any handler, untouched.
+  await runChained('token add', project, {
+    path: 'space.alias',
+    value: '{space.inset}',
+  });
+  const alias = document
+    .getAllTokens()
+    .find((t) => t.path.join('.') === 'space.alias');
+  expect(alias?.value).toBe('{space.inset}');
+  expect(seen).toEqual(['{space.a} {space.b}']);
+});
+
 test('token set consults the chain and stores an upgraded type', async () => {
   const document = createDocument();
   document.hydrate({ 'core.json': { space: { $type: 'dimension' } } });
