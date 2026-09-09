@@ -1,8 +1,15 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/vertekum-lockup-inline-dark.png">
+  <img alt="Vertekum" src="./assets/vertekum-lockup-inline.png">
+</picture>
+
 # Vertekum 
 
 UI Systematics Management Application.
 
 Create, modify and curate tokens and themes, and manage the export data to other applications and systems.
+
+
 
 ## What is Vertekum?
 
