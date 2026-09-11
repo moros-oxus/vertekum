@@ -1,5 +1,7 @@
 # @vertekum/schema-atlassian
 
+## 0.4.0
+
 ## 0.3.15
 
 ## 0.3.14
