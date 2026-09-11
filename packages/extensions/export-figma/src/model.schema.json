@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "vertekum:figma-model",
+  "$id": "vertekum:figma-model/draft.01",
   "title": "Figma-shaped model",
-  "description": "A resolved view of one composition in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version 1.",
+  "description": "A resolved view of one composition in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version draft.01 — the version names this contract shape, not the tokens a document holds.",
   "type": "object",
   "required": ["version", "source", "collections", "styles"],
   "additionalProperties": false,
   "properties": {
-    "version": { "const": 1 },
+    "version": { "const": "draft.01" },
     "source": {
       "type": "object",
       "required": ["generator", "notices"],

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": "draft.01",
   "source": {
     "composition": "showcase",
     "generator": "@vertekum/ext-export-figma",

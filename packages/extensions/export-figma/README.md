@@ -23,6 +23,16 @@ vocabulary:
   `source` — a consumer of the model loses nothing to any importer's dialect.
 - `scopes` and `codeSyntax` are reserved fields; nothing populates them yet.
 
+### Versioning
+
+The model's `version` names its **contract** — the shape `model.schema.json`
+accepts — not a package release and not the tokens it holds. While the shape is
+still settling, the version is a draft (`draft.01`, `draft.02`, …); once the shape
+is declared stable, it takes a calendar version (`YYYY.MM`). The schema is closed,
+so any change to the shape — an added optional field included — takes a new
+version, and many package releases can share one. Readers should refuse a version
+they don't know rather than guess at its shape.
+
 ## Configuration
 
 ```ts

@@ -13,7 +13,13 @@ import { dtcg, type ExporterInput, type Token } from '@vertekum/core';
  * (a Figma plugin, an agent) gets the lossless half.
  */
 
-export const MODEL_VERSION = 1;
+/**
+ * The contract version: names the model's SHAPE (what `model.schema.json` accepts), not a package
+ * release or token content. `draft.NN` while the shape is unstable; `YYYY.MM` once declared stable.
+ * The schema is closed, so ANY shape change — an added optional field included — takes a new
+ * version, spent when a package releases it.
+ */
+export const MODEL_VERSION = 'draft.01';
 
 export type FigmaType = 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN';
 

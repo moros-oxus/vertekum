@@ -1,9 +1,9 @@
-import type { FigmaModel } from '@vertekum/ext-export-figma';
+import { type FigmaModel, MODEL_VERSION } from '@vertekum/ext-export-figma';
 import { expect, test } from 'vitest';
 import { microsoftManifest } from './index';
 
 const model: FigmaModel = {
-  version: 1,
+  version: MODEL_VERSION,
   source: { composition: 'brand-a', generator: 'test', notices: [] },
   collections: [
     {

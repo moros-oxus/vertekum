@@ -1,6 +1,6 @@
 import type { ExporterInput, ResolverDocument, Token } from '@vertekum/core';
 import { expect, test } from 'vitest';
-import { buildModel, type FigmaModel } from './model';
+import { buildModel, type FigmaModel, MODEL_VERSION } from './model';
 import MODEL_SCHEMA from './model.schema.json';
 
 const OKLCH_RED = {
@@ -183,4 +183,11 @@ test('the emitted model validates against the shipped schema', async () => {
   const valid = validate(JSON.parse(JSON.stringify(model)));
   expect(validate.errors ?? null).toBeNull();
   expect(valid).toBe(true);
+});
+
+test('the version constant and the shipped schema name the same contract', async () => {
+  expect(MODEL_SCHEMA.properties.version.const).toBe(MODEL_VERSION);
+  expect(MODEL_VERSION).toMatch(/^(draft\.\d{2}|\d{4}\.(0[1-9]|1[0-2]))$/);
+  const model = await buildModel(fixture(), { composition: 'brand-a' });
+  expect(model.version).toBe(MODEL_VERSION);
 });
