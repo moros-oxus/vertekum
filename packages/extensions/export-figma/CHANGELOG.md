@@ -1,5 +1,16 @@
 # @vertekum/ext-export-figma
 
+## 0.4.0
+
+### Minor Changes
+
+- [`2930833`](https://github.com/moros-oxus/vertekum/commit/29308335dafc9d2951722cba37b2c5bf264168ff) Thanks [@tschemmer](https://github.com/tschemmer)! - `figma.model.json` now carries a string contract version (`"version": "draft.01"`) instead of the integer `1`; readers pinned to `1` must accept `draft.01`.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/core@0.4.0
+
 ## 0.3.15
 
 ### Patch Changes

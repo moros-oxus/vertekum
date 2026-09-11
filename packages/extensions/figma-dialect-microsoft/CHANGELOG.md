@@ -1,5 +1,12 @@
 # @vertekum/figma-dialect-microsoft
 
+## 0.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`2930833`](https://github.com/moros-oxus/vertekum/commit/29308335dafc9d2951722cba37b2c5bf264168ff)]:
+  - @vertekum/ext-export-figma@0.4.0
+
 ## 0.3.15
 
 ### Patch Changes
