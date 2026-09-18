@@ -147,6 +147,14 @@ export async function runWatch(options: WatchOptions): Promise<number> {
   const log = (line: string): void => {
     if (!options.json) process.stderr.write(`${line}\n`);
   };
+  /**
+   * `VTK_WATCH_DEBUG=1`: trace what the watcher was told by the filesystem. Always stderr, even
+   * under `--json`, so it never pollutes the event stream. Filesystem watching differs by
+   * platform, and on a machine you cannot attach to this trace is the only evidence there is.
+   */
+  const debug = (line: string): void => {
+    if (process.env.VTK_WATCH_DEBUG) process.stderr.write(`[watch] ${line}\n`);
+  };
 
   const report = (result: PassResult, trigger?: string): void => {
     emit({
@@ -206,6 +214,8 @@ export async function runWatch(options: WatchOptions): Promise<number> {
   const paths = watchPaths(project);
   emit({ event: 'watching', paths });
   log(`watching ${paths.length} path(s); ctrl-c to stop`);
+  debug(`node ${process.version} on ${process.platform}`);
+  for (const path of paths) debug(`watching ${path}`);
 
   const watchers: FSWatcher[] = [];
   let timer: NodeJS.Timeout | undefined;
@@ -246,10 +256,14 @@ export async function runWatch(options: WatchOptions): Promise<number> {
   for (const path of paths) {
     try {
       watchers.push(
-        fsWatch(path, { recursive: true }, (_event, filename) => {
+        fsWatch(path, { recursive: true }, (event, filename) => {
           const changed = filename ? resolve(path, filename) : path;
           // Our own writes raised this: dropping them is what stops the loop feeding itself.
-          if (isOurs(changed)) return;
+          if (isOurs(changed)) {
+            debug(`${event} ${changed} — ours, ignored`);
+            return;
+          }
+          debug(`${event} ${changed} — scheduling`);
           schedule(changed);
         }),
       );

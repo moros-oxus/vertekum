@@ -22,7 +22,12 @@ function startWatch(cwd: string): {
   next(predicate: (e: WatchEvent) => boolean): Promise<WatchEvent>;
   stop(): void;
 } {
-  const child = spawn('node', [bin, 'watch', '--json'], { cwd });
+  // Debug tracing on: when a run fails on a machine we cannot attach to (CI), the child's own
+  // account of which paths it watched and which events arrived is the evidence.
+  const child = spawn('node', [bin, 'watch', '--json'], {
+    cwd,
+    env: { ...process.env, VTK_WATCH_DEBUG: '1' },
+  });
   let stderr = '';
   child.stderr.on('data', (chunk: Buffer) => {
     stderr += chunk.toString();
@@ -68,9 +73,10 @@ function startWatch(cwd: string): {
                 ].join('\n'),
               ),
             ),
-          // A cold CI runner transpiles the whole extension graph on every pass, so this is
-          // generous on purpose: the failure mode worth catching is "no event ever", not "slow".
-          60_000,
+          // Comfortably UNDER the per-test timeout below: if this budget matched it, vitest would
+          // kill the test first and the diagnosis above would never be printed — which is exactly
+          // what wasted two CI runs.
+          20_000,
         );
         waiters.push({
           predicate,
@@ -109,7 +115,7 @@ test('a token edit rebuilds the configured target', async () => {
   } finally {
     watcher.stop();
   }
-}, 60_000);
+}, 120_000);
 
 test('a .dfn edit reruns the generator before the check', async () => {
   const cwd = await exampleFixture('vtk-watch-dfn-', 'schemas');
@@ -146,7 +152,7 @@ test('a .dfn edit reruns the generator before the check', async () => {
   } finally {
     watcher.stop();
   }
-}, 60_000);
+}, 120_000);
 
 test('a broken edit reports diagnostics and leaves the last good output', async () => {
   const cwd = await exampleFixture('vtk-watch-bad-', 'agentic');
@@ -182,4 +188,4 @@ test('a broken edit reports diagnostics and leaves the last good output', async 
   } finally {
     watcher.stop();
   }
-}, 60_000);
+}, 120_000);
