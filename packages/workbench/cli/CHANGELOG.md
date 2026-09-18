@@ -1,5 +1,18 @@
 # @vertekum/cli
 
+## 0.5.0
+
+### Minor Changes
+
+- [`739344f`](https://github.com/moros-oxus/vertekum/commit/739344ffe4d80a9af1a6d503f2763714be62e8b8) Thanks [@tschemmer](https://github.com/tschemmer)! - `vertekum watch` reruns one ordered pass on every change — generators, then check, then the export targets — so an edited `.dfn`, schema or token file lands in the consumer's output without a manual rebuild. A contributed command declares itself a generator with `generator: { reads }`, and `describe` reports which commands are generators. A failed pass keeps the last good export output; `--json` emits one event per line.
+
+### Patch Changes
+
+- Updated dependencies [[`739344f`](https://github.com/moros-oxus/vertekum/commit/739344ffe4d80a9af1a6d503f2763714be62e8b8)]:
+  - @vertekum/core@0.5.0
+  - vertekum@0.3.0
+  - @vertekum/server@0.3.0
+
 ## 0.4.0
 
 ### Patch Changes
