@@ -169,9 +169,26 @@ export async function runWatch(options: WatchOptions): Promise<number> {
     log('kept the last good output; still watching');
   };
 
-  let written = new Set<string>();
+  /**
+   * Paths this process wrote, and when. A pass writes into directories it also watches — a
+   * generator's artifacts most obviously — so those events must not look like edits. Entries
+   * expire: a file we wrote minutes ago and a human edits now IS an edit.
+   */
+  const written = new Map<string, number>();
+  const SELF_WRITE_MS = 3_000;
+  const remember = (result: PassResult): void => {
+    const now = Date.now();
+    for (const file of result.files) {
+      written.set(resolve(options.cwd, file), now);
+    }
+  };
+  const isOurs = (path: string): boolean => {
+    const at = written.get(path);
+    return at !== undefined && Date.now() - at < SELF_WRITE_MS;
+  };
+
   const first = await runPass(options);
-  written = new Set(first.files.map((p) => resolve(options.cwd, p)));
+  remember(first);
   report(first);
 
   // Paths come from a loaded project; if the first pass could not load one, there is nothing to
@@ -195,19 +212,34 @@ export async function runWatch(options: WatchOptions): Promise<number> {
   let pending: string | undefined;
   let running = false;
 
+  /**
+   * Run passes until nothing is pending.
+   *
+   * The loop matters: a save that lands WHILE a pass is running must not be lost. Returning early
+   * because one is in flight would drop it silently — the edit would simply never take effect, and
+   * on a slow machine (CI, a cold cache) that is the common case, not the rare one.
+   */
+  const drain = async (): Promise<void> => {
+    running = true;
+    try {
+      while (pending !== undefined) {
+        const fired = pending;
+        pending = undefined;
+        const result = await runPass(options);
+        remember(result);
+        report(result, fired);
+      }
+    } finally {
+      running = false;
+    }
+  };
+
   const schedule = (trigger: string): void => {
     pending = trigger;
     if (timer) clearTimeout(timer);
-    timer = setTimeout(async () => {
-      if (running) return;
-      running = true;
-      const fired = pending;
-      pending = undefined;
-      written = new Set();
-      const result = await runPass(options);
-      written = new Set(result.files.map((p) => resolve(options.cwd, p)));
-      report(result, fired);
-      running = false;
+    // A pass already running will pick `pending` up on its next turn of the loop.
+    timer = setTimeout(() => {
+      if (!running) void drain();
     }, debounceMs);
   };
 
@@ -217,7 +249,7 @@ export async function runWatch(options: WatchOptions): Promise<number> {
         fsWatch(path, { recursive: true }, (_event, filename) => {
           const changed = filename ? resolve(path, filename) : path;
           // Our own writes raised this: dropping them is what stops the loop feeding itself.
-          if (written.has(changed)) return;
+          if (isOurs(changed)) return;
           schedule(changed);
         }),
       );

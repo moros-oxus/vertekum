@@ -23,6 +23,10 @@ function startWatch(cwd: string): {
   stop(): void;
 } {
   const child = spawn('node', [bin, 'watch', '--json'], { cwd });
+  let stderr = '';
+  child.stderr.on('data', (chunk: Buffer) => {
+    stderr += chunk.toString();
+  });
   const seen: WatchEvent[] = [];
   const waiters: Array<{
     predicate: (e: WatchEvent) => boolean;
@@ -52,8 +56,21 @@ function startWatch(cwd: string): {
       }
       return new Promise<WatchEvent>((resolve, reject) => {
         const timer = setTimeout(
-          () => reject(new Error('timed out waiting for a watch event')),
-          25_000,
+          () =>
+            reject(
+              new Error(
+                // What the watcher actually said, so a CI failure is diagnosable from the log
+                // rather than reporting only that time ran out.
+                [
+                  'timed out waiting for a watch event',
+                  `events seen: ${JSON.stringify(seen)}`,
+                  `stderr: ${stderr.slice(-2000) || '(none)'}`,
+                ].join('\n'),
+              ),
+            ),
+          // A cold CI runner transpiles the whole extension graph on every pass, so this is
+          // generous on purpose: the failure mode worth catching is "no event ever", not "slow".
+          60_000,
         );
         waiters.push({
           predicate,
