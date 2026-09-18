@@ -43,8 +43,18 @@ vertekum check --json             # machine-readable diagnostics
 vertekum describe                 # what CAN be configured here
 vertekum describe --json          # exporters + their option schemas, validators, compositions
 
-vertekum dev                      # launch the UI (the only long-running command)
+vertekum watch                    # rebuild on every change: generators, check, then targets
+vertekum watch --json             # one JSON event per line, for tools and agents
+
+vertekum dev                      # launch the UI (also long-running; loads Vite)
 ```
+
+`watch` is the development loop: edit a `.dfn`, a schema or a token file and the configured
+targets are rewritten, so whatever consumes them (a Vite dev server, Ladle, Storybook) reloads on
+its own. A pass that fails writes nothing and keeps watching, leaving the last good output in
+place. Commands that generate files — `schema build` is the first — declare themselves generators
+and run before the check, so built schemas are current before the tokens held to them are
+validated and exported.
 
 Extensions contribute commands too. These exist only inside a project, and `describe` lists the ones
 available here:

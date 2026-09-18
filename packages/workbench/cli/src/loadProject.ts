@@ -53,15 +53,23 @@ export interface Project {
  * server, no UI surface — route `mount` thunks are registered but never called, so no `ui` module
  * is ever evaluated (ADR-0029).
  */
-export async function loadProject(cwd: string): Promise<Project> {
+export async function loadProject(
+  cwd: string,
+  options: { fresh?: boolean } = {},
+): Promise<Project> {
   // A relative cwd (`--cwd packages/tokens`) would make every discovered path relative — and a
   // relative path handed to `import()` parses as a PACKAGE name (ERR_INVALID_MODULE_SPECIFIER).
   // Absolutize once here, and import by file URL, which is also what Windows paths require.
   const root = resolve(cwd);
   const configPath = findConfig(root);
+  // `fresh` busts Node's ESM cache: a second `import()` of the same path returns the FIRST
+  // evaluation forever, so a long-running reloader (`watch`) would never see an edited config.
+  // The cost is honest — each reload leaves the previous config module in memory — and a watch
+  // session is developer-scale.
+  const bust = options.fresh ? `?t=${Date.now()}` : '';
   const userConfig = configPath
     ? resolveVertekumConfig(
-        (await import(pathToFileURL(configPath).href)).default,
+        (await import(`${pathToFileURL(configPath).href}${bust}`)).default,
         { command: 'build', mode: 'production' },
       )
     : {};

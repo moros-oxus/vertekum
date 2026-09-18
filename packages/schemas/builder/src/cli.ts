@@ -378,6 +378,13 @@ export const schemaFmtCommand: CommandDescriptor = {
 export const schemaBuildCommand: CommandDescriptor = {
   name: 'schema build',
   description: 'build .dfn vocabulary modules into JSON Schema files',
+  // A generator: `vertekum watch` reruns it when a `.dfn` under the configured source changes,
+  // before the tokens held to the built schemas are checked and exported.
+  generator: {
+    reads: (ctx) => [
+      join((ctx.project as ProjectDir).projectDir, settingsOf(ctx).source),
+    ],
+  },
   args: [
     {
       name: 'module',

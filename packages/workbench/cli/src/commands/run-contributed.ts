@@ -33,6 +33,37 @@ async function newErrors(
 }
 
 /**
+ * Write a command's declared file artifacts (ADR-0030 amendment): the handler names them, the
+ * runner writes them. Confined to the working directory — a path resolving outside it is a
+ * contract violation and throws. Shared with `watch`, which runs generators without the CLI's
+ * printing path.
+ */
+export function writeArtifacts(
+  project: Project,
+  result: CommandResult | undefined,
+  options: { dryRun?: boolean } = {},
+): string[] {
+  const written: string[] = [];
+  for (const artifact of result?.files ?? []) {
+    const target = join(project.projectDir, artifact.path);
+    if (
+      isAbsolute(artifact.path) ||
+      relative(project.projectDir, target).startsWith('..')
+    ) {
+      throw new Error(
+        `refused: artifact path escapes the working directory: ${artifact.path}`,
+      );
+    }
+    if (!options.dryRun) {
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, artifact.content);
+    }
+    written.push(artifact.path);
+  }
+  return written;
+}
+
+/**
  * Run one contributed command (ADR-0030 amendment). The runner owns persistence, `--dry-run` and
  * `--json`, so no handler implements them and a third-party command cannot invent its own write
  * path. A handler mutates `project.document` and returns; the runner notices the version changed.
@@ -100,24 +131,11 @@ export async function runContributed(input: {
 
   const files = mutated ? await saveProject(project, { dryRun }) : [];
 
-  // Declared file artifacts (ADR-0030 amendment): the handler names them, the runner writes them.
-  // Confined to the working directory — a path that resolves outside it is a contract violation.
-  for (const artifact of result?.files ?? []) {
-    const target = join(project.projectDir, artifact.path);
-    if (
-      isAbsolute(artifact.path) ||
-      relative(project.projectDir, target).startsWith('..')
-    ) {
-      process.stderr.write(
-        `refused: artifact path escapes the working directory: ${artifact.path}\n`,
-      );
-      return 2;
-    }
-    if (!dryRun) {
-      mkdirSync(dirname(target), { recursive: true });
-      writeFileSync(target, artifact.content);
-    }
-    files.push(artifact.path);
+  try {
+    files.push(...writeArtifacts(project, result, { dryRun }));
+  } catch (error) {
+    process.stderr.write(`${(error as Error).message}\n`);
+    return 2;
   }
 
   if (json) {

@@ -94,6 +94,25 @@ export function createProgram(project: Project | undefined): Command {
     );
 
   program
+    .command('watch')
+    .description(
+      'rebuild on change: generators, then check, then the export targets',
+    )
+    .option('--target <id...>', 'only these target ids')
+    .option('--json', 'emit one JSON event per line')
+    .option('--cwd <dir>', 'project directory')
+    .action((options) =>
+      withProject(async (p) => {
+        const { runWatch } = await import('./commands/watch');
+        return runWatch({
+          cwd: p.projectDir,
+          target: options.target,
+          json: options.json,
+        });
+      }),
+    );
+
+  program
     .command('check')
     .description('run every registered validator and report diagnostics')
     .option('--json', 'emit machine-readable output')

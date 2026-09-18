@@ -98,6 +98,11 @@ export async function runDescribe(options: DescribeOptions): Promise<number> {
       description: c.description,
       args: (c.args ?? []).map((a) => a.name),
       options: (c.options ?? []).map((o) => o.flag),
+      // Which commands `watch` reruns on a change, and what they read — otherwise the loop's
+      // content would be implied rather than inspectable.
+      generator: c.generator
+        ? { reads: c.generator.reads({ project }) }
+        : false,
     })),
     compositions: [...project.document.getResolvers()].map(([name, doc]) => ({
       name,

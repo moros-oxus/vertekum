@@ -52,6 +52,17 @@ export interface CommandDescriptor {
   args?: CommandArg[];
   options?: Array<{ flag: string; description: string }>;
   /**
+   * Declares this command a GENERATOR: one that turns source files into artifacts, which
+   * `vertekum watch` reruns before checking and exporting (`schema build` is the first).
+   *
+   * `reads` is a function, not a list, because the paths live in the extension's own settings —
+   * the schema builder resolves its configured `source` at run time and nothing else knows it.
+   * Returned paths are absolute; `watch` watches them and ignores everything the pass wrote.
+   */
+  generator?: {
+    reads(ctx: { project: unknown }): string[];
+  };
+  /**
    * A handler may return a result or nothing, synchronously or not. Sync is included deliberately:
    * most curation verbs are pure document mutations with nothing to await, and forcing them async
    * would be ceremony.

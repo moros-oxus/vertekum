@@ -33,6 +33,7 @@ instead of guessing them.
 | [`init`](./docs/init.md)                 | scaffold a project: config, seed tokens, agent skills                    |
 | [`check`](./docs/check.md)               | run every registered validator and report diagnostics                    |
 | [`build`](./docs/build.md)               | run the configured export targets and write their files                  |
+| [`watch`](./docs/watch.md)               | rebuild on change: generators, then check, then the export targets       |
 | [`describe`](./docs/describe.md)         | print the live inventory: extensions, exporters, validators, schemas, commands, compositions |
 | [`token` / `group` / `set` / `resolver` …](./docs/curation.md) | the curation verbs: structural edits that rewrite references and refuse to break the collection |
 | [`migrate values`](./docs/curation.md#migrate-values) | convert stored string values to 2025.10 object notation     |

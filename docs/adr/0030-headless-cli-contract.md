@@ -68,7 +68,8 @@ a subtree the host attaches with one call — the shape extension-contributed co
 - Every invocation transpiles the config graph through `tsx`. Acceptable for `build`; a project that
   cares can shed extensions via the config's function form on `command === 'build'`.
 - Extension-contributed commands, mutation verbs, watch mode, binary outputs, and MCP are explicitly
-  out of scope and land later.
+  out of scope and land later. (Contributed commands landed 2026-08-06; watch mode 2026-09-17 — both
+  amendments below.)
 
 ## Amendment (2026-08-06): the command contribution contract
 
@@ -115,3 +116,44 @@ relative to the working directory. The runner writes them after the mutation gat
 `--dry-run` lists them unwritten, `--json` carries them, and a path resolving outside the
 working directory is refused with exit `2`. Persistence stays owned in one place; a
 third-party command still cannot invent its own write path.
+
+## Amendment (2026-09-17): `watch`, and generators
+
+A **fourth verb**, `vertekum watch` — headless, no Vite, no server — running one ordered pass on
+every change: reload the project, run the generators, check, then write the export targets.
+
+| Verb | Flags |
+| --- | --- |
+| `watch` | `--target <id...>`, `--json`, `--cwd` |
+
+**Not `build --watch`.** `build` terminates with a meaningful exit code, and CI and agents depend
+on that; a flag that makes it run forever would make the code, the `--json` shape and the CI
+meaning conditional. **Not folded into `dev`** either: `dev` means Vite plus the bridge, and a
+token package that wants rebuilt CSS should not load an app it never opens.
+
+**Generators.** A contributed command may declare `generator: { reads(ctx): string[] }` — it turns
+source files into artifacts, so `watch` reruns it before checking and watches what it reads.
+`schema build` is the first: a `.dfn` edit rebuilds the JSON Schema files before the tokens held to
+them are validated and exported. `reads` is a **function**, not a static list, because the paths
+live in the extension's own settings (the builder resolves its configured `source` at run time) and
+nothing else knows them. `describe` reports which commands are generators and what they read, so
+the content of the loop is inspectable rather than implied.
+
+**Two hazards the design has to answer, both real:**
+
+- **The loop must not feed itself.** A generator writes into a directory that is also watched, so
+  every path a pass writes is remembered and the events those writes raise are dropped. Changes are
+  debounced, so a multi-file save is one rebuild.
+- **The config would otherwise be frozen.** `loadProject` evaluates the config with `import()`, and
+  Node's ESM cache returns the first evaluation forever; a reload therefore busts the cache with a
+  query. The cost — the previous config module stays in memory — is accepted at developer scale.
+
+**Failure keeps the last good output.** A failed pass reports diagnostics and leaves the export
+targets untouched, so a consumer keeps rendering the last version that passed rather than a broken
+one; `watch` keeps running. Generated artifacts are the deliberate exception: they are written
+before the check because the check reads them. `watch` exits `0` on a signal, `2` when there was no
+usable project to begin with — it never exits on a failed pass.
+
+**Events.** Human progress goes to stderr; `--json` puts one JSON object per line on stdout
+(`watching`, then a `pass` per rebuild). Line-delimited rather than one array, because the stream
+never ends — the ADR's "stdout is data" rule, applied to something unbounded.
