@@ -1,5 +1,11 @@
-import { type FSWatcher, watch as fsWatch } from 'node:fs';
-import { resolve } from 'node:path';
+import {
+  type Dirent,
+  type FSWatcher,
+  watch as fsWatch,
+  readdirSync,
+  statSync,
+} from 'node:fs';
+import { join, resolve } from 'node:path';
 import {
   type Diagnostic,
   EXPORTER_SERVICE,
@@ -130,6 +136,37 @@ export function watchPaths(project: Project): string[] {
   return [...paths];
 }
 
+/** Never walked into: installed dependencies and git's own store are not project sources. */
+const SKIP_DIRS = new Set(['node_modules', '.git']);
+
+/**
+ * Every directory at or under `root`, so each can be watched on its own.
+ *
+ * `fs.watch(dir, { recursive: true })` is NOT used, on the evidence: on Linux (verified on CI,
+ * Node 24.20) it attaches without error and then delivers no events at all, so a token edit was
+ * never noticed. Watching each directory individually is what chokidar, Vite and `tsc --watch` do,
+ * for the same reason, and it costs one inotify handle per directory — a token collection is small.
+ */
+export function directoriesUnder(root: string, depth = 8): string[] {
+  const found: string[] = [];
+  const walk = (dir: string, left: number): void => {
+    found.push(dir);
+    if (left === 0) return;
+    let entries: Dirent[];
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return; // vanished mid-walk, or unreadable: not watchable, not fatal
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) continue;
+      walk(join(dir, entry.name), left - 1);
+    }
+  };
+  walk(root, depth);
+  return found;
+}
+
 /**
  * The debouncing, self-ignoring event loop.
  *
@@ -253,10 +290,15 @@ export async function runWatch(options: WatchOptions): Promise<number> {
     }, debounceMs);
   };
 
-  for (const path of paths) {
+  const attached = new Set<string>();
+
+  /** Watch one directory (not recursively) or one file; a directory added later is picked up. */
+  const attach = (path: string): void => {
+    if (attached.has(path)) return;
+    attached.add(path);
     try {
       watchers.push(
-        fsWatch(path, { recursive: true }, (event, filename) => {
+        fsWatch(path, (event, filename) => {
           const changed = filename ? resolve(path, filename) : path;
           // Our own writes raised this: dropping them is what stops the loop feeding itself.
           if (isOurs(changed)) {
@@ -264,13 +306,37 @@ export async function runWatch(options: WatchOptions): Promise<number> {
             return;
           }
           debug(`${event} ${changed} — scheduling`);
+          // A new directory brings its own watcher, since this one does not see inside it.
+          try {
+            if (statSync(changed).isDirectory()) {
+              for (const dir of directoriesUnder(changed)) attach(dir);
+            }
+          } catch {
+            // Removed between the event and the check — nothing to attach to.
+          }
           schedule(changed);
         }),
       );
     } catch {
       log(`cannot watch ${path} — skipped`);
     }
+  };
+
+  for (const path of paths) {
+    let isDirectory = false;
+    try {
+      isDirectory = statSync(path).isDirectory();
+    } catch {
+      log(`cannot watch ${path} — skipped`);
+      continue;
+    }
+    if (isDirectory) {
+      for (const dir of directoriesUnder(path)) attach(dir);
+    } else {
+      attach(path);
+    }
   }
+  debug(`attached ${attached.size} watcher(s)`);
 
   return await new Promise<number>((done) => {
     const stop = (): void => {

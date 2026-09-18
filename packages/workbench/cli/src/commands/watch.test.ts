@@ -1,6 +1,9 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import type { Project } from '../loadProject';
-import { watchPaths } from './watch';
+import { directoriesUnder, watchPaths } from './watch';
 
 /** A project stub: `watchPaths` reads only the paths and the command registry. */
 function projectWith(
@@ -39,6 +42,34 @@ test('a path two generators both read is watched once', () => {
     ]),
   );
   expect(paths.filter((p) => p === '/p/shared')).toHaveLength(1);
+});
+
+test('every directory is listed, so each can be watched on its own', () => {
+  const root = mkdtempSync(join(tmpdir(), 'vtk-dirs-'));
+  mkdirSync(join(root, 'color/brand'), { recursive: true });
+  mkdirSync(join(root, 'node_modules/pkg'), { recursive: true });
+  mkdirSync(join(root, '.git/objects'), { recursive: true });
+  writeFileSync(join(root, 'color/core.json'), '{}');
+
+  const found = directoriesUnder(root);
+  expect(found).toContain(root);
+  expect(found).toContain(join(root, 'color'));
+  expect(found).toContain(join(root, 'color/brand'));
+  // Installed dependencies and git's store are not project sources.
+  expect(found.some((d) => d.includes('node_modules'))).toBe(false);
+  expect(found.some((d) => d.includes('.git'))).toBe(false);
+});
+
+test('an unreadable or missing directory is skipped, not fatal', () => {
+  expect(directoriesUnder(join(tmpdir(), 'vtk-does-not-exist-at-all'))).toEqual(
+    [join(tmpdir(), 'vtk-does-not-exist-at-all')],
+  );
+});
+
+test('the walk stops at the depth limit', () => {
+  const root = mkdtempSync(join(tmpdir(), 'vtk-deep-'));
+  mkdirSync(join(root, 'a/b/c'), { recursive: true });
+  expect(directoriesUnder(root, 1)).toEqual([root, join(root, 'a')]);
 });
 
 test('a project with no config watches the collection alone', () => {
