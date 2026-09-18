@@ -1,5 +1,12 @@
 # @vertekum/figma-dialect-microsoft
 
+## 0.5.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/ext-export-figma@0.5.0
+
 ## 0.4.0
 
 ### Patch Changes
