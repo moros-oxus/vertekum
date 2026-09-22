@@ -105,7 +105,7 @@ test('a token edit rebuilds the configured target', async () => {
 
     const tokenFile = join(cwd, 'tokens/core.json');
     const before = await readFile(tokenFile, 'utf8');
-    await writeFile(tokenFile, before.replace(/\s+$/, '') + '\n');
+    await writeFile(tokenFile, `${before.replace(/\s+$/, '')}\n`);
 
     const second = await watcher.next(
       (e) => e.event === 'pass' && e.trigger !== undefined,
