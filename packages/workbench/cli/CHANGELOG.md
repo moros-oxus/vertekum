@@ -1,5 +1,15 @@
 # @vertekum/cli
 
+## 0.7.0
+
+### Patch Changes
+
+- [`cdb5d66`](https://github.com/moros-oxus/vertekum/commit/cdb5d66f39485a8002351913d37deffc49303cb7) Thanks [@tschemmer](https://github.com/tschemmer)! - `vertekum watch` no longer misses a change saved immediately after it starts: it now announces `watching` only once every watcher is armed, rather than just before attaching them. A save landing in that window raised no event at all and was lost outright — rare on a fast machine, ordinary on a slow one.
+- Updated dependencies []:
+  - vertekum@0.3.0
+  - @vertekum/core@0.7.0
+  - @vertekum/server@0.3.0
+
 ## 0.6.0
 
 ### Patch Changes

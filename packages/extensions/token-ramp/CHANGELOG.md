@@ -1,5 +1,16 @@
 # @vertekum/ext-token-ramp
 
+## 0.7.0
+
+### Minor Changes
+
+- [`9cec3e8`](https://github.com/moros-oxus/vertekum/commit/9cec3e8ad3b756e1d2ff4907715b727978979eb0) Thanks [@tschemmer](https://github.com/tschemmer)! - Generated ramp stops are now mapped into a target gamut instead of storing whatever chroma the arch produced. A new `gamut` setting — `srgb` (default), `display-p3`, or `none` for the previous behaviour — resolves through the usual chain of settings, profile and payload, holding lightness and hue and reducing chroma to the gamut boundary. A stop's `hex` is derived from the mapped colour, so it and `components` no longer describe different colours. The anchor's own step is still carried verbatim and is never mapped.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/core@0.7.0
+
 ## 0.6.0
 
 ### Patch Changes
