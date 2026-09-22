@@ -1,12 +1,24 @@
+import { inGamut, oklch, parse as parseColor } from 'culori';
 import { expect, test } from 'vitest';
 import {
   anchorOf,
   computeRamp,
   DEFAULT_PHYSICS,
   parseScalar,
+  physicsFor,
   type RampPhysics,
   type RampStop,
 } from './ramp';
+
+const inSrgb = inGamut('rgb');
+
+/** A stop as culori sees it, for gamut and round-trip assertions. */
+const asColor = (stop: RampStop) => ({
+  mode: 'oklch' as const,
+  l: stop.components[0],
+  c: stop.components[1],
+  h: stop.components[2],
+});
 
 /** A hand-eased ten-step reference ladder (the shape a designed system documents). */
 const BRAND_A: RampPhysics = {
@@ -136,6 +148,101 @@ test('the curve serves any scalar; the explicit ladder wins where it speaks', ()
   expect(stops['300']?.hex).toBe('#002E2B'); // the anchor, verbatim
   expect((stops['200'] as RampStop).components[0]).toBe(0.5); // ladder override
   expect((stops['100'] as RampStop).components[0]).toBeCloseTo(0.958, 3); // curve first
+});
+
+/**
+ * A saturated yellow anchor drives most of its ramp outside sRGB under the arch alone — the
+ * case that made an exporter emit each stop three times, once per gamut.
+ */
+const YELLOW = { anchor: '#FFCD00', scalar: '100-1000/100' } as const;
+
+test('computed stops are mapped into sRGB, holding lightness and hue', () => {
+  const mappedR = computeRamp(YELLOW, BRAND_A, YELLOW.anchor);
+  const rawR = computeRamp(
+    { ...YELLOW, gamut: 'none' },
+    BRAND_A,
+    YELLOW.anchor,
+  );
+  if ('error' in mappedR || 'error' in rawR) throw new Error('no ramp');
+
+  // Unmapped, this ramp really is out of gamut — otherwise the test below proves nothing.
+  const rawOut = Object.values(rawR.stops).filter((s) => !inSrgb(asColor(s)));
+  expect(rawOut.length).toBeGreaterThan(0);
+
+  for (const [step, stop] of Object.entries(mappedR.stops)) {
+    if (step === '300') continue; // the anchor's step — carried verbatim, never mapped
+    expect(inSrgb(asColor(stop)), `${step} ${stop.hex}`).toBe(true);
+
+    // L and h are held; only C moves, and only ever downward.
+    const raw = rawR.stops[step] as RampStop;
+    expect(stop.components[0]).toBeCloseTo(raw.components[0], 4);
+    expect(stop.components[2]).toBeCloseTo(raw.components[2], 1);
+    expect(stop.components[1]).toBeLessThanOrEqual(raw.components[1] + 1e-9);
+  }
+});
+
+test("gamut 'none' stores the arch's own chroma, unmapped", () => {
+  const ramp = computeRamp(
+    { ...YELLOW, gamut: 'none' },
+    BRAND_A,
+    YELLOW.anchor,
+  );
+  if ('error' in ramp) throw new Error(ramp.error);
+  // The escape hatch is real: the pre-mapping behaviour is still reachable.
+  expect(Object.values(ramp.stops).some((s) => !inSrgb(asColor(s)))).toBe(true);
+});
+
+test('a stop’s hex and components describe the same colour', () => {
+  const ramp = computeRamp(YELLOW, BRAND_A, YELLOW.anchor);
+  if ('error' in ramp) throw new Error(ramp.error);
+  for (const [step, stop] of Object.entries(ramp.stops)) {
+    const fromHex = oklch(parseColor(stop.hex));
+    if (!fromHex) throw new Error(`unparseable hex ${stop.hex}`);
+    expect(fromHex.l, `${step} L`).toBeCloseTo(stop.components[0], 2);
+    expect(fromHex.c, `${step} C`).toBeCloseTo(stop.components[1], 2);
+  }
+});
+
+test('gamut resolves through the four-layer chain', () => {
+  const config = {
+    ...DEFAULT_PHYSICS,
+    gamut: 'srgb' as const,
+    profiles: { wide: { gamut: 'display-p3' as const } },
+  };
+  const base = physicsFor(config, YELLOW);
+  if ('error' in base) throw new Error(base.error);
+  expect(base.gamut).toBe('srgb');
+
+  const viaProfile = physicsFor(config, { ...YELLOW, profile: 'wide' });
+  if ('error' in viaProfile) throw new Error(viaProfile.error);
+  expect(viaProfile.gamut).toBe('display-p3');
+
+  // The payload beats the profile, as every other physics field does.
+  const viaPayload = physicsFor(config, {
+    ...YELLOW,
+    profile: 'wide',
+    gamut: 'none',
+  });
+  if ('error' in viaPayload) throw new Error(viaPayload.error);
+  expect(viaPayload.gamut).toBe('none');
+});
+
+test('display-p3 maps less aggressively than srgb', () => {
+  const srgbR = computeRamp(YELLOW, BRAND_A, YELLOW.anchor);
+  const p3R = computeRamp(
+    { ...YELLOW, gamut: 'display-p3' },
+    BRAND_A,
+    YELLOW.anchor,
+  );
+  if ('error' in srgbR || 'error' in p3R) throw new Error('no ramp');
+  // The wider target keeps more chroma somewhere — and the name really is honoured:
+  // culori spells this gamut 'p3' and throws on 'display-p3', so a pass-through would fail here.
+  const widerSomewhere = Object.keys(srgbR.stops).some(
+    (step) =>
+      (p3R.stops[step] as RampStop).components[1] >
+      (srgbR.stops[step] as RampStop).components[1] + 1e-6,
+  );
+  expect(widerSomewhere).toBe(true);
 });
 
 test('anchorOf normalizes hex and passes oklch objects through', () => {

@@ -26,7 +26,7 @@ Two ways to assign it:
 The anchor's own lightness is measured, and it lands on the step whose ladder
 lightness is nearest. That step carries the brand colour **verbatim** — its exact
 lightness, chroma, hue, and hex. The ladder positions the anchor; it never repaints
-it. This is why anchors legitimately land on different steps in different families: a
+it, and neither does gamut mapping (§5). This is why anchors legitimately land on different steps in different families: a
 naturally light brand yellow lands high, a deep brand charcoal lands low.
 
 ## 4. Chroma arches through the anchor
@@ -43,7 +43,27 @@ lightness as `Lₐ`:
 - **Darker than the anchor**: `C = Cₐ × (L / Lₐ)^darkExponent` (0.85 by default;
   higher means duller deep shades).
 
-## 5. Hue holds — with one escape hatch
+## 5. Chroma is mapped into the gamut
+
+The arch is arithmetic, and arithmetic does not know what a screen can show. A saturated
+anchor drives its mid and dark steps past what sRGB can represent — the chroma is
+real, but no display honours it, and a consumer's exporter is then forced to emit
+every such stop two or three times, once per gamut, to say the same thing.
+
+So each computed stop is mapped into the target gamut: **lightness and hue are held,
+and chroma alone is reduced to the boundary.** That is the perceptual repair. Clipping
+the red, green and blue channels independently — the obvious alternative — moves hue
+and lightness as a side effect, which is how a stored colour and its hex fallback end
+up describing two different colours.
+
+`gamut` chooses the target: `srgb` (default), `display-p3`, or `none` to store the
+arch's own chroma wherever it lands. The stop is mapped at the precision it is stored
+at, so the value written is the value that was checked.
+
+**The anchor is exempt.** Its step carries the brand colour verbatim (§3), mapping
+included — an authored colour belongs to whoever authored it, not to the generator.
+
+## 6. Hue holds — with one escape hatch
 
 Every step keeps the anchor's hue. The exception is `hueDrift`: steps darker than the
 anchor rotate linearly, reaching the full drift at the last step. Its reason to exist

@@ -1,5 +1,5 @@
 import { evaluateScale } from '@vertekum/core';
-import { formatHex, oklch, parse as parseColor } from 'culori';
+import { clampChroma, formatHex, oklch, parse as parseColor } from 'culori';
 
 /**
  * The ramp model — one brand anchor, a shared lightness ladder, chroma arched through the anchor.
@@ -23,6 +23,24 @@ import { formatHex, oklch, parse as parseColor } from 'culori';
 /** The `$extensions` key this extension owns — the first-party generator family. */
 export const RAMP_KEY = 'org.vertekum.generate/ramp';
 
+/**
+ * The gamut a computed stop is mapped into.
+ *
+ * `'none'` stores the arch's own chroma whatever it lands on — the behaviour before mapping
+ * existed, kept as a deliberate escape hatch rather than a migration aid.
+ */
+export type RampGamut = 'srgb' | 'display-p3' | 'none';
+
+/**
+ * Culori spells display-p3 `p3`, and THROWS on a name it does not know rather than passing the
+ * colour through unmapped. So the public name is translated explicitly: a pass-through would
+ * turn `'display-p3'` into a runtime error on every ramp that asked for it.
+ */
+const CULORI_GAMUT: Record<Exclude<RampGamut, 'none'>, string> = {
+  srgb: 'rgb',
+  'display-p3': 'p3',
+};
+
 export interface RampPhysics {
   /** L endpoints + curve for ANY ramp length. `ease: 1` = evenly spaced. */
   lightness: { first: number; last: number; ease: number };
@@ -32,12 +50,20 @@ export interface RampPhysics {
   lightFraction: number;
   /** The dark-side chroma exponent. */
   darkExponent: number;
+  /**
+   * The gamut every COMPUTED stop is mapped into; absent is `'srgb'`. Mapping holds L and h and
+   * reduces C to the gamut boundary — a generated value the target cannot represent is an
+   * artifact, not a colour. The ANCHOR's step is never mapped: it carries the brand colour
+   * verbatim, which is the model's promise.
+   */
+  gamut?: RampGamut;
 }
 
 export const DEFAULT_PHYSICS: RampPhysics = {
   lightness: { first: 0.958, last: 0.27, ease: 1 },
   lightFraction: 0.2,
   darkExponent: 0.85,
+  gamut: 'srgb',
 };
 
 /** A named partial of the physics — a brand's ladder, a tweaked curve. */
@@ -46,6 +72,7 @@ export interface RampProfile {
   ladder?: Record<string, number>;
   lightFraction?: number;
   darkExponent?: number;
+  gamut?: RampGamut;
 }
 
 /** The configured physics: the project-wide base plus named profiles. */
@@ -69,6 +96,7 @@ export interface RampPayload {
   lightness?: Partial<RampPhysics['lightness']>;
   lightFraction?: number;
   darkExponent?: number;
+  gamut?: RampGamut;
 }
 
 /** A stored DTCG colour value in oklch notation. */
@@ -116,6 +144,16 @@ const round = (value: number, places: number): number => {
 };
 
 /**
+ * Rounding TOWARD ZERO, for the one value that must never grow: a gamut-mapped chroma sits
+ * exactly on the boundary, so rounding it up in the fourth decimal puts the stop back outside
+ * the gamut it was just mapped into.
+ */
+const floorTo = (value: number, places: number): number => {
+  const f = 10 ** places;
+  return Math.floor(value * f) / f;
+};
+
+/**
  * Resolve one ramp's effective physics through the four-layer chain, per field:
  * built-in defaults ← top-level settings ← selected profile ← payload overrides.
  * `ladder` tables merge BY STEP KEY through the chain; `lightness` merges per-field; scalars
@@ -153,6 +191,8 @@ export function physicsFor(
       payload.lightFraction ?? profile.lightFraction ?? config.lightFraction,
     darkExponent:
       payload.darkExponent ?? profile.darkExponent ?? config.darkExponent,
+    // A scalar: it REPLACES through the chain rather than merging, like lightFraction.
+    gamut: payload.gamut ?? profile.gamut ?? config.gamut,
   };
 }
 
@@ -264,6 +304,7 @@ export function computeRamp(
         Math.log((1 - firstL) / (1 - anchor.l));
 
   const drift = payload.hueDrift ?? 0;
+  const gamut = physics.gamut ?? 'srgb';
   const out: Record<string, RampStop> = {};
   names.forEach((name, index) => {
     if (index === anchorIndex) {
@@ -279,12 +320,40 @@ export function computeRamp(
       !lighter && drift !== 0 && n - 1 > anchorIndex
         ? anchor.h + drift * ((index - anchorIndex) / (n - 1 - anchorIndex))
         : anchor.h;
-    const hex = formatHex({ mode: 'oklch', l: L, c, h });
+
+    // Lightness and hue are rounded BEFORE mapping, so the gamut check sees the values that
+    // will actually be stored. Mapping first and rounding afterwards lands the colour exactly
+    // ON the boundary and then nudges it back outside in the fourth decimal — the original bug
+    // again, three orders of magnitude smaller and just as real.
+    const storedL = round(L, 4);
+    const storedH = round(((h % 360) + 360) % 360, 1);
+
+    // Chroma alone is reduced, and floored rather than rounded — see floorTo. This is NOT
+    // formatHex's per-channel RGB clip, which shifts hue and lightness as a side effect of
+    // clamping channels independently: the reason hex and components used to disagree.
+    const storedC =
+      gamut === 'none'
+        ? round(c, 4)
+        : floorTo(
+            clampChroma(
+              { mode: 'oklch', l: storedL, c, h: storedH },
+              'oklch',
+              CULORI_GAMUT[gamut],
+            ).c ?? c,
+            4,
+          );
+
     out[name] = {
       colorSpace: 'oklch',
-      components: [round(L, 4), round(c, 4), round(((h % 360) + 360) % 360, 1)],
+      components: [storedL, storedC, storedH],
       alpha: 1,
-      hex: hex.toUpperCase(),
+      // Derived from the STORED triple, so the hex and the components are one colour.
+      hex: formatHex({
+        mode: 'oklch',
+        l: storedL,
+        c: storedC,
+        h: storedH,
+      }).toUpperCase(),
     };
   });
   return { stops: out };

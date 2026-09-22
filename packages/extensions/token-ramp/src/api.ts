@@ -56,6 +56,7 @@ function physicsFrom(settings: RampSettingsType | undefined): RampConfig {
     ...(settings.ladder ? { ladder: settings.ladder } : {}),
     lightFraction: settings.lightFraction,
     darkExponent: settings.darkExponent,
+    gamut: settings.gamut,
     ...(settings.profiles ? { profiles: settings.profiles } : {}),
     ...(settings.defaultProfile
       ? { defaultProfile: settings.defaultProfile }
@@ -123,6 +124,7 @@ const PAYLOAD_SCHEMA = {
         },
         lightFraction: { type: 'number' },
         darkExponent: { type: 'number' },
+        gamut: { enum: ['srgb', 'display-p3', 'none'] },
       },
       additionalProperties: false,
     },

@@ -10,6 +10,7 @@ export {
   physicsFor,
   RAMP_KEY,
   type RampConfig,
+  type RampGamut,
   type RampPayload,
   type RampPhysics,
   type RampProfile,
@@ -27,6 +28,11 @@ export {
  * - `lightFraction` — how washed-out the palest step is: its chroma is this fraction of the
  *   anchor's (0.2 = one fifth of the brand colour's saturation).
  * - `darkExponent` — how quickly chroma falls on the dark side (higher = duller deep shades).
+ * - `gamut` — the colour space every COMPUTED stop is mapped into: `srgb` (default),
+ *   `display-p3`, or `none` to store the arch's own chroma whatever it lands on. Mapping holds
+ *   lightness and hue and reduces chroma to the gamut boundary, so a stop is always a colour the
+ *   target can actually show. The anchor's own step is never mapped — it carries the brand
+ *   colour verbatim.
  *
  * Multi-brand systems declare **profiles** — named partials of the same fields — and each ramp
  * payload selects one by name (`"profile": "brand-a"`), or `defaultProfile` routes every silent
@@ -46,6 +52,7 @@ export const RampSettings = z.object({
   ladder: z.record(z.number().min(0).max(1)).optional(),
   lightFraction: z.number().positive().max(1).default(0.2),
   darkExponent: z.number().positive().default(0.85),
+  gamut: z.enum(['srgb', 'display-p3', 'none']).default('srgb'),
   profiles: z
     .record(
       z.object({
@@ -59,6 +66,7 @@ export const RampSettings = z.object({
         ladder: z.record(z.number().min(0).max(1)).optional(),
         lightFraction: z.number().positive().max(1).optional(),
         darkExponent: z.number().positive().optional(),
+        gamut: z.enum(['srgb', 'display-p3', 'none']).optional(),
       }),
     )
     .optional(),
