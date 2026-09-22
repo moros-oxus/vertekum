@@ -58,6 +58,12 @@ interface PreparedValue {
   /** The chain's type proposal, when one was made — the caller decides whether it is stored. */
   chainType?: string;
   value: unknown;
+  /**
+   * `$extensions` data the chain attached, merged by key across links. The caller writes it onto
+   * the token — on `token set`, over what the token already carries, never replacing the whole
+   * bucket.
+   */
+  extensions?: Record<string, unknown>;
 }
 
 /**
@@ -94,12 +100,20 @@ async function prepareValue(
     path: input.path,
     type: { explicit: input.explicit, inherited: input.inherited },
     value: { original: input.raw, current: parsed },
+    options: ctx.options,
   };
   let claimed = false;
+  // `$extensions` data the chain attached, keyed by each extension's own namespaced key. Later
+  // links merge over earlier ones at the KEY level, so two extensions writing different keys both
+  // survive and only a genuine collision is last-wins.
+  let extensions: Record<string, unknown> | undefined;
   for (const link of commandExtensionsOf(ctx, input.verb)) {
     const proposal = (await link.handle(context)) as ValueProposal | undefined;
     if (!proposal) continue;
     if (proposal.type !== undefined) context.type.current = proposal.type;
+    if (proposal.extensions !== undefined) {
+      extensions = { ...extensions, ...proposal.extensions };
+    }
     if (proposal.value !== undefined) {
       context.value.current = proposal.value;
       claimed = true;
@@ -108,17 +122,24 @@ async function prepareValue(
 
   const chainType = context.type.current;
   const type = input.explicit ?? chainType ?? input.inherited;
-  if (claimed) return { type, chainType, value: context.value.current };
-  if (type === undefined) return { type, chainType, value: parsed };
+  // `extensions` rides out on EVERY post-chain path. A link that attaches data without claiming
+  // the type or the value — an annotation, which is the common case — takes whichever of these
+  // the value itself dictates, and dropping the payload on any one of them loses it silently.
+  if (claimed) {
+    return { type, chainType, value: context.value.current, extensions };
+  }
+  if (type === undefined) return { type, chainType, value: parsed, extensions };
 
   const object = await parseValueInput(type, parsed, valueOptionsOf(ctx));
-  if (object !== undefined) return { type, chainType, value: object };
+  if (object !== undefined) {
+    return { type, chainType, value: object, extensions };
+  }
   if (TRANSFORMED.has(type)) {
     throw new Error(
       `'${parsed}' is not a valid ${type} value — expected ${ACCEPTED[type]}`,
     );
   }
-  return { type, chainType, value: parsed };
+  return { type, chainType, value: parsed, extensions };
 }
 
 /**
@@ -222,6 +243,7 @@ export const tokenVerbs: CommandDescriptor[] = [
           ...(ctx.options.description
             ? { description: ctx.options.description as string }
             : {}),
+          ...(prepared.extensions ? { extensions: prepared.extensions } : {}),
         }),
       );
 
@@ -314,7 +336,14 @@ export const tokenVerbs: CommandDescriptor[] = [
 
       // A value-only edit goes through updateTokenValue so it coalesces in the undo stack the same
       // way an editor keystroke does; anything touching other fields replaces the token wholesale.
-      if (type === undefined && description === undefined && !chainType) {
+      // Chain-attached `$extensions` count as touching another field — taking the fast path would
+      // patch the value in place and silently drop them.
+      if (
+        type === undefined &&
+        description === undefined &&
+        !chainType &&
+        prepared?.extensions === undefined
+      ) {
         document.apply(
           updateTokenValue(token.id, (prepared as PreparedValue).value),
         );
@@ -331,6 +360,13 @@ export const tokenVerbs: CommandDescriptor[] = [
               ? { type: chainType }
               : {}),
           ...(description !== undefined ? { description } : {}),
+          // Merged over what the token already carries, per key: setting one category must not
+          // erase another, nor any foreign vendor's data.
+          ...(prepared?.extensions
+            ? {
+                extensions: { ...token.extensions, ...prepared.extensions },
+              }
+            : {}),
         }),
       );
 

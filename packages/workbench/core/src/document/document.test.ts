@@ -310,7 +310,7 @@ describe('coalescing', () => {
 });
 
 describe('replaceToken', () => {
-  test('replaces value, description, and vtk in one command, preserving id', () => {
+  test('replaces value, description, and extensions in one command, preserving id', () => {
     const doc = docWithToken();
 
     doc.apply(
@@ -320,9 +320,7 @@ describe('replaceToken', () => {
         type: 'color',
         value: '#0f0',
         description: 'brand accent',
-        // `meta` is the active vtk sub-key. `themes` was retired, and the parser ignores it — it
-        // still round-trips to disk untouched, it is simply not surfaced on the model.
-        vtk: { meta: { owner: 'brand' } },
+        extensions: { 'org.vertekum.meta': { owner: 'brand' } },
       }),
     );
 
@@ -333,7 +331,45 @@ describe('replaceToken', () => {
       type: 'color',
       value: '#0f0',
       description: 'brand accent',
-      vtk: { meta: { owner: 'brand' } },
+      extensions: { 'org.vertekum.meta': { owner: 'brand' } },
+    });
+  });
+
+  test('a whole-node rewrite keeps extension keys core knows nothing about', () => {
+    const doc = docWithToken();
+    // The data-loss path this preservation exists for: `replaceToken` rebuilds the node from the
+    // model, so anything the model dropped was gone — and `token set --type` and renames both
+    // route through here. A retired Vertekum key and a foreign vendor's key must both survive.
+    doc.apply(
+      replaceToken('tokens:color.primary', {
+        id: 't1',
+        path: ['color', 'primary'],
+        type: 'color',
+        value: '#f00',
+        extensions: {
+          'org.vertekum.ident': 'legacy-1',
+          'org.vertekum.docs': { llm: 'prefer this for body copy' },
+          'com.figma.scopes': ['ALL_FILLS'],
+        },
+      }),
+    );
+    doc.commitEdit();
+
+    // Now the rewrite that used to eat them: a type change at the same path.
+    doc.apply(
+      replaceToken('tokens:color.primary', {
+        id: 't1',
+        path: ['color', 'primary'],
+        type: 'dimension',
+        value: '4px',
+        extensions: doc.getToken('tokens:color.primary')?.extensions,
+      }),
+    );
+
+    expect(doc.getToken('tokens:color.primary')?.extensions).toEqual({
+      'org.vertekum.ident': 'legacy-1',
+      'org.vertekum.docs': { llm: 'prefer this for body copy' },
+      'com.figma.scopes': ['ALL_FILLS'],
     });
   });
 
@@ -356,14 +392,14 @@ describe('replaceToken', () => {
 
   test('one undo restores the entire prior token', () => {
     const doc = docWithToken();
-    // Seed a vtk bucket so the restore covers preserved extension data.
+    // Seed extension data so the restore covers it too.
     doc.apply(
       replaceToken('tokens:color.primary', {
         id: 't1',
         path: ['color', 'primary'],
         type: 'color',
         value: '#f00',
-        vtk: { themes: { dark: { $value: '#000' } } },
+        extensions: { 'org.vertekum.themes': { dark: { $value: '#000' } } },
       }),
     );
     doc.commitEdit();

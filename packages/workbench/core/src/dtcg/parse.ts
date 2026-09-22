@@ -9,12 +9,14 @@ import { materializeTokens } from './materialize';
 
 /**
  * Reverse-DNS root for Vertekum's own `$extensions` keys (ADR-0020). Concerns are split by sub-key,
- * where the sub-key names the premise of the data it holds — `org.vertekum.meta` for per-token
- * metadata. Only *active* sub-keys are recognized (see `VTK_ACTIVE_SUBS`); any inactive or unknown
- * `org.vertekum.*` key is ignored on parse and preserved on write.
+ * where the sub-key names the premise of the data it holds — `org.vertekum.docs` for notes,
+ * `org.vertekum.meta` for per-token metadata.
  *
- * `org.vertekum.ident` was retired: identity is now `(set, path)` and nothing is stored on disk.
- * An ident already in a file falls through as an unrecognized sub-key — inert, and untouched.
+ * The prefix decides whose namespace a key belongs to when WRITING one. It decides nothing about
+ * parsing: every `$extensions` key round-trips untouched, recognized or not (see `keptExtensions`).
+ * An allow-list of "active" sub-keys used to gate that, and silently dropped everything else on the
+ * next whole-node write; `org.vertekum.ident`, retired when identity became `(set, path)`, is one
+ * such key still sitting in old files. It now survives as the inert data it is.
  */
 export const VTK_PREFIX = 'org.vertekum';
 
@@ -48,31 +50,26 @@ function isTokenNode(node: DtcgNode): boolean {
   return '$value' in node || typeof node.$ref === 'string';
 }
 
-/** Return `$extensions` without any Vertekum (`org.vertekum.*`) keys — foreign vendor data only. */
-function foreignExtensions(ext: unknown): DtcgNode | undefined {
+/**
+ * A token's `$extensions`, kept verbatim — every key, whoever wrote it.
+ *
+ * There was once an allow-list of recognized `org.vertekum.*` sub-keys, and anything outside it
+ * reached neither this bucket nor the model: it was silently discarded the next time the node was
+ * rebuilt (`addToken`/`replaceToken`), so `token set --type` or a rename ate data a value edit
+ * would have left alone. The prefix says whose namespace a key belongs to for WRITING; it was
+ * never meant to decide whether the key survives, and ADR-0020 said as much in prose.
+ *
+ * The one exclusion is a key a registered codec claims: the codec path owns that payload and
+ * re-serializes it, so keeping a second copy here would write it twice.
+ */
+function keptExtensions(ext: unknown, claimed?: string): DtcgNode | undefined {
   if (!ext || typeof ext !== 'object') return undefined;
-  const rest: DtcgNode = {};
+  const kept: DtcgNode = {};
   for (const [key, value] of Object.entries(ext as DtcgNode)) {
-    if (!key.startsWith(`${VTK_PREFIX}.`)) rest[key] = value;
+    if (key === claimed) continue;
+    kept[key] = value;
   }
-  return Object.keys(rest).length > 0 ? rest : undefined;
-}
-
-/** Active vtk-bucket sub-keys the system recognizes; any other `org.vertekum.*` key is ignored. */
-const VTK_ACTIVE_SUBS = new Set(['meta']);
-
-/** Collect the active `org.vertekum.<sub>` keys into a bucket (ident → id; unknown/inactive ignored). */
-function vtkBucket(ext: DtcgNode | undefined): DtcgNode | undefined {
-  if (!ext) return undefined;
-  const prefix = `${VTK_PREFIX}.`;
-  const bucket: DtcgNode = {};
-  for (const [key, value] of Object.entries(ext)) {
-    if (!key.startsWith(prefix)) continue;
-    const sub = key.slice(prefix.length);
-    if (!VTK_ACTIVE_SUBS.has(sub)) continue; // ident (→ id), themes (retired), unknown — all ignored
-    bucket[sub] = value;
-  }
-  return Object.keys(bucket).length > 0 ? bucket : undefined;
+  return Object.keys(kept).length > 0 ? kept : undefined;
 }
 
 /**
@@ -139,10 +136,8 @@ function walk(
     if (typeof node.$description === 'string') {
       token.description = node.$description;
     }
-    const vtk = vtkBucket(ext);
-    if (vtk) token.vtk = vtk;
-    const foreign = foreignExtensions(ext);
-    if (foreign) token.extensions = foreign;
+    const kept = keptExtensions(ext);
+    if (kept) token.extensions = kept;
     out.push(token);
     return;
   }
@@ -187,13 +182,10 @@ function walk(
       if (fields.description !== undefined) {
         token.description = fields.description;
       }
-      const vtk = vtkBucket(ext);
-      if (vtk) token.vtk = vtk;
-      const foreign = foreignExtensions(ext);
-      if (foreign) {
-        delete foreign[carrier.codec.key];
-        if (Object.keys(foreign).length > 0) token.extensions = foreign;
-      }
+      // The codec's own key is excluded: its payload is `codecSource`, and the codec writes it
+      // back on serialize. Every other key on the carrier rides as it would on a real token.
+      const kept = keptExtensions(ext, carrier.codec.key);
+      if (kept) token.extensions = kept;
       out.push(token);
       return;
     }

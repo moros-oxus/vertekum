@@ -32,11 +32,11 @@ export interface Token {
    */
   set?: string;
   /**
-   * Vertekum per-token metadata, keyed by premise sub-name (`meta`, `themes`, …) — the
-   * `org.vertekum.*` `$extensions` sub-keys minus `ident` (which is lifted to `id`). (ADR-0020)
+   * Every `$extensions` key as authored — Vertekum's own (`org.vertekum.*`), another vendor's, or
+   * one this version has never heard of. All of it round-trips untouched; core interprets nothing
+   * here, and an extension reads the key it owns. The exception is a key a registered codec claims:
+   * that payload lives in `codecSource` and is re-serialized by the codec (ADR-0020, amended).
    */
-  vtk?: Record<string, unknown>;
-  /** Foreign vendor `$extensions` (non-`org.vertekum.*`), preserved untouched. */
   extensions?: Record<string, unknown>;
   /**
    * The `$extensions` key of the codec that materialized this token from a carrier node

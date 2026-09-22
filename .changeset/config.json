@@ -15,6 +15,7 @@
       "@vertekum/schema-atlassian",
       "@vertekum/ext-export-terrazzo",
       "@vertekum/ext-export-figma",
+      "@vertekum/ext-token-docs",
       "@vertekum/figma-dialect-microsoft",
       "@vertekum/schema-dtcg",
       "@vertekum/ext-token-ramp"

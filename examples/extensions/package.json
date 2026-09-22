@@ -12,6 +12,7 @@
     "@vertekum/cli": "workspace:*",
     "@vertekum/core": "workspace:*",
     "@vertekum/ext-export-css": "workspace:*",
+    "@vertekum/ext-token-docs": "workspace:*",
     "@vertekum/ext-token-ramp": "workspace:*"
   }
 }

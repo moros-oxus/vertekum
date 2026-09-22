@@ -83,6 +83,9 @@ importers:
       '@vertekum/ext-export-css':
         specifier: workspace:*
         version: link:../../packages/extensions/export-css
+      '@vertekum/ext-token-docs':
+        specifier: workspace:*
+        version: link:../../packages/extensions/token-docs
       '@vertekum/ext-token-ramp':
         specifier: workspace:*
         version: link:../../packages/extensions/token-ramp
@@ -315,6 +318,16 @@ importers:
       vertekum:
         specifier: workspace:*
         version: link:../../workbench/app
+
+  packages/extensions/token-docs:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../workbench/core
 
   packages/extensions/token-ramp:
     dependencies:

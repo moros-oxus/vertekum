@@ -65,9 +65,10 @@ describe('parseCollection', () => {
       },
     });
 
-    // Identity is (set, path). A legacy ident falls through as an unrecognized vtk sub-key.
+    // Identity is (set, path); a legacy ident means nothing to the model. It is still the
+    // author's data, so it rides along untouched rather than being deleted on the next write.
     expect(tokens[0]?.id).toBe('core:color.primary');
-    expect(tokens[0]?.vtk).toBeUndefined();
+    expect(tokens[0]?.extensions).toEqual({ 'org.vertekum.ident': 'fixed-1' });
   });
 
   test('identity distinguishes the same path in different sets', () => {
@@ -82,7 +83,7 @@ describe('parseCollection', () => {
     ]);
   });
 
-  test('lifts active org.vertekum.* sub-keys (meta), ignoring inactive ones (themes)', () => {
+  test('keeps every $extensions key — recognized, retired, or foreign', () => {
     const tokens = parseCollection({
       'core.json': {
         color: {
@@ -92,14 +93,19 @@ describe('parseCollection', () => {
             $extensions: {
               'org.vertekum.meta': { note: 'hi' },
               'org.vertekum.themes': { dark: { $value: '#F00' } },
+              'com.figma.scopes': ['ALL_FILLS'],
             },
           },
         },
       },
     });
 
-    expect(tokens[0]?.vtk).toEqual({
-      meta: { note: 'hi' },
+    // No allow-list: core interprets none of these, and preserves all of them. An extension
+    // reads the key it owns; a key this version has never heard of still survives a rewrite.
+    expect(tokens[0]?.extensions).toEqual({
+      'org.vertekum.meta': { note: 'hi' },
+      'org.vertekum.themes': { dark: { $value: '#F00' } },
+      'com.figma.scopes': ['ALL_FILLS'],
     });
   });
 

@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest';
+import { replaceToken } from '../document/commands';
 import { createDocument, type Document } from '../document/document';
 import { createCommandRegistry } from '../shell/command-registry';
 import type {
@@ -323,6 +324,101 @@ async function runChained(
 ): Promise<Awaited<ReturnType<CommandDescriptor['run']>>> {
   return verb(name).run({ project, args, options });
 }
+
+/**
+ * An annotation link: reads a flag it declared itself and returns `$extensions` data, claiming
+ * neither the type nor the value. This is the shape `@vertekum/ext-token-docs` uses.
+ */
+const noteHandler: CommandExtension<ValuePreparationContext, ValueProposal> = {
+  options: [{ flag: '--comment <text>', description: 'a note' }],
+  handle(ctx) {
+    const comment = ctx.options.comment;
+    if (typeof comment !== 'string') return undefined;
+    return { extensions: { 'org.vertekum.docs': { docs: comment } } };
+  },
+};
+
+test('a chain link reads its own flag and attaches extension data', async () => {
+  const document = newDocument();
+  const project = chainedProject(document, [noteHandler]);
+
+  await runChained(
+    'token add',
+    project,
+    { path: 'color.base', value: '#000000' },
+    { type: 'color', set: 'core', comment: 'body copy only' },
+  );
+
+  const [token] = document.getAllTokens();
+  expect(token?.extensions).toEqual({
+    'org.vertekum.docs': { docs: 'body copy only' },
+  });
+  // The link claimed neither type nor value — the built-in transform still ran.
+  expect(token?.type).toBe('color');
+  expect((token?.value as { hex?: string }).hex).toBe('#000000');
+});
+
+test('token set merges extension data over what the token already carries', async () => {
+  const document = newDocument();
+  const project = chainedProject(document, [noteHandler]);
+  await runChained(
+    'token add',
+    project,
+    { path: 'color.base', value: '#000000' },
+    { type: 'color', set: 'core' },
+  );
+  // Seed a second vendor's key and a sibling category the link will not write.
+  const seeded = document.getAllTokens()[0];
+  document.apply(
+    replaceToken(seeded?.id as string, {
+      ...(seeded as NonNullable<typeof seeded>),
+      extensions: {
+        'com.figma.scopes': ['ALL_FILLS'],
+        'org.vertekum.docs': { llm: 'keep me' },
+      },
+    }),
+  );
+
+  await runChained(
+    'token set',
+    project,
+    { path: 'color.base', value: '#ff0000' },
+    { comment: 'now documented' },
+  );
+
+  const token = document.getAllTokens()[0];
+  // Per-key merge: the foreign key survives untouched, and the link's key replaces only itself.
+  expect(token?.extensions).toEqual({
+    'com.figma.scopes': ['ALL_FILLS'],
+    'org.vertekum.docs': { docs: 'now documented' },
+  });
+});
+
+test('a value-only set still keeps chain-attached extension data', async () => {
+  const document = newDocument();
+  const project = chainedProject(document, [noteHandler]);
+  await runChained(
+    'token add',
+    project,
+    { path: 'color.base', value: '#000000' },
+    { type: 'color', set: 'core' },
+  );
+
+  // No --type and no --description: the fast path through updateTokenValue patches the value in
+  // place, which would drop the payload entirely. The presence of chain extensions must divert it.
+  await runChained(
+    'token set',
+    project,
+    { path: 'color.base', value: '#00ff00' },
+    { comment: 'attached on a value-only edit' },
+  );
+
+  const token = document.getAllTokens()[0];
+  expect(token?.extensions).toEqual({
+    'org.vertekum.docs': { docs: 'attached on a value-only edit' },
+  });
+  expect((token?.value as { hex?: string }).hex).toBe('#00ff00');
+});
 
 /** The consumer-driver handler: 2–4 unit entries under a dimension group → a 'spacial' array. */
 const spacialHandler: CommandExtension<ValuePreparationContext, ValueProposal> =

@@ -1,5 +1,6 @@
 import { defineConfig } from '@vertekum/core';
 import { cssExportExtension } from '@vertekum/ext-export-css';
+import { tokenDocsExtension } from '@vertekum/ext-token-docs';
 import { tokenRampExtension } from '@vertekum/ext-token-ramp';
 import { textDecorationExtension } from './extensions/text-decoration';
 
@@ -18,5 +19,10 @@ export default defineConfig({
     },
   ],
   targets: [{ id: 'web', exporter: 'css', out: 'build/css' }],
-  extensions: [cssExportExtension, textDecorationExtension, tokenRampExtension],
+  extensions: [
+    cssExportExtension,
+    textDecorationExtension,
+    tokenRampExtension,
+    tokenDocsExtension,
+  ],
 });

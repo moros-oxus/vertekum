@@ -1,6 +1,6 @@
 import { isGroupCodec, type TokenCodec } from '../document/codec';
 import type { Token } from '../document/types';
-import { type DtcgNode, VTK_PREFIX } from './parse';
+import type { DtcgNode } from './parse';
 import { cloneNode, setNodeAt } from './tree';
 
 /** The lookup half of the codec service — all the write path needs. */
@@ -21,12 +21,9 @@ export interface CodecLookup {
  * one definition of what a token looks like on disk — two copies would drift.
  */
 export function tokenNode(token: Token, codecs?: CodecLookup): DtcgNode {
+  // Every `$extensions` key the token carries, as authored — Vertekum's own, another vendor's, or
+  // one nobody here has ever heard of. A codec's payload is added below, from the codec.
   const extensions: DtcgNode = { ...(token.extensions ?? {}) };
-  if (token.vtk) {
-    for (const [sub, value] of Object.entries(token.vtk)) {
-      extensions[`${VTK_PREFIX}.${sub}`] = value;
-    }
-  }
 
   // A codec-owned token writes as its CARRIER — a conformant empty group whose payload holds the
   // data (extension-held token data). Store form only: view builders (exporter staging) call

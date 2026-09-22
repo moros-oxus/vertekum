@@ -109,6 +109,12 @@ export interface ValuePreparationContext {
   type: { explicit?: string; inherited?: string; current?: string };
   /** `original` is the raw argument; `current` is the value as prepared so far. */
   value: { original: string; current: unknown };
+  /**
+   * The invocation's flags, read-only — including the ones this link declared itself. A chain
+   * link's `options` already reach the CLI's parser, so without this a link could declare
+   * `--comment` and then have no way to read what the author typed.
+   */
+  options: Record<string, unknown>;
 }
 
 /** A value-preparation proposal. Partial is idiomatic: propose a type alone and the built-in
@@ -116,6 +122,19 @@ export interface ValuePreparationContext {
 export interface ValueProposal {
   type?: string;
   value?: unknown;
+  /**
+   * `$extensions` data to merge onto the token, keyed by the extension's own namespaced key
+   * (`org.vertekum.docs`, `com.acme.review`). Deliberately generic: core never learns what the
+   * payload means, so annotation-style extensions — notes, ownership, review state — need no
+   * further change here.
+   *
+   * Writing a key a registered CODEC owns is a mistake — the codec re-serializes that payload from
+   * `codecSource`, so a second writer would be overwritten silently. The verbs do not police it:
+   * the document exposes no codec list, and reaching the kernel's service registry from here would
+   * invent a second way for core's verbs to read the project. The owning extension's schema
+   * binding reports it instead, where the message can say which codec and why.
+   */
+  extensions?: Record<string, unknown>;
 }
 
 /**
