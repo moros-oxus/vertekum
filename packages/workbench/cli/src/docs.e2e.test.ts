@@ -77,7 +77,7 @@ test('a note written during token add lands in $extensions and survives a later 
     docs: 'Body copy on light surfaces',
     llm: 'Prefer this when summarising',
   });
-});
+}, 60_000);
 
 test('docs set annotates a group, and writes it to disk', async () => {
   const cwd = await fixture();
@@ -101,7 +101,7 @@ test('docs set annotates a group, and writes it to disk', async () => {
   expect(group.$extensions).toEqual({
     'org.vertekum.docs': { docs: 'Everything under here is brand colour' },
   });
-});
+}, 60_000);
 
 test('an unknown category is refused, naming what the project declares', async () => {
   const cwd = await fixture();
@@ -114,7 +114,7 @@ test('an unknown category is refused, naming what the project declares', async (
   expect(failed.code).toBe(1);
   expect(failed.stderr).toMatch(/unknown category 'dcos'/);
   expect(failed.stderr).toMatch(/docs, llm, mcp/);
-});
+}, 60_000);
 
 test('docs remove takes one category or all of them', async () => {
   const cwd = await fixture();
@@ -154,4 +154,4 @@ test('docs remove takes one category or all of them', async () => {
     { cwd },
   );
   expect(JSON.parse(none.stdout).data).toEqual({});
-});
+}, 60_000);

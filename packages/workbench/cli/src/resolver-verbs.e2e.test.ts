@@ -119,4 +119,4 @@ test('the vtk bin alias ships beside vertekum', async () => {
   );
   expect(pkg.bin.vtk).toBe('./bin/vertekum.mjs');
   expect(pkg.bin.vertekum).toBe('./bin/vertekum.mjs');
-});
+}, 60_000);

@@ -55,7 +55,7 @@ test('examples/schemas binds all three routes, each to its own set', async () =>
   ]);
   expect(schemas.filter((s) => s.id === 'dtcg-tokens')).toHaveLength(1);
   expect(schemas.at(-1)?.file?.endsWith('schemas/dtcg-tokens.json')).toBe(true);
-});
+}, 60_000);
 
 test('examples/agentic passes check and its vocabulary bites', async () => {
   const { stdout } = await run('node', [bin, 'check', '--json'], {

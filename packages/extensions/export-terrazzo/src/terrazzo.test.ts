@@ -154,7 +154,7 @@ test('PINS terrazzo: resolver-driven hand-off, $root naming, ref chains, fragmen
   expect(sheet).toContain('--surface:'); // the resolver's modifier context, resolved by terrazzo
   expect(sheet).not.toMatch(/--[\w-]*root/); // $root never reaches a NAME (`:root {` is CSS)
   expect(sheet).not.toContain('undefined');
-}, 30_000);
+});
 
 test('flat hand-off (no composition): corrected sets go in as plain sources', async () => {
   const files = { 'core.json': CORE };
@@ -170,7 +170,7 @@ test('flat hand-off (no composition): corrected sets go in as plain sources', as
   const sheet = out.map((f) => f.content).join('\n');
   expect(sheet).toContain('--color-text:');
   expect(sheet).toMatch(/--hue:\s*0\.4/);
-}, 30_000);
+});
 
 test('a dangling $ref fails terrazzo loudly (same contract as dangling aliases)', async () => {
   const files: Record<string, DtcgNode> = {
@@ -187,4 +187,4 @@ test('a dangling $ref fails terrazzo loudly (same contract as dangling aliases)'
       options: { plugins: [css()] },
     }),
   ).rejects.toThrow();
-}, 30_000);
+});
