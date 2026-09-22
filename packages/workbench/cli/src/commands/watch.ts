@@ -249,8 +249,6 @@ export async function runWatch(options: WatchOptions): Promise<number> {
   }
 
   const paths = watchPaths(project);
-  emit({ event: 'watching', paths });
-  log(`watching ${paths.length} path(s); ctrl-c to stop`);
   debug(`node ${process.version} on ${process.platform}`);
   for (const path of paths) debug(`watching ${path}`);
 
@@ -337,6 +335,13 @@ export async function runWatch(options: WatchOptions): Promise<number> {
     }
   }
   debug(`attached ${attached.size} watcher(s)`);
+
+  // Announced only once every watcher is armed. Emitting this before the attach loop made it a
+  // promise the process had not yet kept: a save in that window raised no event and was lost
+  // outright — no debounce, no queue, nothing to recover it. Rare on a fast machine, ordinary on a
+  // slow one, which is why it read as "Linux drops events" and blocked two releases.
+  emit({ event: 'watching', paths });
+  log(`watching ${paths.length} path(s); ctrl-c to stop`);
 
   return await new Promise<number>((done) => {
     const stop = (): void => {
