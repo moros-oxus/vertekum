@@ -1,5 +1,16 @@
 # @vertekum/ext-export-figma
 
+## 0.8.0
+
+### Minor Changes
+
+- [`1db40a5`](https://github.com/moros-oxus/vertekum/commit/1db40a5da6dece6300cb5b47afccacf5a047c802) Thanks [@tschemmer](https://github.com/tschemmer)! - A figma target may name several `compositions`, merged into one `figma.model.json`: collections that resolve identically are untouched, ones that differ gain a mode per composition, and moded collections take the (composition, context) pairs that exist. The model records `source.target`, `source.compositions` and per-collection `modeSources`; the contract is now `draft.02`.
+
+### Patch Changes
+
+- Updated dependencies [[`1db40a5`](https://github.com/moros-oxus/vertekum/commit/1db40a5da6dece6300cb5b47afccacf5a047c802)]:
+  - @vertekum/core@0.8.0
+
 ## 0.7.0
 
 ### Patch Changes
