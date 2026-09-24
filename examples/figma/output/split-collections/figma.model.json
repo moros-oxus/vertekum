@@ -1,7 +1,10 @@
 {
-  "version": "draft.01",
+  "version": "draft.02",
   "source": {
-    "composition": "showcase",
+    "target": "figma-split-collections",
+    "compositions": [
+      "showcase"
+    ],
     "generator": "@vertekum/ext-export-figma",
     "notices": []
   },

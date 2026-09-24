@@ -358,6 +358,27 @@ export const targetValidator: Validator = {
           source: 'core',
         });
       }
+      if (
+        target.composition !== undefined &&
+        target.compositions !== undefined
+      ) {
+        out.push({
+          code: 'export/composition-conflict',
+          severity: 'error',
+          message: `target '${id}' sets both 'composition' and 'compositions' — name one or the other`,
+          source: 'core',
+        });
+      }
+      for (const name of target.compositions ?? []) {
+        if (!resolvers.has(name)) {
+          out.push({
+            code: 'export/unknown-composition',
+            severity: 'error',
+            message: `target '${id}' names composition '${name}', which does not exist`,
+            source: 'core',
+          });
+        }
+      }
       const parsed = exporter.optionsSchema?.safeParse(target.options ?? {});
       if (parsed && !parsed.success) {
         for (const issue of parsed.error.issues) {

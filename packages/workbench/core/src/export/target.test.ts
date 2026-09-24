@@ -13,7 +13,16 @@ const resolver: ResolverDocument = {
   modifiers: {},
   resolutionOrder: [{ $ref: '#/sets/core' }],
 };
-const resolvers = new Map([['default', resolver]]);
+const alt: ResolverDocument = {
+  version: '2025.10',
+  sets: { core: { sources: [{ $ref: 'core.json' }] } },
+  modifiers: {},
+  resolutionOrder: [{ $ref: '#/sets/core' }],
+};
+const resolvers = new Map([
+  ['default', resolver],
+  ['alt', alt],
+]);
 
 const echo: Exporter = {
   id: 'echo',
@@ -64,6 +73,54 @@ test('runTargets throws on an unknown exporter id', async () => {
       resolvers,
     }),
   ).rejects.toThrow(/unknown exporter 'nope'/);
+});
+
+test('runTargets resolves every named composition, first one filling the bundle', async () => {
+  let seen: Parameters<Exporter['transform']>[0] | undefined;
+  const capture: Exporter = {
+    id: 'capture',
+    name: 'Capture',
+    transform: (input) => {
+      seen = input;
+      return [];
+    },
+  };
+  const byId = new Map([['capture', capture]]);
+  await runTargets(
+    [
+      {
+        id: 'brands',
+        exporter: 'capture',
+        compositions: ['default', 'alt'],
+        out: 'build',
+      },
+    ],
+    {
+      registry: {
+        register: () => {},
+        get: (id) => byId.get(id),
+        list: () => [...byId.values()],
+        subscribe: () => () => {},
+      },
+      tokens,
+      resolvers,
+    },
+  );
+  expect(seen?.compositions?.map((c) => c.name)).toEqual(['default', 'alt']);
+  // The bundle an exporter that knows nothing of `compositions` reads is the FIRST one.
+  expect(seen?.resolver).toBe(resolver);
+  expect(seen?.base).toEqual(seen?.compositions?.[0]?.base);
+  // Identity rides along for exporters that record where output came from.
+  expect(seen?.target).toBe('brands');
+});
+
+test('runTargets throws on an unknown composition in the plural form', async () => {
+  await expect(
+    runTargets(
+      [{ exporter: 'echo', compositions: ['default', 'ghost'], out: 'build' }],
+      { registry: registry(), tokens, resolvers },
+    ),
+  ).rejects.toThrow(/unknown composition 'ghost'/);
 });
 
 test('runTargets throws on an unknown composition', async () => {

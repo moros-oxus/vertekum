@@ -1,19 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "vertekum:figma-model/draft.01",
+  "$id": "vertekum:figma-model/draft.02",
   "title": "Figma-shaped model",
-  "description": "A resolved view of one composition in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version draft.01 — the version names this contract shape, not the tokens a document holds.",
+  "description": "A resolved view of one or more compositions in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version draft.02 — the version names this contract shape, not the tokens a document holds.",
   "type": "object",
   "required": ["version", "source", "collections", "styles"],
   "additionalProperties": false,
   "properties": {
-    "version": { "const": "draft.01" },
+    "version": { "const": "draft.02" },
     "source": {
       "type": "object",
-      "required": ["generator", "notices"],
+      "required": ["compositions", "generator", "notices"],
       "additionalProperties": false,
       "properties": {
-        "composition": { "type": "string" },
+        "target": { "type": "string" },
+        "compositions": { "type": "array", "items": { "type": "string" } },
         "generator": { "type": "string" },
         "notices": { "type": "array", "items": { "type": "string" } }
       }
@@ -34,6 +35,18 @@
           "variables": {
             "type": "array",
             "items": { "$ref": "#/$defs/variable" }
+          },
+          "modeSources": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["composition"],
+              "additionalProperties": false,
+              "properties": {
+                "composition": { "type": "string", "minLength": 1 },
+                "context": { "type": "string", "minLength": 1 }
+              }
+            }
           }
         }
       }

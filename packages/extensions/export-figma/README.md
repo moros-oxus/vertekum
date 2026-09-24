@@ -33,6 +33,36 @@ so any change to the shape — an added optional field included — takes a new
 version, and many package releases can share one. Readers should refuse a version
 they don't know rather than guess at its shape.
 
+### Several compositions in one model
+
+A target may name several compositions, and they are merged into **one** artifact —
+for brands that share a single design file:
+
+```ts
+{ id: 'figma', exporter: 'figma', compositions: ['rexall', 'lilly'], out: 'build/figma' }
+```
+
+Which compositions belong together is the only thing to configure. How they combine
+is derived from the resolvers themselves:
+
+- A collection whose variables resolve **identically** in every composition is left
+  exactly as it is — no modes are added.
+- A collection that **differs** gains one mode per composition (`rexall`, `lilly`).
+  If it already has modes, the modes become the pairs that exist —
+  `rexall/light`, `lilly/dark` — and a composition that lacks a context contributes
+  no mode for it.
+- A collection only one composition has is kept whole.
+- A variable a composition doesn't have simply has no value for that composition's
+  modes.
+- Styles carry no modes in Figma, so a style that differs is emitted once per
+  composition (`rexall/typography/body`); identical styles stay shared.
+
+Every absence or collision is recorded in `source.notices`; nothing is invented.
+Each merged collection carries `modeSources`, mapping every mode to the composition
+and context it came from, so a consumer never parses mode names. The model records
+no seat or mode limit: it stays faithful, and a consumer that cannot hold a
+collection's modes splits it on import.
+
 ## Configuration
 
 ```ts

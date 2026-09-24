@@ -61,6 +61,41 @@ test('an unknown composition is an error', async () => {
   expect(diagnostics[0]?.code).toBe('export/unknown-composition');
 });
 
+test('naming both composition and compositions is an error', async () => {
+  const diagnostics = await targetValidator.validate({
+    ...base,
+    resolvers: new Map([
+      ['one', {}],
+      ['two', {}],
+    ]) as never,
+    targets: [
+      {
+        exporter: 'css',
+        composition: 'one',
+        compositions: ['one', 'two'],
+        out: 'build',
+      },
+    ],
+    exporters: registryWith(stub),
+  });
+  expect(
+    diagnostics.some((d) => d.code === 'export/composition-conflict'),
+  ).toBe(true);
+});
+
+test('an unknown composition in the plural form is an error', async () => {
+  const diagnostics = await targetValidator.validate({
+    ...base,
+    targets: [
+      { exporter: 'css', compositions: ['nope', 'also-nope'], out: 'build' },
+    ],
+    exporters: registryWith(stub),
+  });
+  expect(
+    diagnostics.filter((d) => d.code === 'export/unknown-composition'),
+  ).toHaveLength(2);
+});
+
 test('a valid target produces no diagnostics', async () => {
   const diagnostics = await targetValidator.validate({
     ...base,

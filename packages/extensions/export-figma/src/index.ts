@@ -3,6 +3,7 @@ import { activate } from './api';
 
 export type { FigmaDialect, OutputFile } from './dialect';
 export { type FigmaOptions, figmaExporter } from './figma';
+export { type BuiltComposition, mergeModels } from './merge';
 export {
   type BuildModelOptions,
   buildModel,

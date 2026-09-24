@@ -20,6 +20,12 @@ export interface Target {
   exporter: string;
   /** A resolver document name. Omitted means flat: all tokens, no resolution. */
   composition?: string;
+  /**
+   * Several resolver document names, resolved into one export — for exporters that merge
+   * compositions into a single artifact (brands sharing one design file). Mutually exclusive
+   * with `composition`; `core.targets` reports setting both.
+   */
+  compositions?: string[];
   /** Output dir, relative to the project dir. */
   out: string;
   /** Passed through as `ExporterInput.options`; validated against the exporter's schema. */
@@ -76,8 +82,33 @@ export async function runTargets(
     if (!exporter) {
       throw new Error(`unknown exporter '${target.exporter}'`);
     }
+    const named = target.compositions ?? [];
     let input: ExporterInput;
-    if (target.composition === undefined) {
+    if (named.length > 0) {
+      // Every named composition, resolved the same way a single one is. The first also fills
+      // base/variants/resolver, so an exporter that ignores `compositions` is unaffected.
+      const compositions = named.map((name) => {
+        const resolver = ctx.resolvers.get(name);
+        if (!resolver) {
+          throw new Error(`unknown composition '${name}'`);
+        }
+        const resolved = resolveExporterInput(resolver, ctx.tokens);
+        return {
+          name,
+          base: resolved.base,
+          variants: resolved.variants,
+          resolver,
+        };
+      });
+      const [first] = compositions;
+      input = {
+        base: first?.base ?? ctx.tokens,
+        variants: first?.variants ?? [],
+        resolver: first?.resolver ?? emptyResolver(),
+        tokens: ctx.tokens,
+        compositions,
+      };
+    } else if (target.composition === undefined) {
       input = {
         base: ctx.tokens,
         variants: [],
@@ -93,6 +124,7 @@ export async function runTargets(
     }
     const files = await exporter.transform({
       ...input,
+      target: targetId(target),
       files: staged,
       options: target.options,
     });

@@ -1,6 +1,7 @@
 import type { Exporter } from '@vertekum/core';
 import { z } from 'zod';
 import type { FigmaDialect, OutputFile } from './dialect';
+import { type BuiltComposition, mergeModels } from './merge';
 import { buildModel, type TypeContributor } from './model';
 
 /**
@@ -41,10 +42,37 @@ export const figmaExporter: Exporter = {
   optionsSchema: OPTIONS,
   async transform(input) {
     const options = (input.options ?? {}) as FigmaOptions;
-    const model = await buildModel(input, {
-      composition: input.resolver.name,
-      types: options.types,
-    });
+    // One model per composition, then merged. A single-composition target takes the same path:
+    // the merge stamps identity and leaves one model untouched.
+    const resolved = input.compositions?.length
+      ? input.compositions
+      : [
+          {
+            name: input.resolver.name ?? '',
+            base: input.base,
+            variants: input.variants,
+            resolver: input.resolver,
+          },
+        ];
+    const built: BuiltComposition[] = [];
+    for (const composition of resolved) {
+      built.push({
+        composition: composition.name,
+        model: await buildModel(
+          {
+            base: composition.base,
+            variants: composition.variants,
+            resolver: composition.resolver,
+            tokens: input.tokens,
+          },
+          {
+            composition: composition.name || undefined,
+            types: options.types,
+          },
+        ),
+      });
+    }
+    const model = mergeModels(built, input.target);
     const files: OutputFile[] = [
       {
         path: 'figma.model.json',

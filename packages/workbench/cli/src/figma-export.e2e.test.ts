@@ -55,6 +55,36 @@ test('the figma exporter emits the model and all three dialect strategies', asyn
     'utf8',
   );
 
+  // Two compositions, one model: only what differs gains composition modes.
+  const brands = JSON.parse(
+    await readFile(join(cwd, 'output/brands/figma.model.json'), 'utf8'),
+  );
+  expect(brands.source.target).toBe('figma-brands');
+  expect(brands.source.compositions).toEqual(['default', 'alt']);
+  const byName = new Map<string, { modes: string[] }>(
+    brands.collections.map((c: { name: string; modes: string[] }) => [
+      c.name,
+      c,
+    ]),
+  );
+  // `base` and `density` resolve identically in both compositions — untouched.
+  expect(byName.get('base')?.modes).toEqual(['default']);
+  expect(byName.get('density')?.modes).toEqual(['cozy', 'compact']);
+  // The accent colour differs, so `color-mode` carries the (composition, context) pairs.
+  expect(byName.get('color-mode')?.modes).toEqual([
+    'default/light',
+    'default/dark',
+    'alt/light',
+    'alt/dark',
+  ]);
+  const merged = brands.collections.find(
+    (c: { name: string }) => c.name === 'color-mode',
+  );
+  expect(merged.modeSources['alt/dark']).toEqual({
+    composition: 'alt',
+    context: 'dark',
+  });
+
   // The example's COMMITTED output is the latest truth of its source: a rebuild in the
   // fixture must reproduce it byte-for-byte, or the committed artifacts have drifted.
   const committed = await readFile(

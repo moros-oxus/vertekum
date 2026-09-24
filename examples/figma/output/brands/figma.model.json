@@ -1,9 +1,10 @@
 {
   "version": "draft.02",
   "source": {
-    "target": "figma-split-files",
+    "target": "figma-brands",
     "compositions": [
-      "showcase"
+      "default",
+      "alt"
     ],
     "generator": "@vertekum/ext-export-figma",
     "notices": []
@@ -41,21 +42,35 @@
     {
       "name": "color-mode",
       "modes": [
-        "light",
-        "dark"
+        "default/light",
+        "default/dark",
+        "alt/light",
+        "alt/dark"
       ],
       "variables": [
         {
           "name": "color/accent",
           "type": "COLOR",
           "valuesByMode": {
-            "light": {
+            "default/light": {
               "r": 1,
               "g": 0,
               "b": 0,
               "a": 1
             },
-            "dark": {
+            "default/dark": {
+              "r": 0.073,
+              "g": 0.2627,
+              "b": 0.789,
+              "a": 1
+            },
+            "alt/light": {
+              "r": 0.3298,
+              "g": 0.72,
+              "b": 0.3585,
+              "a": 1
+            },
+            "alt/dark": {
               "r": 0.073,
               "g": 0.2627,
               "b": 0.789,
@@ -78,7 +93,25 @@
           "scopes": [],
           "codeSyntax": {}
         }
-      ]
+      ],
+      "modeSources": {
+        "default/light": {
+          "composition": "default",
+          "context": "light"
+        },
+        "default/dark": {
+          "composition": "default",
+          "context": "dark"
+        },
+        "alt/light": {
+          "composition": "alt",
+          "context": "light"
+        },
+        "alt/dark": {
+          "composition": "alt",
+          "context": "dark"
+        }
+      }
     },
     {
       "name": "density",

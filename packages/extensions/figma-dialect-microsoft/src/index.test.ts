@@ -4,7 +4,7 @@ import { microsoftManifest } from './index';
 
 const model: FigmaModel = {
   version: MODEL_VERSION,
-  source: { composition: 'brand-a', generator: 'test', notices: [] },
+  source: { compositions: ['brand-a'], generator: 'test', notices: [] },
   collections: [
     {
       name: 'base',

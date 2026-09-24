@@ -12,12 +12,29 @@ export interface OutputFile {
   content: string;
 }
 
+/** One composition, resolved: the same bundle shape an exporter receives for the single case. */
+export interface ResolvedComposition {
+  /** The composition (resolver document) name, as configured on the target. */
+  name: string;
+  base: Token[];
+  variants: Array<{ modifier: string; context: string; tokens: Token[] }>;
+  resolver: ResolverDocument;
+}
+
 /** What an exporter receives: a pre-resolved bundle (base + per-context) AND the raw resolver + tokens. */
 export interface ExporterInput {
   base: Token[];
   variants: Array<{ modifier: string; context: string; tokens: Token[] }>;
   resolver: ResolverDocument;
   tokens: Token[];
+  /** The target's effective id — artifact identity for exporters that record where output came from. */
+  target?: string;
+  /**
+   * Every composition the target named, resolved, in configured order. Present only for a
+   * `compositions` target; `base`/`variants`/`resolver` then hold the FIRST of them, so an
+   * exporter that knows nothing of this field behaves exactly as it did.
+   */
+  compositions?: ResolvedComposition[];
   /**
    * The collection's raw file trees (sets and resolvers), verbatim, keyed by file name. For
    * exporters that hand files to an external tool rather than consuming resolved bundles.

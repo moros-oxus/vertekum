@@ -40,5 +40,18 @@ export default defineConfig({
       out: 'output/split-files',
       options: { dialects: [microsoftManifest({ modes: 'split-files' })] },
     },
+    /**
+     * Two compositions in ONE model: the merge is derived, not configured. `showcase` and
+     * `showcase-alt` share `core.json`, so every collection that resolves identically is left
+     * alone; only what differs (the accent colour, hence `color/text` through it) gains a mode
+     * per composition. `showcase-alt` has no `density` modifier, so that collection comes from
+     * `default` alone — stated in the model's notices, never filled in.
+     */
+    {
+      id: 'figma-brands',
+      exporter: 'figma',
+      compositions: ['default', 'alt'],
+      out: 'output/brands',
+    },
   ],
 });

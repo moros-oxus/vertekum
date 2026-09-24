@@ -19,7 +19,7 @@ import { dtcg, type ExporterInput, type Token } from '@vertekum/core';
  * The schema is closed, so ANY shape change — an added optional field included — takes a new
  * version, spent when a package releases it.
  */
-export const MODEL_VERSION = 'draft.01';
+export const MODEL_VERSION = 'draft.02';
 
 export type FigmaType = 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN';
 
@@ -43,6 +43,11 @@ export interface FigmaCollection {
   /** Mode names, default first. Single-mode collections have `['default']`. */
   modes: string[];
   variables: FigmaVariable[];
+  /**
+   * Where each mode came from, when several compositions were merged into this collection —
+   * so a consumer never parses mode names. Absent when the collection has one composition.
+   */
+  modeSources?: Record<string, { composition: string; context?: string }>;
 }
 
 export interface FigmaStyleProperty {
@@ -62,7 +67,14 @@ export interface FigmaStyle {
 
 export interface FigmaModel {
   version: typeof MODEL_VERSION;
-  source: { composition?: string; generator: string; notices: string[] };
+  source: {
+    /** The target that produced this artifact — its identity to a consumer. */
+    target?: string;
+    /** Every composition it holds, in configured order. */
+    compositions: string[];
+    generator: string;
+    notices: string[];
+  };
   collections: FigmaCollection[];
   styles: FigmaStyle[];
 }
@@ -194,7 +206,11 @@ export async function buildModel(
   const notices: string[] = [];
   const model: FigmaModel = {
     version: MODEL_VERSION,
-    source: { composition: options.composition, generator: GENERATOR, notices },
+    source: {
+      compositions: options.composition ? [options.composition] : [],
+      generator: GENERATOR,
+      notices,
+    },
     collections: [],
     styles: [],
   };
