@@ -1,6 +1,6 @@
 {
   "name": "@vertekum/ext-token-docs",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Vertekum extension: notes on tokens and groups — documentation, agent guidance, MCP — stored in $extensions and readable by any consumer",
   "license": "Apache-2.0",
   "keywords": [
