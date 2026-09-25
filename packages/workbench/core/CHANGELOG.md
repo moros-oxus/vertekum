@@ -1,5 +1,16 @@
 # @vertekum/core
 
+## 0.9.0
+
+### Minor Changes
+
+- [`28cbc56`](https://github.com/moros-oxus/vertekum/commit/28cbc56c44bcf5498aa1751f03c3ff04c4f7ae16) Thanks [@tschemmer](https://github.com/tschemmer)! - Every exporter now receives a prepared input: generated tokens (colour ramps) resolve their references in their own file and compositions first, so each brand's ramp follows its own anchor; custom types arrive lowered to standard DTCG types through the new `TYPE_LOWERING_SERVICE`, with `build` chain presentations answering per exporter (`InterchangePresentationContext.exporter`); `check` warns when two modifiers override the same path (`resolver/shared-override`); `describe` lists lowered types; `modifierOwners` and `exportPath` are exported.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.9.0
+
 ## 0.8.0
 
 ### Minor Changes
