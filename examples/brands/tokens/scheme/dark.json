@@ -1,0 +1,21 @@
+{
+  "$description": "Which step a role uses \u2014 the one decision a scheme owns. Aliases only, so every brand shares this file.",
+  "surface": {
+    "$type": "color",
+    "background": {
+      "$value": "{color.neutral.900}"
+    }
+  },
+  "text": {
+    "$type": "color",
+    "default": {
+      "$value": "{color.neutral.100}"
+    }
+  },
+  "action": {
+    "$type": "color",
+    "background": {
+      "$value": "{accent.300}"
+    }
+  }
+}

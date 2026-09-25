@@ -206,3 +206,47 @@ export function validateResolver(
 
   return issues;
 }
+
+/**
+ * For every file a composition references: the OTHER files it resolves together with, last-resolved
+ * first — the scope a generated token's references are looked up in (a ramp's anchor), after the
+ * carrier's own file. A file in a modifier context is scoped by the selection that picks that
+ * context. A file several compositions reference takes the first composition's (by name) scope.
+ * Structure only; nothing here reads a value.
+ */
+export function expansionScopes(
+  resolvers: Map<string, ResolverDocument>,
+): (set: string) => string[] {
+  const scopes = new Map<string, string[]>();
+  const strip = (ref: string) => ref.replace(/\.json$/, '');
+  for (const name of [...resolvers.keys()].sort()) {
+    const doc = resolvers.get(name);
+    if (!doc) continue;
+    const selections: Array<{ files: string[]; selection: ResolverSelection }> =
+      [
+        {
+          files: Object.values(doc.sets).flatMap((s) => sourceRefs(s.sources)),
+          selection: {},
+        },
+      ];
+    for (const [modifier, mod] of Object.entries(doc.modifiers)) {
+      for (const [context, sources] of Object.entries(mod.contexts)) {
+        selections.push({
+          files: sourceRefs(sources),
+          selection: { [modifier]: context },
+        });
+      }
+    }
+    for (const { files, selection } of selections) {
+      const order = resolveOrder(doc, selection).map(strip).reverse();
+      for (const file of files.map(strip)) {
+        if (scopes.has(file)) continue;
+        scopes.set(
+          file,
+          order.filter((f) => f !== file),
+        );
+      }
+    }
+  }
+  return (set) => scopes.get(set) ?? [];
+}

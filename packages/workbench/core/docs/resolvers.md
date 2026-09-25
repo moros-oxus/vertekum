@@ -80,11 +80,20 @@ Resolvers are curated from the command line — `vtk resolver add -s sem`,
 `vtk resolver add -m theme/dark dark`, … — see the CLI's curation documentation for
 the verb surface.
 
-The same checks run as part of `vertekum check`, which adds one collection-level
-finding of its own: `unreferenced-set` (warning) — a token set that no resolver
-mentions anywhere, in any set's sources or any modifier context. Its tokens are
-validated but reach no output. Projects without resolvers never warn: the flat model
-merges every file.
+The same checks run as part of `vertekum check`, which adds two findings of its own:
+
+- `unreferenced-set` (warning) — a token set that no resolver mentions anywhere, in any
+  set's sources or any modifier context. Its tokens are validated but reach no output.
+  Projects without resolvers never warn: the flat model merges every file.
+- `shared-override` (warning) — a path defined by files that two modifiers' contexts
+  reference. Resolution is unambiguous (the modifier resolved last wins), but a
+  mode-based target holds each variable in one collection, so it can show only that
+  modifier's values; a designer editing it there sees an incomplete picture. Override
+  each path from one modifier — let the other reach it through an alias.
+
+A modifier **owns** the paths its contexts' files define — whether or not their values
+currently differ from the default. Mode-based exporters (Figma) build their structure
+from this ownership, so it never moves when a value changes.
 
 ## Compositions and export
 

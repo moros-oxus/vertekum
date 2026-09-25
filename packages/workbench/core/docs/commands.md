@@ -78,16 +78,22 @@ written quietly.
 
 ### `build` — interchange presentation
 
-Consulted once per token while the export run stages the interchange files every
-exporter receives. A link proposes the node exporters will SEE — a custom-typed
-value presented in a form the downstream tool renders — while the stored document
-keeps its authored shape. With no links registered, staging is byte-identical.
+Consulted once per token, per target, while the export run stages the interchange
+files an exporter receives. A link proposes the node that exporter will SEE — a
+custom-typed value presented in a form the downstream tool renders (a CSS shorthand)
+— while the stored document keeps its authored shape. A link may answer for one
+exporter only (`context.exporter`) and leave every other to the type's **lowering**
+(see [Export](./export.md)); answering regardless of it presents to every exporter
+that reads files. Whether to offer a presentation — and whether to make it a
+setting — is the extension author's choice. With no links and no lowerings
+registered, staging is byte-identical.
 
 Context (`InterchangePresentationContext`):
 
 | Field | What it holds |
 | --- | --- |
 | `token` | the model token being staged (path, set, type, value) |
+| `exporter` | the id of the exporter this staging is for |
 | `node.original` | the node as staged before the chain |
 | `node.current` | what the chain has proposed so far |
 

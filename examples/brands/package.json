@@ -1,0 +1,19 @@
+{
+  "name": "@vertekum-example/brands",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A reference structure for brand × color scheme × sub-theme: each axis owns one decision, the rest composes through aliases — exported as CSS (terrazzo) and as one Figma model whose structure never moves when values change.",
+  "type": "module",
+  "scripts": {
+    "check": "vertekum check",
+    "build": "vertekum build"
+  },
+  "devDependencies": {
+    "@terrazzo/plugin-css": "^2.7.1",
+    "@vertekum/cli": "workspace:*",
+    "@vertekum/core": "workspace:*",
+    "@vertekum/ext-export-figma": "workspace:*",
+    "@vertekum/ext-export-terrazzo": "workspace:*",
+    "@vertekum/ext-token-ramp": "workspace:*"
+  }
+}

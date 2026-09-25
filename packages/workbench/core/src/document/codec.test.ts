@@ -335,6 +335,78 @@ test('a leaf group carrier expands into generated children, anchor resolved thro
   expect(base.codecSource).toEqual({ anchor: '{chain}' });
 });
 
+test("a carrier resolves its anchor in its OWN file first — one brand's anchor never feeds another's ramp", () => {
+  // The same anchor path in two brand files; each file's carrier must follow its own.
+  const carrier = {
+    $extensions: { 'org.test.generate/pair': { anchor: '{anchor}' } },
+  };
+  const tokens = parseCollection(
+    {
+      'brand-a.json': {
+        anchor: { $type: 'textCase', $value: 'uppercase' },
+        ramp: carrier,
+      },
+      'brand-b.json': {
+        anchor: { $type: 'textCase', $value: 'lowercase' },
+        ramp: carrier,
+      },
+      // A file without its own anchor falls back to the collection at large.
+      'shared.json': { ramp: carrier },
+    },
+    [rampish],
+  );
+  const base = (set: string) =>
+    tokens.find((t) => t.set === set && t.path.join('.') === 'ramp.base')
+      ?.value;
+  expect(base('brand-a')).toBe('uppercase');
+  expect(base('brand-b')).toBe('lowercase');
+  expect(base('shared')).toBeDefined();
+});
+
+test("a carrier with no anchor in its own file follows ITS composition's anchor, not another brand's", () => {
+  // brand-b's dark file carries a ramp but not the anchor: the anchor must come from what brand-b
+  // resolves the dark file WITH (its light file), never from brand-a's. The document derives this
+  // scope from the resolvers' structure.
+  const carrier = {
+    $extensions: { 'org.test.generate/pair': { anchor: '{anchor}' } },
+  };
+  const resolver = (brand: string) => ({
+    version: '2025.10',
+    sets: { palette: { sources: [{ $ref: `${brand}/light.json` }] } },
+    modifiers: {
+      scheme: {
+        default: 'light',
+        contexts: { light: [], dark: [{ $ref: `${brand}/dark.json` }] },
+      },
+    },
+    resolutionOrder: [
+      { $ref: '#/sets/palette' },
+      { $ref: '#/modifiers/scheme' },
+    ],
+  });
+  const codecs = createTokenCodecRegistry();
+  codecs.register(rampish);
+  const document = createDocument({ codecs: () => codecs.list() });
+  document.hydrate({
+    'brand-a/light.json': {
+      anchor: { $type: 'textCase', $value: 'uppercase' },
+    },
+    'brand-a/dark.json': { ramp: carrier },
+    'brand-b/light.json': {
+      anchor: { $type: 'textCase', $value: 'lowercase' },
+    },
+    'brand-b/dark.json': { ramp: carrier },
+    'brand-a.resolver.json': resolver('brand-a'),
+    'brand-b.resolver.json': resolver('brand-b'),
+  });
+  const base = (set: string) =>
+    document
+      .getAllTokens()
+      .find((t) => t.set === set && t.path.join('.') === 'ramp.base')?.value;
+  expect(base('brand-a/dark')).toBe('uppercase');
+  expect(base('brand-b/dark')).toBe('lowercase');
+});
+
 test('a group with real children never expands — committed mode leaves the payload inert', () => {
   const tokens = parseCollection(
     {

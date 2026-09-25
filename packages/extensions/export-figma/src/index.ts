@@ -3,16 +3,19 @@ import { activate } from './api';
 
 export type { FigmaDialect, OutputFile } from './dialect';
 export { type FigmaOptions, figmaExporter } from './figma';
+export { fingerprintOf } from './fingerprint';
 export { type BuiltComposition, mergeModels } from './merge';
 export {
   type BuildModelOptions,
   buildModel,
+  buildModelWithDeps,
   type FigmaCollection,
   type FigmaModel,
   type FigmaStyle,
   type FigmaType,
   type FigmaVariable,
   MODEL_VERSION,
+  type ModelDeps,
   type TypeContributor,
 } from './model';
 

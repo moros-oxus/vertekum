@@ -3,27 +3,34 @@ import type {
   FigmaModel,
   FigmaStyle,
   FigmaVariable,
+  ModelDeps,
 } from './model';
 import { MODEL_VERSION } from './model';
 
 /**
- * Merging several compositions into one model — derived from the resolvers, never configured.
+ * Merging several compositions into one model — derived from the resolvers' STRUCTURE, never from
+ * values (which change every release; the structure a design file binds to must not).
  *
- * A second brand's resolver duplicates the structure and differs only in values, so the rule is:
- * a collection gains one mode per composition ONLY where the compositions differ; one that
- * resolves identically everywhere is left exactly as it is. A collection that already has modes
- * takes the (composition, context) pairs that EXIST — a composition without a context contributes
- * no mode for it, and a variable a composition doesn't have simply has no value for its modes.
- * Every absence is a notice; nothing is invented.
+ * A collection is SHARED when every composition holding it has the same modes and variables, and
+ * each value depends on the same files — its own source file, plus the files a flattened reference
+ * passes through (an alias depends only on its own file: Figma resolves it per mode). Otherwise it
+ * gains one mode per composition — even while the values happen to be identical. A collection that
+ * already has modes takes the (composition, context) pairs that EXIST; a variable a composition
+ * doesn't have simply has no value for its modes. Every absence is a notice; nothing is invented.
  */
 
 export interface BuiltComposition {
   composition: string;
   model: FigmaModel;
+  /**
+   * What each value depends on (`buildModelWithDeps`). Without it the merge falls back to
+   * comparing values — kept for direct callers; the exporter always supplies it.
+   */
+  deps?: ModelDeps;
 }
 
 /** Stable JSON (sorted keys) — the only comparison of "do these compositions differ?". */
-function stable(value: unknown): string {
+export function stable(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
   return `{${Object.keys(value as object)
@@ -55,6 +62,27 @@ function canonical(collection: FigmaCollection): unknown {
       ),
     })),
   };
+}
+
+/**
+ * Two compositions' copies of a collection share one structure: same modes, same variables, and
+ * every value depends on the same files. Values themselves never enter into it.
+ */
+function sameStructure(
+  part: Part,
+  first: Part,
+  depsOf: Map<string, ModelDeps>,
+): boolean {
+  const a = part.collection;
+  const b = first.collection;
+  if (stable(a.modes) !== stable(b.modes)) return false;
+  const names = (c: FigmaCollection) => c.variables.map((v) => v.name).sort();
+  if (stable(names(a)) !== stable(names(b))) return false;
+  const depsA = depsOf.get(part.composition);
+  const depsB = depsOf.get(first.composition);
+  return a.variables.every(
+    (v) => stable(depsA?.get(v.name)) === stable(depsB?.get(v.name)),
+  );
 }
 
 /** A single-mode set collection carries the mode name `default`, which never reaches a merged name. */
@@ -144,6 +172,12 @@ function mergeCollection(
         const to = map.get(mode);
         if (to !== undefined) merged.alias = { ...merged.alias, [to]: alias };
       }
+      for (const [mode, file] of Object.entries(variable.sources ?? {})) {
+        const to = map.get(mode);
+        if (to !== undefined) {
+          merged.sources = { ...merged.sources, [to]: file };
+        }
+      }
     }
   }
 
@@ -169,6 +203,7 @@ function mergeCollection(
 function mergeStyles(
   built: BuiltComposition[],
   notices: string[],
+  depsOf: Map<string, ModelDeps>,
 ): FigmaStyle[] {
   const keys: string[] = [];
   const parts = new Map<
@@ -191,9 +226,15 @@ function mergeStyles(
     const found = parts.get(key) ?? [];
     const [first] = found;
     if (!first) continue;
-    const identical = found.every(
-      (entry) => stable(entry.style) === stable(first.style),
-    );
+    // Structural when every composition says what its styles depend on; values otherwise.
+    const depOf = (composition: string) =>
+      depsOf.get(composition)?.get(`style:${first.style.name}`)?.default;
+    const identical =
+      depsOf.size === built.length
+        ? found.every(
+            (entry) => depOf(entry.composition) === depOf(first.composition),
+          )
+        : found.every((entry) => stable(entry.style) === stable(first.style));
     if (identical) {
       out.push(first.style);
       continue;
@@ -245,6 +286,11 @@ export function mergeModels(
     return model;
   }
 
+  const depsOf = new Map<string, ModelDeps>();
+  for (const entry of built) {
+    if (entry.deps) depsOf.set(entry.composition, entry.deps);
+  }
+
   const names: string[] = [];
   for (const { model: each } of built) {
     for (const collection of each.collections) {
@@ -267,10 +313,11 @@ export function mergeModels(
       model.collections.push(first.collection);
       continue;
     }
-    const identical = parts.every(
-      (part) =>
-        stable(canonical(part.collection)) ===
-        stable(canonical(first.collection)),
+    const identical = parts.every((part) =>
+      depsOf.size === built.length
+        ? sameStructure(part, first, depsOf)
+        : stable(canonical(part.collection)) ===
+          stable(canonical(first.collection)),
     );
     // The whole point: identical collections are left exactly as they are.
     model.collections.push(
@@ -278,6 +325,6 @@ export function mergeModels(
     );
   }
 
-  model.styles = mergeStyles(built, notices);
+  model.styles = mergeStyles(built, notices, depsOf);
   return model;
 }

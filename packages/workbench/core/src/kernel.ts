@@ -10,6 +10,10 @@ import {
 } from './document/codec';
 import { createDocument, type Document } from './document/document';
 import { EXPORTER_SERVICE } from './export/exporter';
+import {
+  createTypeLoweringRegistry,
+  TYPE_LOWERING_SERVICE,
+} from './export/lowering';
 import { createExporterRegistry } from './export/registry';
 import { createCommandRegistry } from './shell/command-registry';
 import { createServiceRegistry } from './shell/service-registry';
@@ -90,6 +94,9 @@ export function createKernel(): Kernel {
   // codec and schema-binding registries, so an exporter extension just get()s and registers —
   // the historical get-or-create ritual (ext-export ownership, ADR-0023) is no longer needed.
   services.register(EXPORTER_SERVICE, createExporterRegistry());
+  // Custom types' lowerings — core applies them before every exporter (the prepare stage), so an
+  // extension owning a type just get()s and registers, like an exporter.
+  services.register(TYPE_LOWERING_SERVICE, createTypeLoweringRegistry());
   // Core's own curation verbs, registered before any extension activates. They go through the same
   // registry contributed commands use, so a client sees one list and cannot tell a built-in verb
   // from a contributed one. Registered on the RAW registry, not an attributed wrapper — they belong

@@ -1,5 +1,6 @@
 import type { DtcgNode } from '../dtcg/parse';
 import { parseCollection } from '../dtcg/parse';
+import { expansionScopes } from '../dtcg/resolve';
 import { parseResolver, serializeResolver } from '../dtcg/resolver';
 import { DEFAULT_SET, tokenNode } from '../dtcg/serialize';
 import {
@@ -107,8 +108,20 @@ export function createDocument(options?: {
   }
 
   function allTokens(): Token[] {
-    if (tokenList === null)
-      tokenList = parseCollection(partition(record()).sets, codecList());
+    if (tokenList === null) {
+      const { sets, resolvers } = partition(record());
+      // Generated tokens resolve their references in their compositions' scope (a brand's ramp
+      // follows that brand's anchor) — so the parse needs the resolvers' structure.
+      const scopes = expansionScopes(
+        new Map(
+          Object.entries(resolvers).map(([name, node]) => [
+            resolverFromFileName(name),
+            parseResolver(node),
+          ]),
+        ),
+      );
+      tokenList = parseCollection(sets, codecList(), scopes);
+    }
     return tokenList;
   }
 

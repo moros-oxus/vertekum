@@ -57,6 +57,27 @@ importers:
         specifier: workspace:*
         version: link:../../packages/schemas/atlassian
 
+  examples/brands:
+    devDependencies:
+      '@terrazzo/plugin-css':
+        specifier: ^2.7.1
+        version: 2.7.1(@terrazzo/cli@0.10.5(hono@4.13.0))(@terrazzo/parser@2.7.1)
+      '@vertekum/cli':
+        specifier: workspace:*
+        version: link:../../packages/workbench/cli
+      '@vertekum/core':
+        specifier: workspace:*
+        version: link:../../packages/workbench/core
+      '@vertekum/ext-export-figma':
+        specifier: workspace:*
+        version: link:../../packages/extensions/export-figma
+      '@vertekum/ext-export-terrazzo':
+        specifier: workspace:*
+        version: link:../../packages/extensions/export-terrazzo
+      '@vertekum/ext-token-ramp':
+        specifier: workspace:*
+        version: link:../../packages/extensions/token-ramp
+
   examples/commands:
     devDependencies:
       '@terrazzo/plugin-css':

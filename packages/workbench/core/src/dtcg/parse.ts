@@ -236,6 +236,12 @@ function walk(
 export function parseCollection(
   files: Record<string, DtcgNode>,
   codecs: TokenCodec[] = [],
+  /**
+   * Per file, the other files its compositions resolve it with, last-resolved first
+   * (`expansionScopes`). Omitted: a generated token's references resolve in its own file, then
+   * the collection at large.
+   */
+  scopeOf: (set: string) => string[] = () => [],
 ): Token[] {
   const out: Token[] = [];
   const pending: PendingExpansion[] = [];
@@ -246,26 +252,39 @@ export function parseCollection(
   if (pending.length > 0) {
     // Alias-chain resolution over everything the first pass produced — ordinary and value-codec
     // tokens. Cycle-guarded; a dangling chain resolves to undefined and the codec decides.
+    //
+    // Scoped to the carrier: each hop prefers the token defined in the carrier's OWN file, then
+    // in the files its compositions resolve it with (last-resolved first), and only then the
+    // collection at large. The same path may be defined in several files (one per brand);
+    // flattened, one of them would silently win, and every brand's ramp would follow it.
     const byPath = new Map(out.map((token) => [token.path.join('.'), token]));
-    const resolve = (value: unknown): unknown => {
-      const seen = new Set<string>();
-      let held = value;
-      while (typeof held === 'string' && /^\{[^}]+\}$/.test(held)) {
-        const target = held.slice(1, -1);
-        if (seen.has(target)) return undefined;
-        seen.add(target);
-        const token = byPath.get(target);
-        if (!token) return undefined;
-        held = token.value;
-      }
-      return held;
-    };
+    const bySetPath = new Map(
+      out.map((token) => [`${token.set}\u0000${token.path.join('.')}`, token]),
+    );
+    const resolveIn =
+      (set: string) =>
+      (value: unknown): unknown => {
+        const seen = new Set<string>();
+        let held = value;
+        while (typeof held === 'string' && /^\{[^}]+\}$/.test(held)) {
+          const target = held.slice(1, -1);
+          if (seen.has(target)) return undefined;
+          seen.add(target);
+          const scoped = [set, ...scopeOf(set)]
+            .map((file) => bySetPath.get(`${file}\u0000${target}`))
+            .find((found) => found !== undefined);
+          const token = scoped ?? byPath.get(target);
+          if (!token) return undefined;
+          held = token.value;
+        }
+        return held;
+      };
 
     for (const expansion of pending) {
       const children = expansion.codec.expand(
         expansion.payload,
         { set: expansion.set, path: expansion.path },
-        { resolve },
+        { resolve: resolveIn(expansion.set) },
       );
       if (!children) continue;
       for (const [name, fields] of Object.entries(children)) {

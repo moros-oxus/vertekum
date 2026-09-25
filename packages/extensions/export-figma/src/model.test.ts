@@ -77,14 +77,16 @@ function fixture(): ExporterInput {
     fontWeight: '{font.regular}',
   };
 
+  // The dark context's file overrides the accent — as parsed, a token of set `dark`.
+  const darkAccent = token('color.accent', 'color', OKLCH_BLUE, 'dark');
   const dark = base.map((t) =>
-    t.path.join('.') === 'color.accent' ? { ...t, value: OKLCH_BLUE } : t,
+    t.path.join('.') === 'color.accent' ? darkAccent : t,
   );
   return {
     base,
     variants: [{ modifier: 'color-mode', context: 'dark', tokens: dark }],
     resolver,
-    tokens: base,
+    tokens: [...base, darkAccent],
   };
 }
 

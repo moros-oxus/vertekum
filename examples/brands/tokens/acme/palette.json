@@ -1,0 +1,40 @@
+{
+  "$description": "acme's palette: anchors, and the ramps generated from them. The ONLY file that differs per brand.",
+  "anchor": {
+    "$type": "color",
+    "brand": {
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.55, 0.2, 265],
+        "alpha": 1
+      }
+    },
+    "neutral": {
+      "$value": {
+        "colorSpace": "oklch",
+        "components": [0.55, 0.02, 250],
+        "alpha": 1
+      }
+    }
+  },
+  "color": {
+    "brand": {
+      "$type": "color",
+      "$extensions": {
+        "org.vertekum.generate/ramp": {
+          "anchor": "{anchor.brand}",
+          "scalar": "100-900/100"
+        }
+      }
+    },
+    "neutral": {
+      "$type": "color",
+      "$extensions": {
+        "org.vertekum.generate/ramp": {
+          "anchor": "{anchor.neutral}",
+          "scalar": "100-900/100"
+        }
+      }
+    }
+  }
+}

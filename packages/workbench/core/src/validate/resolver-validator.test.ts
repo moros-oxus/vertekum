@@ -129,3 +129,54 @@ test('the flat model never warns — with no resolvers, every set merges', async
   });
   expect(diagnostics).toEqual([]);
 });
+
+test('a path two modifiers override draws a warning — a mode-based target can show only one', async () => {
+  const tok = (path: string, set: string) => ({
+    id: `${set}:${path}`,
+    path: path.split('.'),
+    type: 'color',
+    value: '#000',
+    set,
+  });
+  const doc = {
+    version: '2025.10',
+    sets: { core: { sources: [{ $ref: 'core.json' }] } },
+    modifiers: {
+      scheme: {
+        default: 'light',
+        contexts: { light: [], dark: [{ $ref: 'dark.json' }] },
+      },
+      theme: {
+        default: 'plain',
+        contexts: { plain: [], skin: [{ $ref: 'skin.json' }] },
+      },
+    },
+    resolutionOrder: [
+      { $ref: '#/sets/core' },
+      { $ref: '#/modifiers/scheme' },
+      { $ref: '#/modifiers/theme' },
+    ],
+  } as ResolverDocument;
+  const diagnostics = await resolverValidator.validate({
+    tokens: [
+      tok('accent', 'core'),
+      tok('accent', 'dark'),
+      tok('accent', 'skin'),
+      tok('surface', 'dark'),
+    ],
+    sets: ['core', 'dark', 'skin'],
+    resolvers: new Map([['brand', doc]]),
+  });
+  const shared = diagnostics.filter(
+    (d) => d.code === 'resolver/shared-override',
+  );
+  // One warning per modifier pair; `surface` has one owner and draws nothing.
+  expect(shared).toHaveLength(1);
+  expect(shared[0]).toMatchObject({
+    severity: 'warning',
+    file: 'brand.resolver.json',
+  });
+  expect(shared[0]?.message).toMatch(
+    /1 path\(s\) are overridden by 'scheme' and 'theme' \(accent\).*only 'theme''s values/,
+  );
+});

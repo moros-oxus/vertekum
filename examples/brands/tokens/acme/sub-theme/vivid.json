@@ -1,0 +1,15 @@
+{
+  "$description": "acme's vivid sub-theme: accent follows the neutral ramp's opposite \u2014 still only 'which ramp'.",
+  "accent": {
+    "$type": "color",
+    "300": {
+      "$value": "{color.neutral.300}"
+    },
+    "500": {
+      "$value": "{color.neutral.500}"
+    },
+    "700": {
+      "$value": "{color.neutral.700}"
+    }
+  }
+}

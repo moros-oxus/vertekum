@@ -145,6 +145,12 @@ export interface ValueProposal {
 export interface InterchangePresentationContext {
   /** The model token being staged (path, set, type, materialized value). */
   token: Token;
+  /**
+   * The exporter this staging is for — so a link can present for ONE target (a CSS shorthand for
+   * terrazzo) and leave every other exporter to the type's lowering. Answering regardless of it
+   * presents to every exporter that reads staged files.
+   */
+  exporter: string;
   /** `original` is the node as staged today; `current` is what the chain has proposed so far. */
   node: { original: DtcgNode; current: DtcgNode };
 }

@@ -1,4 +1,5 @@
 import type { Token } from '../document/types';
+import { modifierOwners } from '../dtcg/ownership';
 import { ROOT_TOKEN } from '../dtcg/parse';
 import { isPointerObject, parsePointer } from '../dtcg/pointer';
 import {
@@ -270,7 +271,7 @@ export const aliasValidator: Validator = {
 export const resolverValidator: Validator = {
   id: 'core.resolvers',
   name: 'Composition validity',
-  validate({ resolvers, sets }) {
+  validate({ resolvers, sets, tokens }) {
     // `validateResolver` compares against known source REFS (file names), not set names.
     const knownRefs = new Set(sets.map((set) => `${set}.json`));
     const diagnostics: Diagnostic[] = [];
@@ -284,6 +285,32 @@ export const resolverValidator: Validator = {
           source: 'core',
           file: `${name}.resolver.json`,
           target: issue.target,
+        });
+      }
+    }
+
+    // A path two modifiers override: resolution picks the one resolved last, but a mode-based
+    // target (Figma: one variable, one collection) can show only that one's values — a designer
+    // editing it there sees an incomplete picture, and write-back cannot tell which axis to edit.
+    // Structural (files, never values), so it warns once per modifier pair per composition.
+    for (const [name, doc] of resolvers) {
+      const pairs = new Map<string, string[]>();
+      for (const [path, owners] of modifierOwners(doc, tokens)) {
+        if (owners.length < 2) continue;
+        const key = owners.join('\u0000');
+        pairs.set(key, [...(pairs.get(key) ?? []), path]);
+      }
+      for (const [key, paths] of pairs) {
+        const owners = key.split('\u0000');
+        const winner = owners[owners.length - 1];
+        const shown = paths.slice(0, 3).join(', ');
+        const more = paths.length > 3 ? ` +${paths.length - 3} more` : '';
+        diagnostics.push({
+          code: 'resolver/shared-override',
+          severity: 'warning',
+          message: `${paths.length} path(s) are overridden by ${owners.map((o) => `'${o}'`).join(' and ')} (${shown}${more}) — a mode-based target such as Figma can show only '${winner}''s values for them; override each path from one modifier`,
+          source: 'core',
+          file: `${name}.resolver.json`,
         });
       }
     }

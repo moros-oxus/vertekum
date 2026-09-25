@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "vertekum:figma-model/draft.02",
+  "$id": "vertekum:figma-model/draft.03",
   "title": "Figma-shaped model",
-  "description": "A resolved view of one or more compositions in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version draft.02 — the version names this contract shape, not the tokens a document holds.",
+  "description": "A resolved view of one or more compositions in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version draft.03 — the version names this contract shape, not the tokens a document holds.",
   "type": "object",
   "required": ["version", "source", "collections", "styles"],
   "additionalProperties": false,
   "properties": {
-    "version": { "const": "draft.02" },
+    "version": { "const": "draft.03" },
     "source": {
       "type": "object",
       "required": ["compositions", "generator", "notices"],
@@ -16,7 +16,8 @@
         "target": { "type": "string" },
         "compositions": { "type": "array", "items": { "type": "string" } },
         "generator": { "type": "string" },
-        "notices": { "type": "array", "items": { "type": "string" } }
+        "notices": { "type": "array", "items": { "type": "string" } },
+        "fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
       }
     },
     "collections": {
@@ -112,6 +113,10 @@
           "additionalProperties": { "type": "string" }
         },
         "source": { "$ref": "#/$defs/source" },
+        "sources": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
         "scopes": { "type": "array", "items": { "type": "string" } },
         "codeSyntax": {
           "type": "object",

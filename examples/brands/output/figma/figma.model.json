@@ -1,0 +1,1106 @@
+{
+  "version": "draft.03",
+  "source": {
+    "target": "figma",
+    "compositions": [
+      "acme",
+      "globex"
+    ],
+    "generator": "@vertekum/ext-export-figma",
+    "notices": [
+      "'globex' has no 'sub-theme' context 'vivid' — no mode emitted for it"
+    ],
+    "fingerprint": "sha256:32fd8acfb508cd3154ef0eecad4e95ccf95fdb9a4de31c30fd862514061a541d"
+  },
+  "collections": [
+    {
+      "name": "core",
+      "modes": [
+        "default"
+      ],
+      "variables": [
+        {
+          "name": "space/sm",
+          "type": "FLOAT",
+          "valuesByMode": {
+            "default": 4
+          },
+          "source": {
+            "$type": "dimension",
+            "$value": {
+              "value": 4,
+              "unit": "px"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "default": "core"
+          }
+        },
+        {
+          "name": "space/md",
+          "type": "FLOAT",
+          "valuesByMode": {
+            "default": 8
+          },
+          "source": {
+            "$type": "dimension",
+            "$value": {
+              "value": 8,
+              "unit": "px"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "default": "core"
+          }
+        },
+        {
+          "name": "space/lg",
+          "type": "FLOAT",
+          "valuesByMode": {
+            "default": 16
+          },
+          "source": {
+            "$type": "dimension",
+            "$value": {
+              "value": 16,
+              "unit": "px"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "default": "core"
+          }
+        },
+        {
+          "name": "radius/md",
+          "type": "FLOAT",
+          "valuesByMode": {
+            "default": 6
+          },
+          "source": {
+            "$type": "dimension",
+            "$value": {
+              "value": 6,
+              "unit": "px"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "default": "core"
+          }
+        }
+      ]
+    },
+    {
+      "name": "palette",
+      "modes": [
+        "acme",
+        "globex"
+      ],
+      "variables": [
+        {
+          "name": "anchor/brand",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.2119,
+              "g": 0.3964,
+              "b": 0.8945,
+              "a": 1
+            },
+            "globex": {
+              "r": 0,
+              "g": 0.5595,
+              "b": 0.136,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.55,
+                0.2,
+                265
+              ],
+              "alpha": 1
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "anchor/neutral",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.4118,
+              "g": 0.4499,
+              "b": 0.4907,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.4698,
+              "g": 0.4412,
+              "b": 0.3949,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.55,
+                0.02,
+                250
+              ],
+              "alpha": 1
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/100",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.9202,
+              "g": 0.9462,
+              "b": 0.9998,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.875,
+              "g": 0.9776,
+              "b": 0.8913,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.958,
+                0.0197,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#EBF1FF"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.7569,
+              "g": 0.8354,
+              "b": 0.9997,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.6787,
+              "g": 0.8992,
+              "b": 0.7198,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.872,
+                0.0622,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#C1D5FF"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.5941,
+              "g": 0.7222,
+              "b": 0.9998,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.4927,
+              "g": 0.8122,
+              "b": 0.5636,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.786,
+                0.1077,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#98B8FF"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.4375,
+              "g": 0.6047,
+              "b": 0.9895,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.292,
+              "g": 0.7217,
+              "b": 0.4139,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.7,
+                0.1518,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#709AFC"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.3052,
+              "g": 0.4872,
+              "b": 0.9378,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.0016,
+              "g": 0.6235,
+              "b": 0.284,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.614,
+                0.1802,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#4E7CEF"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.2119,
+              "g": 0.3964,
+              "b": 0.8945,
+              "a": 1
+            },
+            "globex": {
+              "r": 0,
+              "g": 0.5595,
+              "b": 0.136,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.55,
+                0.2,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#3665e4"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.1419,
+              "g": 0.2851,
+              "b": 0.6784,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.0002,
+              "g": 0.3949,
+              "b": 0.1697,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.442,
+                0.166,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#2449AD"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.0904,
+              "g": 0.2017,
+              "b": 0.5132,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.0002,
+              "g": 0.2883,
+              "b": 0.1165,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.356,
+                0.1381,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#173383"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/brand/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.0434,
+              "g": 0.1239,
+              "b": 0.3553,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.0002,
+              "g": 0.188,
+              "b": 0.0664,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.27,
+                0.1092,
+                265
+              ],
+              "alpha": 1,
+              "hex": "#0B205B"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/100",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.9375,
+              "g": 0.9462,
+              "b": 0.9556,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.9507,
+              "g": 0.9442,
+              "b": 0.9337,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.958,
+                0.004,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#EFF1F4"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.8186,
+              "g": 0.8367,
+              "b": 0.8562,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.8461,
+              "g": 0.8325,
+              "b": 0.8107,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.872,
+                0.0085,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#D1D5DA"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.7046,
+              "g": 0.7294,
+              "b": 0.7562,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.7424,
+              "g": 0.7237,
+              "b": 0.6936,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.786,
+                0.012,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#B4BAC1"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.5944,
+              "g": 0.6249,
+              "b": 0.6576,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.6407,
+              "g": 0.6179,
+              "b": 0.581,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.7,
+                0.0151,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#989FA8"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.4882,
+              "g": 0.5233,
+              "b": 0.5611,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.5417,
+              "g": 0.5153,
+              "b": 0.4726,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.614,
+                0.018,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#7C858F"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.4118,
+              "g": 0.4499,
+              "b": 0.4907,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.4698,
+              "g": 0.4412,
+              "b": 0.3949,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.55,
+                0.02,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#69737d"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.2994,
+              "g": 0.3293,
+              "b": 0.3613,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.3449,
+              "g": 0.3225,
+              "b": 0.2861,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.442,
+                0.0166,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#4C545C"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.2147,
+              "g": 0.2383,
+              "b": 0.2635,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.2506,
+              "g": 0.2329,
+              "b": 0.2042,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.356,
+                0.0138,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#373D43"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "color/neutral/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.1353,
+              "g": 0.1527,
+              "b": 0.1713,
+              "a": 1
+            },
+            "globex": {
+              "r": 0.1618,
+              "g": 0.1487,
+              "b": 0.1276,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.27,
+                0.0109,
+                250
+              ],
+              "alpha": 1,
+              "hex": "#22272C"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette",
+            "globex": "globex/palette"
+          }
+        }
+      ],
+      "modeSources": {
+        "acme": {
+          "composition": "acme"
+        },
+        "globex": {
+          "composition": "globex"
+        }
+      }
+    },
+    {
+      "name": "sub-theme",
+      "modes": [
+        "acme/standard",
+        "acme/vivid",
+        "globex/standard"
+      ],
+      "variables": [
+        {
+          "name": "accent/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme/standard": {
+              "r": 0.5941,
+              "g": 0.7222,
+              "b": 0.9998,
+              "a": 1
+            },
+            "acme/vivid": {
+              "r": 0.7046,
+              "g": 0.7294,
+              "b": 0.7562,
+              "a": 1
+            },
+            "globex/standard": {
+              "r": 0.4927,
+              "g": 0.8122,
+              "b": 0.5636,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{color.brand.300}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "acme/standard": "color/brand/300",
+            "acme/vivid": "color/neutral/300",
+            "globex/standard": "color/brand/300"
+          },
+          "sources": {
+            "acme/standard": "acme/sub-theme/standard",
+            "acme/vivid": "acme/sub-theme/vivid",
+            "globex/standard": "globex/sub-theme/standard"
+          }
+        },
+        {
+          "name": "accent/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme/standard": {
+              "r": 0.3052,
+              "g": 0.4872,
+              "b": 0.9378,
+              "a": 1
+            },
+            "acme/vivid": {
+              "r": 0.4882,
+              "g": 0.5233,
+              "b": 0.5611,
+              "a": 1
+            },
+            "globex/standard": {
+              "r": 0.0016,
+              "g": 0.6235,
+              "b": 0.284,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{color.brand.500}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "acme/standard": "color/brand/500",
+            "acme/vivid": "color/neutral/500",
+            "globex/standard": "color/brand/500"
+          },
+          "sources": {
+            "acme/standard": "acme/sub-theme/standard",
+            "acme/vivid": "acme/sub-theme/vivid",
+            "globex/standard": "globex/sub-theme/standard"
+          }
+        },
+        {
+          "name": "accent/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme/standard": {
+              "r": 0.1419,
+              "g": 0.2851,
+              "b": 0.6784,
+              "a": 1
+            },
+            "acme/vivid": {
+              "r": 0.2994,
+              "g": 0.3293,
+              "b": 0.3613,
+              "a": 1
+            },
+            "globex/standard": {
+              "r": 0.0002,
+              "g": 0.3949,
+              "b": 0.1697,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{color.brand.700}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "acme/standard": "color/brand/700",
+            "acme/vivid": "color/neutral/700",
+            "globex/standard": "color/brand/700"
+          },
+          "sources": {
+            "acme/standard": "acme/sub-theme/standard",
+            "acme/vivid": "acme/sub-theme/vivid",
+            "globex/standard": "globex/sub-theme/standard"
+          }
+        }
+      ],
+      "modeSources": {
+        "acme/standard": {
+          "composition": "acme",
+          "context": "standard"
+        },
+        "acme/vivid": {
+          "composition": "acme",
+          "context": "vivid"
+        },
+        "globex/standard": {
+          "composition": "globex",
+          "context": "standard"
+        }
+      }
+    },
+    {
+      "name": "color-scheme",
+      "modes": [
+        "light",
+        "dark"
+      ],
+      "variables": [
+        {
+          "name": "surface/background",
+          "type": "COLOR",
+          "valuesByMode": {
+            "light": {
+              "r": 0.9375,
+              "g": 0.9462,
+              "b": 0.9556,
+              "a": 1
+            },
+            "dark": {
+              "r": 0.1353,
+              "g": 0.1527,
+              "b": 0.1713,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{color.neutral.100}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "light": "color/neutral/100",
+            "dark": "color/neutral/900"
+          },
+          "sources": {
+            "light": "scheme/light",
+            "dark": "scheme/dark"
+          }
+        },
+        {
+          "name": "text/default",
+          "type": "COLOR",
+          "valuesByMode": {
+            "light": {
+              "r": 0.1353,
+              "g": 0.1527,
+              "b": 0.1713,
+              "a": 1
+            },
+            "dark": {
+              "r": 0.9375,
+              "g": 0.9462,
+              "b": 0.9556,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{color.neutral.900}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "light": "color/neutral/900",
+            "dark": "color/neutral/100"
+          },
+          "sources": {
+            "light": "scheme/light",
+            "dark": "scheme/dark"
+          }
+        },
+        {
+          "name": "action/background",
+          "type": "COLOR",
+          "valuesByMode": {
+            "light": {
+              "r": 0.1419,
+              "g": 0.2851,
+              "b": 0.6784,
+              "a": 1
+            },
+            "dark": {
+              "r": 0.5941,
+              "g": 0.7222,
+              "b": 0.9998,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{accent.700}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "light": "accent/700",
+            "dark": "accent/300"
+          },
+          "sources": {
+            "light": "scheme/light",
+            "dark": "scheme/dark"
+          }
+        }
+      ]
+    }
+  ],
+  "styles": []
+}

@@ -84,8 +84,14 @@ export type {
 } from './document/resolver-types';
 export { emptyResolver } from './document/resolver-types';
 export type { Token } from './document/types';
+export { modifierOwners } from './dtcg/ownership';
 export type { DtcgNode } from './dtcg/parse';
-export { parseCollection, ROOT_TOKEN, VTK_PREFIX } from './dtcg/parse';
+export {
+  exportPath,
+  parseCollection,
+  ROOT_TOKEN,
+  VTK_PREFIX,
+} from './dtcg/parse';
 export {
   escapePointerSegment,
   orderModifierName,
@@ -106,6 +112,15 @@ export type {
   OutputFile,
 } from './export/exporter';
 export { EXPORTER_SERVICE } from './export/exporter';
+export type {
+  TypeLowering,
+  TypeLoweringService,
+} from './export/lowering';
+export {
+  createTypeLoweringRegistry,
+  lowerTokens,
+  TYPE_LOWERING_SERVICE,
+} from './export/lowering';
 export { createExporterRegistry } from './export/registry';
 export { resolveExporterInput } from './export/resolve-input';
 export type { Target, TargetResult } from './export/target';

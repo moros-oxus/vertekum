@@ -50,53 +50,53 @@ const colorMode = (
 
 test('a collection that resolves identically is left exactly as it is', () => {
   const merged = mergeModels([
-    model('rexall', [base('red')]),
-    model('lilly', [base('red')]),
+    model('acme', [base('red')]),
+    model('globex', [base('red')]),
   ]);
   const collection = merged.collections[0];
   expect(collection?.modes).toEqual(['default']);
   expect(collection?.modeSources).toBeUndefined();
-  expect(merged.source.compositions).toEqual(['rexall', 'lilly']);
+  expect(merged.source.compositions).toEqual(['acme', 'globex']);
 });
 
 test('a single-mode collection that differs gains one mode per composition', () => {
   const merged = mergeModels(
-    [model('rexall', [base('red')]), model('lilly', [base('blue')])],
+    [model('acme', [base('red')]), model('globex', [base('blue')])],
     'figma',
   );
   const collection = merged.collections[0];
-  expect(collection?.modes).toEqual(['rexall', 'lilly']);
+  expect(collection?.modes).toEqual(['acme', 'globex']);
   expect(collection?.variables[0]?.valuesByMode).toEqual({
-    rexall: 'red',
-    lilly: 'blue',
+    acme: 'red',
+    globex: 'blue',
   });
-  expect(collection?.modeSources?.rexall).toEqual({ composition: 'rexall' });
+  expect(collection?.modeSources?.acme).toEqual({ composition: 'acme' });
   expect(merged.source.target).toBe('figma');
 });
 
 test('a moded collection that differs takes (composition, context) pairs', () => {
   const merged = mergeModels([
-    model('rexall', [colorMode('white', 'black')]),
-    model('lilly', [colorMode('cream', 'ink')]),
+    model('acme', [colorMode('white', 'black')]),
+    model('globex', [colorMode('cream', 'ink')]),
   ]);
   const collection = merged.collections[0];
   expect(collection?.modes).toEqual([
-    'rexall/light',
-    'rexall/dark',
-    'lilly/light',
-    'lilly/dark',
+    'acme/light',
+    'acme/dark',
+    'globex/light',
+    'globex/dark',
   ]);
-  expect(collection?.modeSources?.['lilly/dark']).toEqual({
-    composition: 'lilly',
+  expect(collection?.modeSources?.['globex/dark']).toEqual({
+    composition: 'globex',
     context: 'dark',
   });
-  expect(collection?.variables[0]?.valuesByMode['rexall/light']).toBe('white');
+  expect(collection?.variables[0]?.valuesByMode['acme/light']).toBe('white');
 });
 
 test('only pairs that exist become modes; the absence is a notice', () => {
   const merged = mergeModels([
-    model('rexall', [colorMode('white', 'black')]),
-    model('lilly', [
+    model('acme', [colorMode('white', 'black')]),
+    model('globex', [
       {
         name: 'color-mode',
         modes: ['light'],
@@ -105,18 +105,18 @@ test('only pairs that exist become modes; the absence is a notice', () => {
     ]),
   ]);
   expect(merged.collections[0]?.modes).toEqual([
-    'rexall/light',
-    'rexall/dark',
-    'lilly/light',
+    'acme/light',
+    'acme/dark',
+    'globex/light',
   ]);
   expect(merged.source.notices.join('\n')).toMatch(
-    /'lilly' has no 'color-mode' context 'dark'/,
+    /'globex' has no 'color-mode' context 'dark'/,
   );
 });
 
 test('a variable one composition lacks leaves its modes empty, with a notice', () => {
   const merged = mergeModels([
-    model('rexall', [
+    model('acme', [
       {
         name: 'base',
         modes: ['default'],
@@ -126,27 +126,27 @@ test('a variable one composition lacks leaves its modes empty, with a notice', (
         ],
       },
     ]),
-    model('lilly', [base('blue')]),
+    model('globex', [base('blue')]),
   ]);
   const brandOnly = merged.collections[0]?.variables.find(
     (v) => v.name === 'color/brandOnly',
   );
-  expect(brandOnly?.valuesByMode).toEqual({ rexall: 'gold' });
-  expect(brandOnly?.valuesByMode.lilly).toBeUndefined();
+  expect(brandOnly?.valuesByMode).toEqual({ acme: 'gold' });
+  expect(brandOnly?.valuesByMode.globex).toBeUndefined();
   expect(merged.source.notices.join('\n')).toMatch(
-    /1 variable\(s\) have no value in 'lilly'/,
+    /1 variable\(s\) have no value in 'globex'/,
   );
 });
 
 test('a collection only one composition has is kept whole, with a notice', () => {
   const merged = mergeModels([
-    model('rexall', [base('red'), colorMode('white', 'black')]),
-    model('lilly', [base('red')]),
+    model('acme', [base('red'), colorMode('white', 'black')]),
+    model('globex', [base('red')]),
   ]);
   const density = merged.collections.find((c) => c.name === 'color-mode');
   expect(density?.modes).toEqual(['light', 'dark']);
   expect(merged.source.notices.join('\n')).toMatch(
-    /collection 'color-mode' comes only from 'rexall'/,
+    /collection 'color-mode' comes only from 'acme'/,
   );
 });
 
@@ -158,18 +158,18 @@ test('styles that differ are emitted per composition; identical ones are shared'
     source: { $type: 'typography', $value: {} },
   });
   const shared = mergeModels([
-    model('rexall', [base('red')], [style('16px')]),
-    model('lilly', [base('red')], [style('16px')]),
+    model('acme', [base('red')], [style('16px')]),
+    model('globex', [base('red')], [style('16px')]),
   ]);
   expect(shared.styles.map((s) => s.name)).toEqual(['typography/body']);
 
   const split = mergeModels([
-    model('rexall', [base('red')], [style('16px')]),
-    model('lilly', [base('red')], [style('18px')]),
+    model('acme', [base('red')], [style('16px')]),
+    model('globex', [base('red')], [style('18px')]),
   ]);
   expect(split.styles.map((s) => s.name)).toEqual([
-    'rexall/typography/body',
-    'lilly/typography/body',
+    'acme/typography/body',
+    'globex/typography/body',
   ]);
   expect(split.source.notices.join('\n')).toMatch(/style 'typography\/body'/);
 });

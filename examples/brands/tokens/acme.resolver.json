@@ -1,0 +1,66 @@
+{
+  "version": "2025.10",
+  "name": "acme",
+  "sets": {
+    "core": {
+      "sources": [
+        {
+          "$ref": "core.json"
+        }
+      ]
+    },
+    "palette": {
+      "sources": [
+        {
+          "$ref": "acme/palette.json"
+        }
+      ]
+    }
+  },
+  "modifiers": {
+    "sub-theme": {
+      "default": "standard",
+      "contexts": {
+        "standard": [
+          {
+            "$ref": "acme/sub-theme/standard.json"
+          }
+        ],
+        "vivid": [
+          {
+            "$ref": "acme/sub-theme/vivid.json"
+          }
+        ]
+      }
+    },
+    "color-scheme": {
+      "default": "light",
+      "contexts": {
+        "light": [
+          {
+            "$ref": "scheme/light.json"
+          }
+        ],
+        "dark": [
+          {
+            "$ref": "scheme/dark.json"
+          }
+        ]
+      }
+    }
+  },
+  "resolutionOrder": [
+    {
+      "$ref": "#/sets/core"
+    },
+    {
+      "$ref": "#/sets/palette"
+    },
+    {
+      "$ref": "#/modifiers/sub-theme"
+    },
+    {
+      "$ref": "#/modifiers/color-scheme"
+    }
+  ]
+}

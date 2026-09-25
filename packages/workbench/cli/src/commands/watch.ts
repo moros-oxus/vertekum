@@ -11,6 +11,8 @@ import {
   EXPORTER_SERVICE,
   type ExporterService,
   runTargets,
+  TYPE_LOWERING_SERVICE,
+  type TypeLoweringService,
 } from '@vertekum/core';
 import { writeTextFile } from '@vertekum/core/node';
 import { loadProject, type Project } from '../loadProject';
@@ -113,6 +115,9 @@ export async function runPass(options: WatchOptions): Promise<PassResult> {
     files: project.document.getFiles(),
     only: options.target,
     extensions: project.kernel.commands.extensionsOf('build'),
+    lowerings: project.kernel.services.get<TypeLoweringService>(
+      TYPE_LOWERING_SERVICE,
+    ),
   });
   for (const result of results) {
     for (const file of result.files) {

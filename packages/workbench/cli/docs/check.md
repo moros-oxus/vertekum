@@ -29,7 +29,9 @@ any error.
    type mismatches), resolver semantics (`bad-default`, `empty-contexts`, …), token
    sets no composition references (`resolver/unreferenced-set`, a warning — the set's
    tokens are validated but reach no output; flat projects, which merge every file,
-   never warn), export-target shape (unknown exporters and compositions, options
+   never warn), paths two modifiers both override (`resolver/shared-override`, a
+   warning — resolution picks the one resolved last, but a mode-based target such as
+   Figma can show only that one's values), export-target shape (unknown exporters and compositions, options
    validated against each exporter's schema), plus any validator a loaded extension
    registered.
 

@@ -6,6 +6,8 @@ import {
   SCHEMA_BINDING_SERVICE,
   type SchemaBinding,
   type SchemaBindingService,
+  TYPE_LOWERING_SERVICE,
+  type TypeLoweringService,
   VALIDATOR_SERVICE,
   type ValidatorService,
 } from '@vertekum/core';
@@ -77,6 +79,13 @@ export async function runDescribe(options: DescribeOptions): Promise<number> {
       options: e.optionsSchema ? describeSchema(e.optionsSchema) : null,
     })),
     validators: validators.map((v) => ({ id: v.id, name: v.name })),
+    // Custom types every exporter receives in standard DTCG form (the prepare stage) — so an agent
+    // knows a type will reach a target without reading the extension that owns it.
+    lowerings:
+      project.kernel.services
+        .get<TypeLoweringService>(TYPE_LOWERING_SERVICE)
+        ?.list()
+        .map((l) => l.type) ?? [],
     // What CONSTRAINS this project. An agent should be able to ask, rather than discover it by
     // failing. Schema bodies are deliberately not serialized — describe is an inventory, not a dump
     // — but the resolved PATH is, because that is what lets an agent open the file and read the

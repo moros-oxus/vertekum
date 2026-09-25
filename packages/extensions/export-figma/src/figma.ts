@@ -1,8 +1,9 @@
 import type { Exporter } from '@vertekum/core';
 import { z } from 'zod';
 import type { FigmaDialect, OutputFile } from './dialect';
+import { fingerprintOf } from './fingerprint';
 import { type BuiltComposition, mergeModels } from './merge';
-import { buildModel, type TypeContributor } from './model';
+import { buildModelWithDeps, claimsOf, type TypeContributor } from './model';
 
 /**
  * The `figma` exporter: builds the Figma-shaped model from the resolved composition and emits it
@@ -54,25 +55,46 @@ export const figmaExporter: Exporter = {
             resolver: input.resolver,
           },
         ];
+    // Ownership is decided ONCE, across every composition: a path one composition's modifier
+    // owns lands in that modifier's collection for all of them (each contributing its own
+    // contexts as modes), so no variable is split across collections by brand.
+    const ownershipNotices: string[] = [];
+    const claimed = new Map<string, string>();
+    for (const composition of resolved) {
+      for (const [path, modifier] of claimsOf(
+        composition.resolver,
+        input.tokens,
+        ownershipNotices,
+      )) {
+        const held = claimed.get(path);
+        if (held === undefined) claimed.set(path, modifier);
+        else if (held !== modifier) {
+          ownershipNotices.push(
+            `'${path}' is owned by '${held}' in one composition and '${modifier}' in '${composition.name}' — modelled under '${held}'`,
+          );
+        }
+      }
+    }
     const built: BuiltComposition[] = [];
     for (const composition of resolved) {
-      built.push({
-        composition: composition.name,
-        model: await buildModel(
-          {
-            base: composition.base,
-            variants: composition.variants,
-            resolver: composition.resolver,
-            tokens: input.tokens,
-          },
-          {
-            composition: composition.name || undefined,
-            types: options.types,
-          },
-        ),
-      });
+      const { model, deps } = await buildModelWithDeps(
+        {
+          base: composition.base,
+          variants: composition.variants,
+          resolver: composition.resolver,
+          tokens: input.tokens,
+        },
+        {
+          composition: composition.name || undefined,
+          types: options.types,
+          claimed,
+        },
+      );
+      built.push({ composition: composition.name, model, deps });
     }
     const model = mergeModels(built, input.target);
+    model.source.notices.unshift(...new Set(ownershipNotices));
+    model.source.fingerprint = await fingerprintOf(model);
     const files: OutputFile[] = [
       {
         path: 'figma.model.json',

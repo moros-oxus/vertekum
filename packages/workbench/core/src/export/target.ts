@@ -5,6 +5,7 @@ import type { DtcgNode } from '../dtcg/parse';
 import { interchangeFiles } from '../dtcg/serialize';
 import type { CommandExtension } from '../shell/types';
 import type { ExporterInput, ExporterService, OutputFile } from './exporter';
+import { lowerInput, type TypeLoweringService } from './lowering';
 import { presentInterchange } from './present';
 import { resolveExporterInput } from './resolve-input';
 
@@ -59,8 +60,14 @@ export async function runTargets(
     /** The collection's raw file trees, for exporters that hand files to an external tool. */
     files?: Record<string, DtcgNode>;
     only?: string[];
-    /** The `build` command's extension chain — consulted once per staged token (present.ts). */
+    /** The `build` command's extension chain — consulted per target, per staged token (present.ts). */
     extensions?: CommandExtension[];
+    /**
+     * Custom types' lowerings (ADR-0013, amended: resolve + prepare). Every bundle an exporter
+     * receives is lowered, and staged files fall back to it where no presentation answers — so an
+     * exporter only ever sees standard DTCG types.
+     */
+    lowerings?: TypeLoweringService;
   },
 ): Promise<TargetResult[]> {
   const selected = targets.filter((t) =>
@@ -69,13 +76,10 @@ export async function runTargets(
   // Exporters receive the INTERCHANGE form: codec carriers inlined as plain tokens, so a tool
   // that stages files verbatim (the terrazzo bridge) sees real tokens where the store holds
   // conformant empty-group carriers. Identity when no codec tokens exist.
-  let staged =
+  const interchange =
     ctx.files === undefined
       ? undefined
       : interchangeFiles(ctx.files, ctx.tokens);
-  if (staged !== undefined && ctx.extensions?.length) {
-    staged = await presentInterchange(staged, ctx.tokens, ctx.extensions);
-  }
   const results: TargetResult[] = [];
   for (const target of selected) {
     const exporter = ctx.registry.get(target.exporter);
@@ -122,8 +126,21 @@ export async function runTargets(
       }
       input = resolveExporterInput(resolver, ctx.tokens);
     }
+    // Prepared per exporter: a presentation may answer for this exporter alone; everything else
+    // is lowered. Identity when no chain and no lowerings exist.
+    const staged =
+      interchange === undefined
+        ? undefined
+        : await presentInterchange(
+            interchange,
+            ctx.tokens,
+            ctx.extensions ?? [],
+            target.exporter,
+            ctx.lowerings,
+          );
+    const prepared = ctx.lowerings ? lowerInput(input, ctx.lowerings) : input;
     const files = await exporter.transform({
-      ...input,
+      ...prepared,
       target: targetId(target),
       files: staged,
       options: target.options,

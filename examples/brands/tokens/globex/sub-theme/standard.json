@@ -1,0 +1,15 @@
+{
+  "$description": "Which ramp is 'accent' \u2014 the one decision a sub-theme owns.",
+  "accent": {
+    "$type": "color",
+    "300": {
+      "$value": "{color.brand.300}"
+    },
+    "500": {
+      "$value": "{color.brand.500}"
+    },
+    "700": {
+      "$value": "{color.brand.700}"
+    }
+  }
+}

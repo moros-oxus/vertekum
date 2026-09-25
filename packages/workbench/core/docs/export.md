@@ -91,9 +91,48 @@ what lets a third-party exporter be configured correctly without reading its sou
 
 ## The run model
 
-`runTargets(targets, ctx)` resolves each target's composition, runs its exporter, and
-returns the emitted files. It is pure — the caller writes (the CLI to disk, a browser
-host through its bridge).
+`runTargets(targets, ctx)` resolves each target's composition, **prepares** it, runs its
+exporter, and returns the emitted files. It is pure — the caller writes (the CLI to disk,
+a browser host through its bridge).
+
+### Prepare: what every exporter can rely on
+
+Between resolving and transforming, every exporter's input is prepared the same way:
+
+- **Generated tokens are expanded in their own scope.** A group codec (a colour ramp)
+  resolves its references in the carrier's own file first, then in the files its
+  compositions resolve it with, and only then across the collection — so a ramp in one
+  brand's file follows that brand's anchor even when another brand defines the same path.
+- **Custom types arrive as standard DTCG types.** The extension that owns a custom
+  `$type` registers a **lowering** — the value expressed as standard-typed children
+  (a four-sided spacing value as four `dimension` tokens, references kept as references).
+  Resolved bundles and staged files are both lowered, so an exporter never needs to know
+  a project's own types.
+- **A presentation, per exporter, takes precedence.** A `build` chain link
+  ([commands](./commands.md)) may present a token for one exporter — a CSS shorthand for
+  a stylesheet tool — and leave every other exporter to the lowering. Precedence:
+  presentation for that exporter → lowering → the value as authored.
+
+```ts
+import { TYPE_LOWERING_SERVICE, type TypeLoweringService } from '@vertekum/core';
+
+export function activate(ctx) {
+  ctx.services.get<TypeLoweringService>(TYPE_LOWERING_SERVICE)?.register({
+    type: 'inset',
+    lower(token) {
+      const [top, right = top, bottom = top, left = right] = token.value as unknown[];
+      return {
+        top: { type: 'dimension', value: top },
+        right: { type: 'dimension', value: right },
+        bottom: { type: 'dimension', value: bottom },
+        left: { type: 'dimension', value: left },
+      };
+    },
+  });
+}
+```
+
+`vertekum describe` lists the types that have a lowering.
 
 ## The exporter contract
 
@@ -118,7 +157,14 @@ interface ExporterInput {
     tokens: Token[];    // fully resolved under that selection
   }>;
   resolver: ResolverDocument; // the raw composition
-  tokens: Token[];            // the raw, unresolved token list
+  tokens: Token[];            // the raw, unresolved token list (lowered)
+  target?: string;            // the target's id — artifact identity
+  compositions?: Array<{      // present when the target names several compositions;
+    name: string;             // base/variants/resolver then hold the first of them
+    base: Token[];
+    variants: Array<{ modifier: string; context: string; tokens: Token[] }>;
+    resolver: ResolverDocument;
+  }>;
   files?: Record<string, DtcgNode>; // the collection's raw file trees, verbatim
   options?: unknown;          // the target's options, already validated
 }

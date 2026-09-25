@@ -1,5 +1,5 @@
 {
-  "version": "draft.02",
+  "version": "draft.03",
   "source": {
     "target": "figma-brands",
     "compositions": [
@@ -7,7 +7,8 @@
       "alt"
     ],
     "generator": "@vertekum/ext-export-figma",
-    "notices": []
+    "notices": [],
+    "fingerprint": "sha256:bc60e92891d6ca6cb25c0f621cc741a9a4f7654654b8b2725f5d9cb946b46d85"
   },
   "collections": [
     {
@@ -35,6 +36,9 @@
           "codeSyntax": {},
           "alias": {
             "default": "color/accent"
+          },
+          "sources": {
+            "default": "core"
           }
         }
       ]
@@ -91,7 +95,13 @@
             }
           },
           "scopes": [],
-          "codeSyntax": {}
+          "codeSyntax": {},
+          "sources": {
+            "default/light": "core",
+            "default/dark": "dark",
+            "alt/light": "alt",
+            "alt/dark": "dark"
+          }
         }
       ],
       "modeSources": {
@@ -135,7 +145,11 @@
             }
           },
           "scopes": [],
-          "codeSyntax": {}
+          "codeSyntax": {},
+          "sources": {
+            "cozy": "core",
+            "compact": "compact"
+          }
         },
         {
           "name": "space/inset",
@@ -152,7 +166,11 @@
             }
           },
           "scopes": [],
-          "codeSyntax": {}
+          "codeSyntax": {},
+          "sources": {
+            "cozy": "core",
+            "compact": "compact"
+          }
         }
       ]
     }

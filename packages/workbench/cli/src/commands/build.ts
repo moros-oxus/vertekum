@@ -3,6 +3,8 @@ import {
   type ExporterService,
   runTargets,
   type Target,
+  TYPE_LOWERING_SERVICE,
+  type TypeLoweringService,
   targetId,
 } from '@vertekum/core';
 import { writeTextFile } from '@vertekum/core/node';
@@ -82,6 +84,9 @@ export async function runBuild(options: BuildOptions): Promise<number> {
     // The build command's extension chain: handlers present tokens at interchange (core
     // consults them once per staged token), so a custom type reaches every exporter.
     extensions: project.kernel.commands.extensionsOf('build'),
+    lowerings: project.kernel.services.get<TypeLoweringService>(
+      TYPE_LOWERING_SERVICE,
+    ),
   });
 
   if (!options.dryRun) {
