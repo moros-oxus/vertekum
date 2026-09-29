@@ -1,5 +1,15 @@
 # @vertekum/cli
 
+## 0.10.0
+
+### Patch Changes
+
+- [`b7b3c60`](https://github.com/moros-oxus/vertekum/commit/b7b3c600c41137ff194f6e6c509e0363f217964c) Thanks [@tschemmer](https://github.com/tschemmer)! - The system default config is now resolved before it is merged under a project's config, so a default written in the function form (`defineConfig((env) => ({ … }))`) applies instead of being merged as a function.
+- Updated dependencies []:
+  - vertekum@0.3.0
+  - @vertekum/core@0.10.0
+  - @vertekum/server@0.3.0
+
 ## 0.9.0
 
 ### Patch Changes

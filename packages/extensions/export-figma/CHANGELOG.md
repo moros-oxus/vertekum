@@ -1,5 +1,16 @@
 # @vertekum/ext-export-figma
 
+## 0.10.0
+
+### Minor Changes
+
+- [`6e92a14`](https://github.com/moros-oxus/vertekum/commit/6e92a14ae4ece50eac0ba499adc0ebd6017a603a) Thanks [@tschemmer](https://github.com/tschemmer)! - A merged Figma model no longer leaves a composition's modes blank for a variable that composition lacks: they alias a typed "not available" sentinel (`NOT_AVAILABLE/COLOR` in magenta, `/FLOAT`, `/STRING`, `/BOOLEAN`) in its own collection, named in `source.notAvailable` — a visible marker in the design tool and a signal for write-back. The contract is now `draft.04`.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/core@0.10.0
+
 ## 0.9.0
 
 ### Minor Changes

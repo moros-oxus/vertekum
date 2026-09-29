@@ -1,5 +1,12 @@
 # @vertekum/ext-token-docs
 
+## 0.10.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/core@0.10.0
+
 ## 0.9.0
 
 ### Patch Changes
