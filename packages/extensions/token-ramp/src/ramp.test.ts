@@ -12,13 +12,16 @@ import {
 
 const inSrgb = inGamut('rgb');
 
-/** A stop as culori sees it, for gamut and round-trip assertions. */
-const asColor = (stop: RampStop) => ({
-  mode: 'oklch' as const,
-  l: stop.components[0],
-  c: stop.components[1],
-  h: stop.components[2],
-});
+/** A stop as culori sees it, for gamut and round-trip assertions (literal anchors only). */
+const asColor = (step: RampStop | string) => {
+  const stop = step as RampStop;
+  return {
+    mode: 'oklch' as const,
+    l: stop.components[0],
+    c: stop.components[1],
+    h: stop.components[2],
+  };
+};
 
 /** A hand-eased ten-step reference ladder (the shape a designed system documents). */
 const BRAND_A: RampPhysics = {
@@ -59,7 +62,7 @@ test('the reference teal ramp reproduces from its anchor', () => {
   const stops = ramp.stops;
 
   // Anchor placed by nearest ladder L (0.688 → 500) and carried VERBATIM.
-  expect(stops['500']?.hex).toBe('#1DB1A8');
+  expect((stops['500'] as RampStop).hex).toBe('#1DB1A8');
 
   const expected: Record<string, string> = {
     '100': '#E1F6F4',
@@ -98,7 +101,7 @@ test('hueDrift rotates only the dark side, reaching the full drift at the last s
   const drifted = driftedR.stops;
   // Light side identical; the last step's hue moved by the full drift.
   expect((drifted['100'] as RampStop).hex).toBe((still['100'] as RampStop).hex);
-  const h = (step: Record<string, RampStop>, name: string) =>
+  const h = (step: Record<string, RampStop | string>, name: string) =>
     (step[name] as RampStop).components[2];
   expect(h(drifted, '1000') - h(still, '1000')).toBeCloseTo(-18, 0);
 });
@@ -111,13 +114,12 @@ test('a stored colour object anchors verbatim; a non-colour refuses', () => {
     hex: '#1DB1A8',
   };
   const ramp = computeRamp(
-    { anchor: '{brand.pool}', scalar: '100-1000/100' },
+    { anchor: object, scalar: '100-1000/100' },
     BRAND_A,
     object,
   );
   if ('error' in ramp) throw new Error(ramp.error);
-  const stops = ramp.stops;
-  expect(stops['500']).toEqual(object);
+  expect(ramp.stops['500']).toEqual(object);
 
   const refused = computeRamp(
     { anchor: '{nope}', scalar: '100-1000/100' },
@@ -125,6 +127,32 @@ test('a stored colour object anchors verbatim; a non-colour refuses', () => {
     undefined,
   );
   expect('error' in refused && refused.error).toContain('anchor');
+});
+
+test('an anchor authored as a reference is kept as one — its step aliases the named colour', () => {
+  const object = {
+    colorSpace: 'oklch',
+    components: [0.688, 0.115, 188.2],
+    alpha: 1,
+    hex: '#1DB1A8',
+  };
+  const referenced = computeRamp(
+    { anchor: '{brand.pool}', scalar: '100-1000/100' },
+    BRAND_A,
+    object,
+  );
+  const literal = computeRamp(
+    { anchor: object, scalar: '100-1000/100' },
+    BRAND_A,
+    object,
+  );
+  if ('error' in referenced || 'error' in literal) throw new Error('no ramp');
+  // The anchor's step is the reference itself, so exporters keep the link…
+  expect(referenced.stops['500']).toBe('{brand.pool}');
+  // …and every computed step is exactly what the literal anchor produces.
+  const { '500': _, ...computed } = referenced.stops;
+  const { '500': __, ...fromLiteral } = literal.stops;
+  expect(computed).toEqual(fromLiteral);
 });
 
 test('the curve serves any scalar; the explicit ladder wins where it speaks', () => {
@@ -145,7 +173,7 @@ test('the curve serves any scalar; the explicit ladder wins where it speaks', ()
   );
   if ('error' in ramp) throw new Error(ramp.error);
   const stops = ramp.stops;
-  expect(stops['300']?.hex).toBe('#002E2B'); // the anchor, verbatim
+  expect((stops['300'] as RampStop).hex).toBe('#002E2B'); // the anchor, verbatim
   expect((stops['200'] as RampStop).components[0]).toBe(0.5); // ladder override
   expect((stops['100'] as RampStop).components[0]).toBeCloseTo(0.958, 3); // curve first
 });
@@ -169,8 +197,9 @@ test('computed stops are mapped into sRGB, holding lightness and hue', () => {
   const rawOut = Object.values(rawR.stops).filter((s) => !inSrgb(asColor(s)));
   expect(rawOut.length).toBeGreaterThan(0);
 
-  for (const [step, stop] of Object.entries(mappedR.stops)) {
+  for (const [step, value] of Object.entries(mappedR.stops)) {
     if (step === '300') continue; // the anchor's step — carried verbatim, never mapped
+    const stop = value as RampStop;
     expect(inSrgb(asColor(stop)), `${step} ${stop.hex}`).toBe(true);
 
     // L and h are held; only C moves, and only ever downward.
@@ -195,7 +224,8 @@ test("gamut 'none' stores the arch's own chroma, unmapped", () => {
 test('a stop’s hex and components describe the same colour', () => {
   const ramp = computeRamp(YELLOW, BRAND_A, YELLOW.anchor);
   if ('error' in ramp) throw new Error(ramp.error);
-  for (const [step, stop] of Object.entries(ramp.stops)) {
+  for (const [step, value] of Object.entries(ramp.stops)) {
+    const stop = value as RampStop; // a literal anchor: every step is a colour
     const fromHex = oklch(parseColor(stop.hex));
     if (!fromHex) throw new Error(`unparseable hex ${stop.hex}`);
     expect(fromHex.l, `${step} L`).toBeCloseTo(stop.components[0], 2);

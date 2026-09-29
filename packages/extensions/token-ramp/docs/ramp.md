@@ -24,9 +24,12 @@ Two ways to assign it:
 ## 3. The anchor lands — and is never repainted
 
 The anchor's own lightness is measured, and it lands on the step whose ladder
-lightness is nearest. That step carries the brand colour **verbatim** — its exact
-lightness, chroma, hue, and hex. The ladder positions the anchor; it never repaints
-it, and neither does gamut mapping (§5). This is why anchors legitimately land on different steps in different families: a
+lightness is nearest. That step carries the anchor **as authored**: an anchor written
+as a reference (`{brand.accent}`) is kept as that reference, so the step is an alias to
+the named colour in every output (a `var()` in CSS, an alias in a design tool); an
+anchor written as a colour is kept verbatim — its exact lightness, chroma, hue, and
+hex. The ladder positions the anchor; it never repaints it, and neither does gamut
+mapping (§5). This is why anchors legitimately land on different steps in different families: a
 naturally light brand yellow lands high, a deep brand charcoal lands low.
 
 ## 4. Chroma arches through the anchor
@@ -60,7 +63,7 @@ up describing two different colours.
 arch's own chroma wherever it lands. The stop is mapped at the precision it is stored
 at, so the value written is the value that was checked.
 
-**The anchor is exempt.** Its step carries the brand colour verbatim (§3), mapping
+**The anchor is exempt.** Its step carries the anchor as authored (§3), mapping
 included — an authored colour belongs to whoever authored it, not to the generator.
 
 ## 6. Hue holds — with one escape hatch

@@ -14,7 +14,7 @@
   --color-brand-300: oklch(78.6% 0.1207 150);
   --color-brand-400: oklch(70% 0.1518 150);
   --color-brand-500: oklch(61.4% 0.169 150);
-  --color-brand-600: oklch(55.91% 0.1691 146.4);
+  --color-brand-600: var(--anchor-brand);
   --color-brand-700: oklch(44.2% 0.1217 150);
   --color-brand-800: oklch(35.6% 0.098 150);
   --color-brand-900: oklch(27% 0.0743 150);
@@ -23,7 +23,7 @@
   --color-neutral-300: oklch(78.6% 0.012 80);
   --color-neutral-400: oklch(70% 0.0151 80);
   --color-neutral-500: oklch(61.4% 0.018 80);
-  --color-neutral-600: oklch(55% 0.02 80);
+  --color-neutral-600: var(--anchor-neutral);
   --color-neutral-700: oklch(44.2% 0.0166 80);
   --color-neutral-800: oklch(35.6% 0.0138 80);
   --color-neutral-900: oklch(27% 0.0109 80);
@@ -38,13 +38,13 @@
 @media (color-gamut: p3) {
   :root {
     --anchor-brand: oklch(55% 0.2 150);
-    --color-brand-600: oklch(55% 0.2 150);
+    --color-brand-600: var(--anchor-brand);
   }
 }
 
 @media (color-gamut: rec2020) {
   :root {
     --anchor-brand: oklch(55% 0.2 150);
-    --color-brand-600: oklch(55% 0.2 150);
+    --color-brand-600: var(--anchor-brand);
   }
 }

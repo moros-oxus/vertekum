@@ -9,9 +9,10 @@ import { clampChroma, formatHex, oklch, parse as parseColor } from 'culori';
  * - **L (lightness)** comes from the ladder: an explicit per-step table when configured, else a
  *   curve from `lightness.first` to `lightness.last` (`L = first + (last − first) · t^ease`).
  *   The step number is therefore a lightness — a contrast duty — never a measure of saturation.
- * - **The anchor keeps its colour verbatim.** It lands on the step whose ladder L is nearest its
- *   own L; that step carries the brand colour exactly (its own L, C, h, hex). The ladder
- *   positions the anchor; it never repaints it.
+ * - **The anchor is kept, never repainted.** It lands on the step whose ladder L is nearest its
+ *   own L, and that step carries the anchor itself: the reference when the anchor is authored as
+ *   one (`{color.brand.teal}` — the step is an alias to the named colour, so exporters keep the
+ *   link), else the colour exactly (its own L, C, h, hex). The ladder only positions it.
  * - **C (chroma)** arches through the anchor:
  *   lighter · `C = Cₐ · ((1−L)/(1−Lₐ))^kl`, with `kl = ln(lightFraction) / ln((1−L_first)/(1−Lₐ))`
  *   — solved so the palest step is always `lightFraction × Cₐ`, wherever the anchor landed;
@@ -36,7 +37,8 @@ export type RampGamut = 'srgb' | 'display-p3' | 'none';
  * colour through unmapped. So the public name is translated explicitly: a pass-through would
  * turn `'display-p3'` into a runtime error on every ramp that asked for it.
  */
-const CULORI_GAMUT: Record<Exclude<RampGamut, 'none'>, string> = {
+/** culori's own names for the RGB gamuts it can clamp into. */
+const CULORI_GAMUT: Record<Exclude<RampGamut, 'none'>, 'rgb' | 'p3'> = {
   srgb: 'rgb',
   'display-p3': 'p3',
 };
@@ -53,8 +55,8 @@ export interface RampPhysics {
   /**
    * The gamut every COMPUTED stop is mapped into; absent is `'srgb'`. Mapping holds L and h and
    * reduces C to the gamut boundary — a generated value the target cannot represent is an
-   * artifact, not a colour. The ANCHOR's step is never mapped: it carries the brand colour
-   * verbatim, which is the model's promise.
+   * artifact, not a colour. The ANCHOR's step is never mapped: it carries the anchor as
+   * authored (its reference, or its colour verbatim), which is the model's promise.
    */
   gamut?: RampGamut;
 }
@@ -253,16 +255,21 @@ export function anchorOf(
   };
 }
 
+/** A curly reference (`{color.brand.teal}`) — the only anchor form a step can alias. */
+const isReference = (value: unknown): value is string =>
+  typeof value === 'string' && /^\{[^}]+\}$/.test(value);
+
 /**
- * Compute a whole ramp: step name → stored colour value. The anchor step carries the brand
- * colour verbatim; every other step is calculated. Returns an error string instead when the
- * payload cannot compute (bad scalar, non-colour anchor).
+ * Compute a whole ramp: step name → stored colour value. The anchor step carries the anchor as
+ * authored — its reference when it is one, else its colour verbatim; every other step is
+ * calculated from the RESOLVED anchor. Returns an error string instead when the payload cannot
+ * compute (bad scalar, non-colour anchor).
  */
 export function computeRamp(
   payload: RampPayload,
   config: RampConfig,
   resolvedAnchor: unknown,
-): { stops: Record<string, RampStop> } | { error: string } {
+): { stops: Record<string, RampStop | string> } | { error: string } {
   const scale = parseScalar(payload.scalar);
   if ('error' in scale) return scale;
   const physics = physicsFor(config, payload);
@@ -305,10 +312,10 @@ export function computeRamp(
 
   const drift = payload.hueDrift ?? 0;
   const gamut = physics.gamut ?? 'srgb';
-  const out: Record<string, RampStop> = {};
+  const out: Record<string, RampStop | string> = {};
   names.forEach((name, index) => {
     if (index === anchorIndex) {
-      out[name] = anchor.stop;
+      out[name] = isReference(payload.anchor) ? payload.anchor : anchor.stop;
       return;
     }
     const L = ladderL[index] as number;
@@ -336,7 +343,7 @@ export function computeRamp(
         ? round(c, 4)
         : floorTo(
             clampChroma(
-              { mode: 'oklch', l: storedL, c, h: storedH },
+              { mode: 'oklch' as const, l: storedL, c, h: storedH },
               'oklch',
               CULORI_GAMUT[gamut],
             ).c ?? c,

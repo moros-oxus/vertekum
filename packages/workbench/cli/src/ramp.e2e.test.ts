@@ -11,14 +11,15 @@ const fixture = () => exampleFixture('vtk-ramp-', 'extensions');
 test('a virtual ramp exports, refuses edits, commits via ramp build, and --check guards it', async () => {
   const cwd = await fixture();
 
-  // Virtual: generated stops reach the css output; the anchor step is the brand hex verbatim.
+  // Virtual: generated stops reach the css output; the anchor step aliases the anchor it was
+  // authored as (`{brand.accent}`), so the link survives into every output.
   // The group's own $root token exports beside them (the consumer field report: a $root-bearing
   // ramp group must generate, not silently decline).
   await run('node', [bin, 'build'], { cwd });
   const css = await readFile(join(cwd, 'build/css/tokens.css'), 'utf8');
   expect(css).toMatch(/--color-teal: oklch/);
   expect(css).toMatch(/--color-teal-100: oklch/);
-  expect(css).toMatch(/--color-teal-300: oklch\(0\.6884 0\.1148 188\.2\)/);
+  expect(css).toMatch(/--color-teal-300: var\(--brand-accent\)/);
 
   // --dry-run --json emits the computed stops — a value source that needs no CSS parsing.
   const probe = await run(
@@ -30,7 +31,7 @@ test('a virtual ramp exports, refuses edits, commits via ramp build, and --check
   expect(ramps).toHaveLength(1);
   expect(ramps[0].path).toBe('color.teal');
   expect(ramps[0].committed).toBe(false);
-  expect(ramps[0].stops['300'].hex).toBe('#1DB1A8');
+  expect(ramps[0].stops['300']).toBe('{brand.accent}');
 
   // Generated tokens are views — the verbs say where the truth lives.
   const refused = await run(
@@ -46,7 +47,7 @@ test('a virtual ramp exports, refuses edits, commits via ramp build, and --check
   const core = JSON.parse(
     await readFile(join(cwd, 'tokens/core.json'), 'utf8'),
   );
-  expect(core.color.teal['300'].$value.hex).toBe('#1DB1A8');
+  expect(core.color.teal['300'].$value).toBe('{brand.accent}');
   expect(
     Object.keys(core.color.teal).filter((k) => !k.startsWith('$')),
   ).toHaveLength(5);

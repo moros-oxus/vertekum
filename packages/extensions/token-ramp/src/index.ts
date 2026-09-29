@@ -31,8 +31,8 @@ export {
  * - `gamut` — the colour space every COMPUTED stop is mapped into: `srgb` (default),
  *   `display-p3`, or `none` to store the arch's own chroma whatever it lands on. Mapping holds
  *   lightness and hue and reduces chroma to the gamut boundary, so a stop is always a colour the
- *   target can actually show. The anchor's own step is never mapped — it carries the brand
- *   colour verbatim.
+ *   target can actually show. The anchor's own step is never mapped — it carries the anchor as
+ *   authored (its reference, or its colour verbatim).
  *
  * Multi-brand systems declare **profiles** — named partials of the same fields — and each ramp
  * payload selects one by name (`"profile": "brand-a"`), or `defaultProfile` routes every silent

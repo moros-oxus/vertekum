@@ -10,7 +10,7 @@
     "notices": [
       "'globex' has no 'sub-theme' context 'vivid' — no mode emitted for it"
     ],
-    "fingerprint": "sha256:32fd8acfb508cd3154ef0eecad4e95ccf95fdb9a4de31c30fd862514061a541d"
+    "fingerprint": "sha256:df2ebd8cfcfcd53755f73e8dcfb7d0d14319b30c376fb88ad9f2eb7713335ee7"
   },
   "collections": [
     {
@@ -380,19 +380,14 @@
           },
           "source": {
             "$type": "color",
-            "$value": {
-              "colorSpace": "oklch",
-              "components": [
-                0.55,
-                0.2,
-                265
-              ],
-              "alpha": 1,
-              "hex": "#3665e4"
-            }
+            "$value": "{anchor.brand}"
           },
           "scopes": [],
           "codeSyntax": {},
+          "alias": {
+            "acme": "anchor/brand",
+            "globex": "anchor/brand"
+          },
           "sources": {
             "acme": "acme/palette",
             "globex": "globex/palette"
@@ -713,19 +708,14 @@
           },
           "source": {
             "$type": "color",
-            "$value": {
-              "colorSpace": "oklch",
-              "components": [
-                0.55,
-                0.02,
-                250
-              ],
-              "alpha": 1,
-              "hex": "#69737d"
-            }
+            "$value": "{anchor.neutral}"
           },
           "scopes": [],
           "codeSyntax": {},
+          "alias": {
+            "acme": "anchor/neutral",
+            "globex": "anchor/neutral"
+          },
           "sources": {
             "acme": "acme/palette",
             "globex": "globex/palette"
