@@ -60,20 +60,25 @@ test('staging passes $root, aliases, and $extensions verbatim; corrects only fra
     tokens,
     'core',
   ) as Record<string, Record<string, unknown>>;
+  const node = (key: string) => {
+    const found = corrected[key];
+    if (!found) throw new Error(`no '${key}' in the corrected tree`);
+    return found;
+  };
 
   // verbatim: extensions, $root, alias spelling, token-node $ref, dangling ref
-  expect((corrected.color as Record<string, unknown>).$extensions).toEqual({
+  expect(node('color').$extensions).toEqual({
     'org.vertekum.scale': { base: 4 },
   });
-  const text = corrected.color.text as Record<string, Record<string, unknown>>;
-  expect(text.$root.$value).toEqual(color('#111111', [0.07, 0.07, 0.07]));
-  expect(corrected.link.$value).toBe('{color.text.$root}');
+  const text = node('color').text as Record<string, Record<string, unknown>>;
+  expect(text.$root?.$value).toEqual(color('#111111', [0.07, 0.07, 0.07]));
+  expect(node('link').$value).toBe('{color.text.$root}');
   expect(corrected.ptr).toEqual({ $ref: '#/color/blue' });
   expect(corrected.broken).toEqual({ $ref: '#/nope' }); // stays authored; terrazzo fails loudly
 
   // corrected: $value-crossing and fragment forms, swapped for materialized literals
-  expect(corrected.lift.$ref).toBeUndefined();
-  expect(corrected.lift.$value).toEqual(color('#0066cc', [0, 0.4, 0.8]));
+  expect(node('lift').$ref).toBeUndefined();
+  expect(node('lift').$value).toEqual(color('#0066cc', [0, 0.4, 0.8]));
   expect(corrected.hue).toEqual({ $type: 'number', $value: 0.4 });
   expect(corrected.odd).toEqual({ $type: 'number', $value: 0.4 });
 });
@@ -100,7 +105,7 @@ test('§7.3 fragment corrections: dimension unit, typography sub-value', () => {
     tokens,
     'core',
   ) as Record<string, Record<string, unknown>>;
-  expect(corrected.unitOf.$value).toBe('px');
+  expect(corrected.unitOf?.$value).toBe('px');
   expect(corrected.leading).toEqual({ $type: 'number', $value: 1.5 });
 });
 

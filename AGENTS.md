@@ -26,11 +26,14 @@ contradicts an ADR, surface it; don't silently override it.
 
 ```bash
 pnpm install
-pnpm lint && pnpm test   # the gate — green before any work is called done
+pnpm lint && pnpm typecheck && pnpm test   # the gate — green before any commit or push
 ```
 
 Lint is Biome (2-space, organized imports): `pnpm format` fixes what `pnpm lint`
 complains about. Tests are vitest, run repo-wide from the root.
+`pnpm typecheck` runs `tsc --noEmit` over every project with a `tsconfig.json`
+(`scripts/typecheck.mjs` finds them) — a type error blocks a commit exactly like a failing
+test.
 
 ## Versioning (changesets)
 

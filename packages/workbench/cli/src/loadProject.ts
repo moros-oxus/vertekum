@@ -67,13 +67,19 @@ export async function loadProject(
   // The cost is honest — each reload leaves the previous config module in memory — and a watch
   // session is developer-scale.
   const bust = options.fresh ? `?t=${Date.now()}` : '';
+  const env = { command: 'build', mode: 'production' } as const;
   const userConfig = configPath
     ? resolveVertekumConfig(
         (await import(`${pathToFileURL(configPath).href}${bust}`)).default,
-        { command: 'build', mode: 'production' },
+        env,
       )
     : {};
-  const config = mergeVertekumConfig(await loadDefaultConfig(), userConfig);
+  // The system default may use the function form too — resolved with the same env, never merged
+  // as a function.
+  const config = mergeVertekumConfig(
+    resolveVertekumConfig(await loadDefaultConfig(), env),
+    userConfig,
+  );
 
   // Metadata + generated artifacts live at the working dir: the config's dir when found, else the
   // inferred repo root — the same rule `vertekum dev` applies.

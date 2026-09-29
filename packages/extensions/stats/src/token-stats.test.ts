@@ -1,4 +1,4 @@
-import type { Token } from 'vertekum';
+import type { Token } from 'vertekum/core';
 import { expect, test } from 'vitest';
 import { computeTokenStats } from './token-stats';
 

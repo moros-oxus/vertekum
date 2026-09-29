@@ -110,9 +110,10 @@ test('object values render in the FIXED default space — oklch, whatever storag
 });
 
 test('colorFormat hex emits #rrggbb computed from components', async () => {
-  const files = (await cssExporter
-    .transform(input([t(['color', 'magenta'], MAGENTA)], []))
-    .then((f) => f)) as { content: string }[];
+  // `transform` may return files or a promise of them; `await` takes either.
+  const files = (await cssExporter.transform(
+    input([t(['color', 'magenta'], MAGENTA)], []),
+  )) as { content: string }[];
 
   const hexFiles = (await cssExporter.transform({
     ...input([t(['color', 'magenta'], MAGENTA)], []),

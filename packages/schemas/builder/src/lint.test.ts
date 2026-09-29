@@ -4,6 +4,15 @@ import { dirname, join } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
 import { lintModule } from './lint';
 
+/** The item at `index` — a failed assertion (not a crash) when the list is too short. */
+function at<T>(items: readonly T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) {
+    throw new Error(`expected an item at index ${index} of ${items.length}`);
+  }
+  return item;
+}
+
 const dirs: string[] = [];
 afterEach(() => {
   for (const dir of dirs.splice(0))
@@ -34,9 +43,11 @@ test('a fragment with a broken production is caught — the build sweep never se
   });
   const diagnostics = lintModule(join(dir, 'emphasis.dfn'));
   expect(diagnostics).toHaveLength(1);
-  expect(diagnostics[0].message).toContain("unknown production '<missing>'");
-  expect(diagnostics[0].line).toBe(1);
-  expect(diagnostics[0].column).toBe(21);
+  expect(at(diagnostics, 0).message).toContain(
+    "unknown production '<missing>'",
+  );
+  expect(at(diagnostics, 0).line).toBe(1);
+  expect(at(diagnostics, 0).column).toBe(21);
 });
 
 test('an unused production in a rooted module is evaluated', () => {
@@ -45,7 +56,9 @@ test('an unused production in a rooted module is evaluated', () => {
   });
   const diagnostics = lintModule(join(dir, 'color.dfn'));
   expect(diagnostics).toHaveLength(1);
-  expect(diagnostics[0].message).toContain("unknown production '<nowhere>'");
+  expect(at(diagnostics, 0).message).toContain(
+    "unknown production '<nowhere>'",
+  );
 });
 
 test('findings collect: one broken production does not hide the next', () => {
@@ -71,8 +84,8 @@ test('a root error surfaces once, not once per reaching path', () => {
   });
   const diagnostics = lintModule(join(dir, 'color.dfn'));
   expect(diagnostics).toHaveLength(1);
-  expect(diagnostics[0].message).toContain("no member '300' to omit");
-  expect(diagnostics[0].line).toBe(2);
+  expect(at(diagnostics, 0).message).toContain("no member '300' to omit");
+  expect(at(diagnostics, 0).line).toBe(2);
 });
 
 test('a parse error in an imported fragment is attributed to that file', () => {
@@ -82,8 +95,8 @@ test('a parse error in an imported fragment is attributed to that file', () => {
   });
   const diagnostics = lintModule(join(dir, 'color.dfn'));
   expect(diagnostics).toHaveLength(1);
-  expect(diagnostics[0].file).toBe(join(dir, 'broken.dfn'));
-  expect(diagnostics[0].message).toContain("'*' marks a set open");
+  expect(at(diagnostics, 0).file).toBe(join(dir, 'broken.dfn'));
+  expect(at(diagnostics, 0).message).toContain("'*' marks a set open");
 });
 
 test('an evaluation error inside an imported module is attributed to that file', () => {
@@ -93,9 +106,9 @@ test('an evaluation error inside an imported module is attributed to that file',
   });
   const diagnostics = lintModule(join(dir, 'primitives.dfn'));
   expect(diagnostics).toHaveLength(1);
-  expect(diagnostics[0].file).toBe(join(dir, 'common/size.dfn'));
-  expect(diagnostics[0].line).toBe(5);
-  expect(diagnostics[0].message).toContain("no import named 't-shirt'");
+  expect(at(diagnostics, 0).file).toBe(join(dir, 'common/size.dfn'));
+  expect(at(diagnostics, 0).line).toBe(5);
+  expect(at(diagnostics, 0).message).toContain("no import named 't-shirt'");
 });
 
 test('referencing a fragment by module name explains the fix and lists its productions', () => {
@@ -106,10 +119,10 @@ test('referencing a fragment by module name explains the fix and lists its produ
   });
   const diagnostics = lintModule(join(dir, 'border.dfn'));
   expect(diagnostics).toHaveLength(1);
-  expect(diagnostics[0].file).toBe(join(dir, 'border.dfn'));
-  expect(diagnostics[0].line).toBe(3);
-  expect(diagnostics[0].column).toBe(16);
-  expect(diagnostics[0].message).toBe(
+  expect(at(diagnostics, 0).file).toBe(join(dir, 'border.dfn'));
+  expect(at(diagnostics, 0).line).toBe(3);
+  expect(at(diagnostics, 0).column).toBe(16);
+  expect(at(diagnostics, 0).message).toBe(
     "'t-shirt' is imported, but it declares no root (a fragment) — reference one of its productions: <@t-shirt/size>, <@t-shirt/scale>",
   );
 });
@@ -120,7 +133,7 @@ test('a qualified miss lists what the import declares', () => {
     't-shirt.dfn': 'size = sm | md | lg\n',
   });
   const diagnostics = lintModule(join(dir, 'border.dfn'));
-  expect(diagnostics[0].message).toBe(
+  expect(at(diagnostics, 0).message).toBe(
     "'t-shirt' has no production 'sizes' — it declares: <@t-shirt/size>",
   );
 });

@@ -44,3 +44,21 @@ export async function exampleFixture(
   onTestFinished(() => rm(dir, { recursive: true, force: true }));
   return dir;
 }
+
+/** What a CLI run that exits non-zero rejects with (`child_process.execFile`, promisified). */
+export interface CommandFailure {
+  code: number;
+  stdout: string;
+  stderr: string;
+}
+
+/**
+ * For a run that is EXPECTED to fail: `run(…).then(unexpectedSuccess, asFailure)` resolves to the
+ * failure — typed, so its exit code and output can be asserted — and a run that succeeds fails the
+ * test instead of slipping through as if it had been refused.
+ */
+export function unexpectedSuccess(): never {
+  throw new Error('expected the command to fail, but it exited 0');
+}
+export const asFailure = (error: unknown): CommandFailure =>
+  error as CommandFailure;

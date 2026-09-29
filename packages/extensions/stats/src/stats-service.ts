@@ -1,4 +1,4 @@
-import type { Document } from 'vertekum';
+import type { Document } from 'vertekum/core';
 import {
   computeTokenStats,
   type TokenStats,

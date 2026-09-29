@@ -1,6 +1,15 @@
 import { expect, test } from 'vitest';
 import { parse } from './parser';
 
+/** The item at `index` — a failed assertion (not a crash) when the list is too short. */
+function at<T>(items: readonly T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) {
+    throw new Error(`expected an item at index ${index} of ${items.length}`);
+  }
+  return item;
+}
+
 test('a denotation is a plain alternation of names', () => {
   const module = parse('conspicuity = subtle | normal | bold\n');
   expect(module.productions.get('conspicuity')).toMatchObject({
@@ -63,8 +72,8 @@ test('groups hold sub-paths (branches, not guards) and take an open marker', () 
   const steps = (module.root as { steps: unknown[] }).steps as Array<{
     term: { kind: string; node?: unknown; open?: boolean };
   }>;
-  expect(steps[2].term.kind).toBe('group');
-  expect(steps[2].term.open).toBe(true);
+  expect(at(steps, 2).term.kind).toBe('group');
+  expect(at(steps, 2).term.open).toBe(true);
 });
 
 test('open refs, ranges, and kebab identifiers lex without collision', () => {
@@ -95,7 +104,7 @@ test('open refs, ranges, and kebab identifiers lex without collision', () => {
     ],
   });
   const steps = (module.root as { steps: Array<{ term: unknown }> }).steps;
-  expect(steps[1].term).toMatchObject({
+  expect(at(steps, 1).term).toMatchObject({
     kind: 'ref',
     name: 'color-role',
     imported: false,

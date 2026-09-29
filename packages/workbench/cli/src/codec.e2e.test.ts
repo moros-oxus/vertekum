@@ -3,7 +3,12 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
-import { bin, exampleFixture } from './e2e-fixture';
+import {
+  asFailure,
+  bin,
+  exampleFixture,
+  unexpectedSuccess,
+} from './e2e-fixture';
 
 const run = promisify(execFile);
 
@@ -124,8 +129,9 @@ test('a carrier token checks clean, edits through its codec, and exports', async
 
 test('a malformed payload is the extension binding’s diagnostic, exit 1', async () => {
   const cwd = await fixture('shouty');
-  const refused = await run('node', [bin, 'check', '--json'], { cwd }).catch(
-    (error: { code: number; stdout: string }) => error,
+  const refused = await run('node', [bin, 'check', '--json'], { cwd }).then(
+    unexpectedSuccess,
+    asFailure,
   );
   expect(refused.code).toBe(1);
   const report = JSON.parse(refused.stdout);

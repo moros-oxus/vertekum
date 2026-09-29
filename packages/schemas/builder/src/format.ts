@@ -68,9 +68,11 @@ function separator(prev: Token, cur: Token, next: Token | undefined): string {
 /** Re-emit one line's tokens under the canonical spacing rules. */
 function printTokens(tokens: Token[]): string {
   let out = '';
-  for (let i = 0; i < tokens.length; i++) {
-    if (i > 0) out += separator(tokens[i - 1], tokens[i], tokens[i + 1]);
-    out += text(tokens[i]);
+  let prev: Token | undefined;
+  for (const [i, token] of tokens.entries()) {
+    if (prev) out += separator(prev, token, tokens[i + 1]);
+    out += text(token);
+    prev = token;
   }
   return out;
 }
@@ -109,8 +111,8 @@ export function formatSource(
   let level = 0;
   let blankRun = 0;
 
-  for (let i = 0; i < lines.length; i++) {
-    const { comment } = splitComment(lines[i]);
+  for (const [i, raw] of lines.entries()) {
+    const { comment } = splitComment(raw);
     const lineTokens = byLine.get(i + 1) ?? [];
 
     if (lineTokens.length === 0 && comment === null) {
@@ -184,9 +186,8 @@ export function resolveIndent(
     let applies = false;
     for (const raw of content.split('\n')) {
       const line = raw.trim();
-      const section = line.match(/^\[(.+)\]$/);
-      if (section) {
-        const glob = section[1];
+      const glob = line.match(/^\[(.+)\]$/)?.[1];
+      if (glob !== undefined) {
         applies =
           glob === '*' ||
           glob === '**' ||
@@ -194,10 +195,10 @@ export function resolveIndent(
         continue;
       }
       if (!applies) continue;
-      const pair = line.match(/^([A-Za-z_]+)\s*=\s*(.+)$/);
-      if (!pair) continue;
-      if (pair[1] === 'indent_style') style = pair[2].trim();
-      if (pair[1] === 'indent_size') size = pair[2].trim();
+      const [, key, value] = line.match(/^([A-Za-z_]+)\s*=\s*(.+)$/) ?? [];
+      if (key === undefined || value === undefined) continue;
+      if (key === 'indent_style') style = value.trim();
+      if (key === 'indent_size') size = value.trim();
     }
   }
 
@@ -245,6 +246,8 @@ export function fixSource(source: string): {
     for (let i = 0; i + 1 < lineTokens.length; i++) {
       const closer = lineTokens[i];
       const star = lineTokens[i + 1];
+      // The loop bound keeps both indices in range; the guard only narrows.
+      if (closer === undefined || star === undefined) break;
       if (
         (closer.kind === 'rangle' || closer.kind === 'rbracket') &&
         star.kind === 'star'
@@ -259,8 +262,9 @@ export function fixSource(source: string): {
         });
       }
     }
-    if (repaired) {
-      const raw = lines[line - 1];
+    const raw = lines[line - 1];
+    // Every token's line exists in the source it was lexed from.
+    if (repaired && raw !== undefined) {
       const { comment } = splitComment(raw);
       const leading = raw.match(/^\s*/)?.[0] ?? '';
       const code = printTokens(lineTokens);

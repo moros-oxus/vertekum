@@ -70,8 +70,10 @@ const WORD = /^\d+[A-Za-z][A-Za-z0-9-]*/;
 const NUMBER = /^\d+/;
 
 /** "Write the numbers as they appear": a leading zero declares the pad width. */
-function padWidth(...literals: string[]): number | undefined {
-  const declared = literals.filter((l) => l.length > 1 && l.startsWith('0'));
+function padWidth(...literals: Array<string | undefined>): number | undefined {
+  const declared = literals.filter(
+    (l): l is string => l !== undefined && l.length > 1 && l.startsWith('0'),
+  );
   if (declared.length === 0) return undefined;
   return Math.max(...declared.map((l) => l.length));
 }
@@ -83,9 +85,9 @@ export function tokenize(source: string): Token[] {
   // this stack is non-empty a group is a BLOCK — newlines inside it are insignificant.
   const openBrackets: Array<{ line: number; column: number }> = [];
 
-  for (let i = 0; i < lines.length; i++) {
+  for (const [i, raw] of lines.entries()) {
     const line = i + 1;
-    let text = lines[i];
+    let text = raw;
     const commentAt = text.indexOf('#');
     if (commentAt !== -1) text = text.slice(0, commentAt);
 
@@ -197,11 +199,13 @@ export function tokenize(source: string): Token[] {
         '/': 'slash',
         ':': 'colon',
       };
-      const kind = single[text[0]];
-      if (!kind) throw new DfnError(`unexpected '${text[0]}'`, line, column);
+      // The loop condition guarantees a non-empty `text`, so `charAt(0)` is its first character.
+      const char = text.charAt(0);
+      const kind = single[char];
+      if (!kind) throw new DfnError(`unexpected '${char}'`, line, column);
       if (kind === 'lbracket') openBrackets.push({ line, column });
       if (kind === 'rbracket') openBrackets.pop();
-      push(kind, text[0]);
+      push(kind, char);
     }
 
     // Inside a block, a newline is not a statement boundary.

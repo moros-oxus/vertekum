@@ -4,6 +4,15 @@ import { join } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
 import { fixSource, formatSource, resolveIndent } from './format';
 
+/** The item at `index` — a failed assertion (not a crash) when the list is too short. */
+function at<T>(items: readonly T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) {
+    throw new Error(`expected an item at index ${index} of ${items.length}`);
+  }
+  return item;
+}
+
 /** Format, and assert the result is a fixed point — every test input proves idempotency. */
 function fmt(source: string, indent = '  '): string {
   const once = formatSource(source, { indent });
@@ -134,8 +143,8 @@ test('fixSource relocates a trailing open-set mark on refs and groups', () => {
   const { content, fixes } = fixSource('a = <roles>*\nb = [x | y]*\nc = ok\n');
   expect(content).toBe('a = <roles*>\nb = [x | y *]\nc = ok\n');
   expect(fixes).toHaveLength(2);
-  expect(fixes[0].message).toContain('reference');
-  expect(fixes[1].message).toContain('group');
+  expect(at(fixes, 0).message).toContain('reference');
+  expect(at(fixes, 1).message).toContain('group');
 });
 
 test('fixSource leaves the unfixable bare star and unlexable sources alone', () => {

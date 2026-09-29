@@ -169,7 +169,8 @@ function target(
       });
     }
   }
-  if (hits.length === 0) {
+  const [hit] = hits;
+  if (hit === undefined) {
     throw new DfnError(
       `no import provides '<@${ref.name}>'`,
       ref.line,
@@ -185,7 +186,7 @@ function target(
       file,
     );
   }
-  return hits[0];
+  return hit;
 }
 
 /**
@@ -276,9 +277,12 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
       // Steps expand right to left: each step becomes the tail of the one before it. An
       // optional step (`?`) may be SKIPPED — its tail also attaches directly, so
       // `<role>.<emphasis>?.<interaction>?` grants the whole slot-collapse lattice.
+      const [first, ...rest] = node.steps;
+      if (first === undefined) {
+        throw new Error('internal: a path has at least one step');
+      }
       let next = tail;
-      for (let i = node.steps.length - 1; i > 0; i--) {
-        const step = node.steps[i];
+      for (const step of rest.reverse()) {
         const after = next;
         next = step.optional
           ? () => {
@@ -288,7 +292,6 @@ function evaluate(node: Node, scope: Scope, tail: () => TreeNode): TreeNode {
             }
           : () => evaluate(step.term, scope, after);
       }
-      const first = node.steps[0];
       const forest = evaluate(first.term, scope, next);
       if (first.optional) merge(forest, next());
       return forest;

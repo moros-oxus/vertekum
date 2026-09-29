@@ -3,7 +3,12 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
-import { bin, exampleFixture } from './e2e-fixture';
+import {
+  asFailure,
+  bin,
+  exampleFixture,
+  unexpectedSuccess,
+} from './e2e-fixture';
 
 const run = promisify(execFile);
 const fixture = () => exampleFixture('vtk-docs-', 'extensions');
@@ -109,7 +114,7 @@ test('an unknown category is refused, naming what the project declares', async (
     'node',
     [bin, 'docs', 'remove', 'font.case.upper', '--category', 'dcos'],
     { cwd },
-  ).catch((error: { code: number; stderr: string }) => error);
+  ).then(unexpectedSuccess, asFailure);
 
   expect(failed.code).toBe(1);
   expect(failed.stderr).toMatch(/unknown category 'dcos'/);

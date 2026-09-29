@@ -1,8 +1,12 @@
+import { resolveVertekumConfig } from '@vertekum/core';
 import { expect, test } from 'vitest';
 import { loadDefaultConfig } from './defaultConfig';
 
 test('with the app installed, the system default is the app host config', async () => {
-  const config = await loadDefaultConfig();
+  const config = resolveVertekumConfig(await loadDefaultConfig(), {
+    command: 'build',
+    mode: 'production',
+  });
   expect(config.extensions?.length).toBeGreaterThan(0);
 });
 

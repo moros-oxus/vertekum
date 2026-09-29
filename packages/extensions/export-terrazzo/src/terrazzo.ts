@@ -2,7 +2,14 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { build, defineConfig, parse } from '@terrazzo/parser';
+import {
+  build,
+  defineConfig,
+  type LintRuleLonghand,
+  type LintRuleShorthand,
+  type Plugin,
+  parse,
+} from '@terrazzo/parser';
 import type {
   DtcgNode,
   Exporter,
@@ -44,9 +51,12 @@ export const TerrazzoOptions = z
  * notation (`vertekum migrate values` converts older repos); the lint override keeps hex STRINGS
  * working too, since terrazzo converts those itself.
  */
-const DEFAULT_LINT_RULES = {
+/** terrazzo's own rule-config shape, so defaults and overrides merge into what it accepts. */
+type LintRules = Record<string, LintRuleShorthand | LintRuleLonghand>;
+
+const DEFAULT_LINT_RULES: LintRules = {
   'core/valid-color': ['error', { legacyFormat: true }],
-} as const;
+};
 
 interface TerrazzoOutputFile {
   filename: string;
@@ -99,8 +109,15 @@ export const terrazzoExporter: Exporter = {
       const cwd = pathToFileURL(`${staging}/`);
       const config = defineConfig(
         {
-          plugins: options.plugins,
-          lint: { rules: { ...DEFAULT_LINT_RULES, ...(options.lint ?? {}) } },
+          // The options schema guarantees an array and a record; what a plugin or a rule IS stays
+          // terrazzo's to validate (it refuses a malformed one loudly), so they pass as its types.
+          plugins: options.plugins as Plugin[],
+          lint: {
+            rules: {
+              ...DEFAULT_LINT_RULES,
+              ...((options.lint ?? {}) as LintRules),
+            },
+          },
         },
         { cwd },
       );

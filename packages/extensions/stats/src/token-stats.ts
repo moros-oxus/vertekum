@@ -1,4 +1,4 @@
-import type { Token } from 'vertekum';
+import type { Token } from 'vertekum/core';
 
 /** Well-known service key under which the Stats extension publishes token counts (ADR-0022). */
 export const TOKEN_STATS_SERVICE = 'tokenStats';

@@ -14,14 +14,21 @@ export function parse(source: string): Module {
 
 class Parser {
   private readonly tokens: Token[];
+  /** The stream's closing `eof` — what the cursor sees once it runs past the end. */
+  private readonly eof: Token;
   private index = 0;
 
   constructor(tokens: Token[]) {
+    const last = tokens[tokens.length - 1];
+    if (last?.kind !== 'eof') {
+      throw new Error('internal: a token stream ends with eof');
+    }
     this.tokens = tokens;
+    this.eof = last;
   }
 
   private peek(): Token {
-    return this.tokens[this.index];
+    return this.tokens[this.index] ?? this.eof;
   }
 
   private at(offset: number): Token | undefined {
@@ -29,7 +36,9 @@ class Parser {
   }
 
   private next(): Token {
-    return this.tokens[this.index++];
+    const token = this.peek();
+    this.index++;
+    return token;
   }
 
   private expect(kind: Token['kind'], what: string): Token {
@@ -204,24 +213,26 @@ class Parser {
 
   /** `a | b | c` — a single option collapses to itself. */
   private alternation(): Node {
-    const options: Node[] = [this.path()];
+    const first = this.path();
+    const options: Node[] = [first];
     while (this.peek().kind === 'pipe') {
       this.next();
       options.push(this.path());
     }
-    if (options.length === 1) return options[0];
+    if (options.length === 1) return first;
     const alt: Alt = { kind: 'alt', options };
     return alt;
   }
 
   /** `a.b.c` — a single step with no `?` collapses to its term. */
   private path(): Node {
-    const steps: Step[] = [this.step()];
+    const first = this.step();
+    const steps: Step[] = [first];
     while (this.peek().kind === 'dot') {
       this.next();
       steps.push(this.step());
     }
-    if (steps.length === 1 && !steps[0].optional) return steps[0].term;
+    if (steps.length === 1 && !first.optional) return first.term;
     const path: Path = { kind: 'path', steps };
     return path;
   }

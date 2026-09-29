@@ -1,8 +1,5 @@
-import type {
-  ActivateContext,
-  ExtensionContext,
-  LazyView,
-} from 'vertekum/core';
+import type { LazyView } from 'vertekum';
+import type { ActivateContext, ExtensionContext } from 'vertekum/core';
 import type { tokensManifest } from './index';
 import { TokensRoute } from './TokensRoute';
 

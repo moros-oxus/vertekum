@@ -10,6 +10,7 @@
     "test:watch": "vitest",
     "format": "biome format --write .",
     "lint": "biome check .",
+    "typecheck": "node scripts/typecheck.mjs",
     "clean:pristine": "pnpm dlx rimraf --glob **/node_modules",
     "changeset": "changeset",
     "changeset:status": "changeset status",

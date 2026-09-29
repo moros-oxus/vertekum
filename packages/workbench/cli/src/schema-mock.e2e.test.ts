@@ -3,7 +3,12 @@ import { copyFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
-import { bin, exampleFixture } from './e2e-fixture';
+import {
+  asFailure,
+  bin,
+  exampleFixture,
+  unexpectedSuccess,
+} from './e2e-fixture';
 
 const run = promisify(execFile);
 const fixture = () => exampleFixture('vtk-mock-', 'schemas');
@@ -49,8 +54,9 @@ test('schema mock: names listing, clean mock validates, broken mock fails on the
     join(cwd, 'mocks/house.broken.tokens.json'),
     join(cwd, 'tokens/house.json'),
   );
-  const refused = await run('node', [bin, 'check', '--json'], { cwd }).catch(
-    (e: { code: number; stdout: string }) => e,
+  const refused = await run('node', [bin, 'check', '--json'], { cwd }).then(
+    unexpectedSuccess,
+    asFailure,
   );
   expect(refused.code).toBe(1);
   const report = JSON.parse(refused.stdout);
