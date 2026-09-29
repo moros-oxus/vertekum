@@ -39,6 +39,8 @@ test('the brands reference structure: four small collections, committed outputs 
     ['palette', 'acme,globex'],
     ['sub-theme', 'acme/standard,acme/vivid,globex/standard'],
     ['color-scheme', 'light,dark'],
+    // acme's berry ramp has no globex counterpart: globex's modes alias the sentinel.
+    ['NOT_AVAILABLE', 'default'],
   ]);
 
   // The committed artifacts are what a fresh build produces, byte for byte.

@@ -2,6 +2,7 @@ import type {
   FigmaCollection,
   FigmaModel,
   FigmaStyle,
+  FigmaType,
   FigmaVariable,
   ModelDeps,
 } from './model';
@@ -101,10 +102,25 @@ interface Part {
   collection: FigmaCollection;
 }
 
+/**
+ * The "not available" sentinels — Figma-only, one per variable type (an alias must match its type),
+ * in their own single-mode collection so they sit in no real group. Loud on purpose: a mode that
+ * shows magenta has no token behind it.
+ */
+export const NOT_AVAILABLE = 'NOT_AVAILABLE';
+const SENTINEL_VALUE: Record<FigmaType, unknown> = {
+  COLOR: { r: 1, g: 0, b: 1, a: 1 },
+  FLOAT: 0,
+  STRING: NOT_AVAILABLE,
+  BOOLEAN: false,
+};
+const sentinelName = (type: FigmaType): string => `${NOT_AVAILABLE}/${type}`;
+
 function mergeCollection(
   name: string,
   parts: Part[],
   notices: string[],
+  sentinels: Set<FigmaType>,
 ): FigmaCollection {
   const modes: string[] = [];
   const modeSources: FigmaCollection['modeSources'] = {};
@@ -181,15 +197,28 @@ function mergeCollection(
     }
   }
 
-  // Variables a composition doesn't have: its modes stay empty, said once per composition.
+  // Variables a composition doesn't have: its modes alias the "not available" sentinel of the
+  // variable's type — never left blank for the design tool to fill — said once per composition.
   for (const { composition, collection } of parts) {
     const has = new Set(collection.variables.map((v) => v.name));
     const missing = order.filter((varName) => !has.has(varName));
-    if (missing.length > 0) {
-      notices.push(
-        `collection '${name}': ${missing.length} variable(s) have no value in '${composition}' (${listed(missing)})`,
-      );
+    if (missing.length === 0) continue;
+    const modesOf = [...(modeMap.get(composition)?.values() ?? [])];
+    for (const varName of missing) {
+      const variable = byName.get(varName) as FigmaVariable;
+      for (const mode of modesOf) {
+        if (variable.valuesByMode[mode] !== undefined) continue;
+        if (variable.alias?.[mode] !== undefined) continue;
+        variable.alias = {
+          ...variable.alias,
+          [mode]: sentinelName(variable.type),
+        };
+        sentinels.add(variable.type);
+      }
     }
+    notices.push(
+      `collection '${name}': ${missing.length} variable(s) have no value in '${composition}' — aliased to ${NOT_AVAILABLE} (${listed(missing)})`,
+    );
   }
 
   return {
@@ -291,6 +320,7 @@ export function mergeModels(
     if (entry.deps) depsOf.set(entry.composition, entry.deps);
   }
 
+  const sentinels = new Set<FigmaType>();
   const names: string[] = [];
   for (const { model: each } of built) {
     for (const collection of each.collections) {
@@ -321,8 +351,30 @@ export function mergeModels(
     );
     // The whole point: identical collections are left exactly as they are.
     model.collections.push(
-      identical ? first.collection : mergeCollection(name, parts, notices),
+      identical
+        ? first.collection
+        : mergeCollection(name, parts, notices, sentinels),
     );
+  }
+
+  if (sentinels.size > 0) {
+    // Emitted only for the types actually used; the marker names them for consumers.
+    const types = [...sentinels].sort();
+    model.collections.push({
+      name: NOT_AVAILABLE,
+      modes: ['default'],
+      variables: types.map((type) => ({
+        name: sentinelName(type),
+        type,
+        valuesByMode: { default: SENTINEL_VALUE[type] },
+        scopes: [],
+        codeSyntax: {},
+      })),
+    });
+    model.source.notAvailable = {
+      collection: NOT_AVAILABLE,
+      variables: Object.fromEntries(types.map((t) => [t, sentinelName(t)])),
+    };
   }
 
   model.styles = mergeStyles(built, notices, depsOf);

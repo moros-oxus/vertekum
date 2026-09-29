@@ -7,6 +7,7 @@ import {
 import { expect, test } from 'vitest';
 import { figmaExporter } from './figma';
 import type { FigmaModel } from './model';
+import MODEL_SCHEMA from './model.schema.json';
 
 /**
  * The model's STRUCTURE comes from the resolvers — which file defines a path, which resolver entry
@@ -212,4 +213,61 @@ test('a style member authored as a reference carries the VALUE, and the binding'
   expect(body?.properties.find((p) => p.property === 'font-size')?.value).toBe(
     '8px',
   );
+});
+
+test('a variable one brand lacks aliases NOT_AVAILABLE of its type in that brand’s modes', async () => {
+  const m = await model(
+    collection((files) => {
+      const a = files['brand-a/light.json'] as Record<string, unknown>;
+      a.teal = color(190); // brand-a only
+      a.gutter = { $type: 'dimension', $value: { value: 12, unit: 'px' } };
+    }),
+  );
+  const palette = m.collections.find((c) => c.name === 'palette');
+  const teal = palette?.variables.find((v) => v.name === 'teal');
+  const gutter = palette?.variables.find((v) => v.name === 'gutter');
+  // brand-a keeps its value; brand-b's mode aliases the sentinel of the variable's type.
+  expect(teal?.valuesByMode['brand-a']).toBeDefined();
+  expect(teal?.alias).toEqual({ 'brand-b': 'NOT_AVAILABLE/COLOR' });
+  expect(teal?.sources).toEqual({ 'brand-a': 'brand-a/light' });
+  expect(gutter?.alias).toEqual({ 'brand-b': 'NOT_AVAILABLE/FLOAT' });
+
+  // The sentinels exist — only the types used — and the marker names them.
+  const sentinel = m.collections.find((c) => c.name === 'NOT_AVAILABLE');
+  expect(sentinel?.modes).toEqual(['default']);
+  expect(
+    sentinel?.variables.map((v) => [v.name, v.valuesByMode.default]),
+  ).toEqual([
+    ['NOT_AVAILABLE/COLOR', { r: 1, g: 0, b: 1, a: 1 }],
+    ['NOT_AVAILABLE/FLOAT', 0],
+  ]);
+  expect(m.source.notAvailable).toEqual({
+    collection: 'NOT_AVAILABLE',
+    variables: {
+      COLOR: 'NOT_AVAILABLE/COLOR',
+      FLOAT: 'NOT_AVAILABLE/FLOAT',
+    },
+  });
+  expect(m.source.notices.join(' ')).toMatch(
+    /2 variable\(s\) have no value in 'brand-b' — aliased to NOT_AVAILABLE/,
+  );
+
+  // Still a valid model.
+  const AjvModule = await import('ajv/dist/2020.js');
+  const Ajv = (AjvModule.default ?? AjvModule) as unknown as new (
+    options: object,
+  ) => {
+    compile(
+      schema: object,
+    ): ((data: unknown) => boolean) & { errors?: unknown };
+  };
+  const validate = new Ajv({ strict: false }).compile(MODEL_SCHEMA);
+  validate(m);
+  expect(validate.errors ?? null).toBeNull();
+});
+
+test('no absences, no sentinels: no NOT_AVAILABLE collection and no marker', async () => {
+  const m = await model(collection());
+  expect(m.collections.some((c) => c.name === 'NOT_AVAILABLE')).toBe(false);
+  expect(m.source.notAvailable).toBeUndefined();
 });

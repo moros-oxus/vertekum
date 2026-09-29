@@ -7,8 +7,18 @@
   --accent-500: var(--color-brand-500);
   --accent-700: var(--color-brand-700);
   --action-background: var(--accent-700);
+  --anchor-berry: oklch(52% 0.18 350);
   --anchor-brand: oklch(55% 0.2 265);
   --anchor-neutral: oklch(55% 0.02 250);
+  --color-berry-100: oklch(95.8% 0.0245 350);
+  --color-berry-200: oklch(87.2% 0.0751 350);
+  --color-berry-300: oklch(78.6% 0.1055 350);
+  --color-berry-400: oklch(70% 0.1319 350);
+  --color-berry-500: oklch(61.4% 0.1558 350);
+  --color-berry-600: var(--anchor-berry);
+  --color-berry-700: oklch(44.2% 0.1567 350);
+  --color-berry-800: oklch(35.6% 0.1304 350);
+  --color-berry-900: oklch(27% 0.1031 350);
   --color-brand-100: oklch(95.8% 0.0197 265);
   --color-brand-200: oklch(87.2% 0.0622 265);
   --color-brand-300: oklch(78.6% 0.1077 265);

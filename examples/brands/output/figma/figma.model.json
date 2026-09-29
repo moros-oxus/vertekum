@@ -1,5 +1,5 @@
 {
-  "version": "draft.03",
+  "version": "draft.04",
   "source": {
     "target": "figma",
     "compositions": [
@@ -8,9 +8,16 @@
     ],
     "generator": "@vertekum/ext-export-figma",
     "notices": [
+      "collection 'palette': 10 variable(s) have no value in 'globex' — aliased to NOT_AVAILABLE (anchor/berry, color/berry/100, color/berry/200, color/berry/300, color/berry/400 +5 more)",
       "'globex' has no 'sub-theme' context 'vivid' — no mode emitted for it"
     ],
-    "fingerprint": "sha256:df2ebd8cfcfcd53755f73e8dcfb7d0d14319b30c376fb88ad9f2eb7713335ee7"
+    "notAvailable": {
+      "collection": "NOT_AVAILABLE",
+      "variables": {
+        "COLOR": "NOT_AVAILABLE/COLOR"
+      }
+    },
+    "fingerprint": "sha256:d02f556b7fa8e073050fe6828253566a28b367be435f7cac185504d99ed89321"
   },
   "collections": [
     {
@@ -174,6 +181,38 @@
           "sources": {
             "acme": "acme/palette",
             "globex": "globex/palette"
+          }
+        },
+        {
+          "name": "anchor/berry",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.684,
+              "g": 0.174,
+              "b": 0.4675,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.52,
+                0.18,
+                350
+              ],
+              "alpha": 1
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
           }
         },
         {
@@ -831,6 +870,295 @@
             "acme": "acme/palette",
             "globex": "globex/palette"
           }
+        },
+        {
+          "name": "color/berry/100",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 1,
+              "g": 0.9208,
+              "b": 0.9543,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.958,
+                0.0245,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#FFEBF3"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
+        },
+        {
+          "name": "color/berry/200",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.9888,
+              "g": 0.7578,
+              "b": 0.8619,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.872,
+                0.0751,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#FCC1DC"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
+        },
+        {
+          "name": "color/berry/300",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.929,
+              "g": 0.6162,
+              "b": 0.7637,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.786,
+                0.1055,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#ED9DC3"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
+        },
+        {
+          "name": "color/berry/400",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.8574,
+              "g": 0.4788,
+              "b": 0.6662,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.7,
+                0.1319,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#DB7AAA"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
+        },
+        {
+          "name": "color/berry/500",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.7778,
+              "g": 0.3409,
+              "b": 0.5702,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.614,
+                0.1558,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#C65791"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
+        },
+        {
+          "name": "color/berry/600",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.684,
+              "g": 0.174,
+              "b": 0.4675,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": "{anchor.berry}"
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "alias": {
+            "acme": "anchor/berry",
+            "globex": "NOT_AVAILABLE/COLOR"
+          },
+          "sources": {
+            "acme": "acme/palette"
+          }
+        },
+        {
+          "name": "color/berry/700",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.5526,
+              "g": 0.1225,
+              "b": 0.3725,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.442,
+                0.1567,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#8D1F5F"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
+        },
+        {
+          "name": "color/berry/800",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.4133,
+              "g": 0.0693,
+              "b": 0.2723,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.356,
+                0.1304,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#691245"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
+        },
+        {
+          "name": "color/berry/900",
+          "type": "COLOR",
+          "valuesByMode": {
+            "acme": {
+              "r": 0.2809,
+              "g": 0.0232,
+              "b": 0.1777,
+              "a": 1
+            }
+          },
+          "source": {
+            "$type": "color",
+            "$value": {
+              "colorSpace": "oklch",
+              "components": [
+                0.27,
+                0.1031,
+                350
+              ],
+              "alpha": 1,
+              "hex": "#48062D"
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {},
+          "sources": {
+            "acme": "acme/palette"
+          },
+          "alias": {
+            "globex": "NOT_AVAILABLE/COLOR"
+          }
         }
       ],
       "modeSources": {
@@ -1088,6 +1416,28 @@
             "light": "scheme/light",
             "dark": "scheme/dark"
           }
+        }
+      ]
+    },
+    {
+      "name": "NOT_AVAILABLE",
+      "modes": [
+        "default"
+      ],
+      "variables": [
+        {
+          "name": "NOT_AVAILABLE/COLOR",
+          "type": "COLOR",
+          "valuesByMode": {
+            "default": {
+              "r": 1,
+              "g": 0,
+              "b": 1,
+              "a": 1
+            }
+          },
+          "scopes": [],
+          "codeSyntax": {}
         }
       ]
     }

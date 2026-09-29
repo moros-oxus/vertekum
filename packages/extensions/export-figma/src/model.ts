@@ -26,7 +26,7 @@ import {
  * The schema is closed, so ANY shape change — an added optional field included — takes a new
  * version, spent when a package releases it.
  */
-export const MODEL_VERSION = 'draft.03';
+export const MODEL_VERSION = 'draft.04';
 
 export type FigmaType = 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN';
 
@@ -91,6 +91,16 @@ export interface FigmaModel {
      * block — so two models compare equal exactly when a design file would hold the same thing.
      */
     fingerprint?: string;
+    /**
+     * The "not available" sentinels, when the model has any: a merged collection's variable that
+     * a composition lacks aliases, in that composition's modes, the sentinel of its type — a
+     * visible marker instead of a blank, and a signal for write-back (still aliased = no token for
+     * that composition; changed = a new one). Named here so a consumer never parses names.
+     */
+    notAvailable?: {
+      collection: string;
+      variables: Partial<Record<FigmaType, string>>;
+    };
   };
   collections: FigmaCollection[];
   styles: FigmaStyle[];

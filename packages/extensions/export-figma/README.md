@@ -44,7 +44,7 @@ vocabulary:
 
 The model's `version` names its **contract** — the shape `model.schema.json`
 accepts — not a package release and not the tokens it holds. While the shape is
-still settling, the version is a draft (`draft.01` … `draft.03`); once the shape
+still settling, the version is a draft (`draft.01` … `draft.04`); once the shape
 is declared stable, it takes a calendar version (`YYYY.MM`). The schema is closed,
 so any change to the shape — an added optional field included — takes a new
 version, and many package releases can share one. Readers should refuse a version
@@ -79,6 +79,25 @@ never from what the values happen to be today:
   modes.
 - Styles carry no modes in Figma, so a style whose files differ is emitted once per
   composition (`acme/typography/body`); otherwise it stays shared.
+
+### Not available
+
+A merged collection can hold a variable one composition doesn't have — a colour only one brand
+uses. Its modes for that composition are never left blank (a design tool fills a blank with
+something arbitrary): they alias a **"not available" sentinel** of the variable's type, in its own
+single-mode collection:
+
+| Variable | Value |
+| --- | --- |
+| `NOT_AVAILABLE/COLOR` | magenta `#FF00FF` |
+| `NOT_AVAILABLE/FLOAT` | `0` |
+| `NOT_AVAILABLE/STRING` | `"NOT_AVAILABLE"` |
+| `NOT_AVAILABLE/BOOLEAN` | `false` |
+
+Only the types actually needed are emitted, and `source.notAvailable` names them, so a consumer
+recognises a sentinel without parsing names. A mode that still aliases it has no token behind it;
+a mode someone changed away from it is a value for that composition. The sentinels exist only in
+this model — no token is created, and no other output changes.
 
 Every absence or collision is recorded in `source.notices`; nothing is invented.
 Each merged collection carries `modeSources`, mapping every mode to the composition

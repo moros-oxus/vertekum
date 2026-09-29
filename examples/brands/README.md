@@ -34,6 +34,10 @@ pnpm build   # output/css/{acme,globex}/*.css and output/figma/figma.model.json
   brand's anchor or a scheme step and the collections, modes and variables stay where they are —
   only the model's `fingerprint` changes. A design file bound to it never has to rebind.
 
+A colour only one brand has — acme's `berry` ramp — still lands in the shared `palette`
+collection; globex's mode for it aliases `NOT_AVAILABLE/COLOR` (magenta), a Figma-only sentinel
+that says "no token here" instead of leaving a blank for Figma to fill.
+
 Every context references its own file (no empty default context), so the structure is legible
 from the resolvers alone. `globex` has one sub-theme; `check` notes the single-context modifier,
 and the model says it emitted no `globex/vivid` mode rather than inventing one.
