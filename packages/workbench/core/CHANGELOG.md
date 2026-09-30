@@ -1,5 +1,16 @@
 # @vertekum/core
 
+## 0.11.0
+
+### Minor Changes
+
+- [`96388e3`](https://github.com/moros-oxus/vertekum/commit/96388e3570464734ea7d1001b0ead03c628dba12) Thanks [@tschemmer](https://github.com/tschemmer)! - A group codec's stops now generate beside authored children: a real child of the carrier group overrides the generated token it names instead of switching the whole group off, and `token set` on a generated token writes that override (`token remove` on it brings the generated token back).
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.11.0
+
 ## 0.10.0
 
 ### Patch Changes
