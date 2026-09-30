@@ -1,5 +1,16 @@
 # @vertekum/ext-token-ramp
 
+## 0.11.0
+
+### Minor Changes
+
+- [`96388e3`](https://github.com/moros-oxus/vertekum/commit/96388e3570464734ea7d1001b0ead03c628dba12) Thanks [@tschemmer](https://github.com/tschemmer)! - Ramp stops can be overridden: a hand-written stop replaces only itself while the rest keep generating. `ramp build` marks the stops it writes (`"org.vertekum.generate/ramp": "committed"`) and keeps overrides; `--check` ignores them; `data.ramps` reports effective stops and an `overridden` list; `ramp/unknown-stop` warns about a child that names no step. A ramp committed by an earlier version has unmarked stops, which now read as overrides — delete them and run `ramp build` again.
+
+### Patch Changes
+
+- Updated dependencies [[`96388e3`](https://github.com/moros-oxus/vertekum/commit/96388e3570464734ea7d1001b0ead03c628dba12)]:
+  - @vertekum/core@0.11.0
+
 ## 0.10.0
 
 ### Minor Changes
