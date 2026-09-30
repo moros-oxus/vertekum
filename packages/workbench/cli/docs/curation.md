@@ -63,6 +63,12 @@ beneath the path moves, not a formality. The summary reports both counts:
 renamed color.grey → color.gray: 12 token(s), 7 reference(s)
 ```
 
+A **generated** token (a ramp stop, produced by an extension payload on its group) has
+no node of its own. `token set` on one writes an **override** — a real token at that
+path, which replaces the generated one while its siblings keep generating — and
+`token remove` on the override brings the generated token back. `token add`, `remove`,
+`move` and `rename` refuse a generated token and name those two routes instead.
+
 ## `group` verbs
 
 | Verb                  | Does                                        | Flags                                                        |

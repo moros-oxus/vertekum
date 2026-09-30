@@ -78,14 +78,16 @@ function keptExtensions(ext: unknown, claimed?: string): DtcgNode | undefined {
  * type down; a token's own `$type` always wins.
  */
 /**
- * The carrier rule (extension-held token data): a node that is not a token, has no non-`$`
- * children, and whose `$extensions` carries exactly ONE registered codec key, is a carrier.
- * `$root` is permitted for GROUP codecs — the root token is the group's own value and parses as
- * usual, with the generated children appearing beside it (a ramp group whose anchor swatch is its
- * `$root`) — but declines VALUE codecs, whose node must itself become a token. Anything else —
- * children present, `$value` beside the key, two registered keys — is left as authored: the
- * payload is inert group data there, and the malformed-carrier diagnostic belongs to the owning
- * extension's schema binding, which can say WHY, not to a silent parse rule.
+ * The carrier rule (extension-held token data): a node that is not a token and whose
+ * `$extensions` carries exactly ONE registered codec key, is a carrier.
+ *
+ * A VALUE codec's node must itself become a token, so it declines any child, `$root` included.
+ * A GROUP codec's node stays a group and keeps what the author put in it: `$root` is the group's
+ * own value, and a real child is an OVERRIDE — generation happens first, and an authored child
+ * replaces the generated one it names (a hand-tuned ramp stop). Anything else — `$value` beside
+ * the key, two registered keys — is left as authored: the payload is inert data there, and the
+ * malformed-carrier diagnostic belongs to the owning extension's schema binding, which can say
+ * WHY, not to a silent parse rule.
  */
 function carrierOf(
   node: DtcgNode,
@@ -93,13 +95,14 @@ function carrierOf(
 ): { codec: TokenCodec; payload: unknown } | null {
   const ext = node.$extensions;
   if (!ext || typeof ext !== 'object') return null;
-  for (const key of Object.keys(node)) {
-    if (!key.startsWith('$')) return null;
-  }
   const matches = codecs.filter((codec) => codec.key in (ext as DtcgNode));
   if (matches.length !== 1) return null;
   const codec = matches[0] as TokenCodec;
-  if (!isGroupCodec(codec) && ROOT_TOKEN in node) return null;
+  if (!isGroupCodec(codec)) {
+    for (const key of Object.keys(node)) {
+      if (!key.startsWith('$') || key === ROOT_TOKEN) return null;
+    }
+  }
   return { codec, payload: (ext as DtcgNode)[codec.key] };
 }
 
@@ -108,6 +111,8 @@ interface PendingExpansion {
   payload: unknown;
   set: string;
   path: string[];
+  /** The carrier's authored child names — each overrides the generated child it names. */
+  authored: Set<string>;
 }
 
 function walk(
@@ -148,25 +153,19 @@ function walk(
   const carrier = path.length > 0 ? carrierOf(node, codecs) : null;
   if (carrier && isGroupCodec(carrier.codec)) {
     // Group carriers expand AFTER the whole collection is walked, so an anchor can reference a
-    // real token anywhere in it (two-pass parse). A `$root` token on the carrier still parses —
-    // it is the group's own value, not a generated child.
-    pending.push({ codec: carrier.codec, payload: carrier.payload, set, path });
-    const root = node[ROOT_TOKEN];
-    if (root && typeof root === 'object') {
-      const groupType = typeof node.$type === 'string' ? node.$type : inherited;
-      walk(
-        root as DtcgNode,
-        [...path, ROOT_TOKEN],
-        out,
-        set,
-        codecs,
-        pending,
-        groupType,
-      );
-    }
-    return;
-  }
-  if (carrier && !isGroupCodec(carrier.codec)) {
+    // real token anywhere in it (two-pass parse). Everything authored in the carrier still parses,
+    // through the ordinary group walk below: `$root` is the group's own value, and a real child
+    // overrides the generated one it names.
+    pending.push({
+      codec: carrier.codec,
+      payload: carrier.payload,
+      set,
+      path,
+      authored: new Set(
+        Object.keys(node).filter((key) => !key.startsWith('$')),
+      ),
+    });
+  } else if (carrier && !isGroupCodec(carrier.codec)) {
     const fields = carrier.codec.materialize(carrier.payload, { set, path });
     if (fields) {
       const ext = node.$extensions as DtcgNode;
@@ -289,6 +288,7 @@ export function parseCollection(
       if (!children) continue;
       for (const [name, fields] of Object.entries(children)) {
         if (name === ROOT_TOKEN) continue; // the group's own value is never a generated child
+        if (expansion.authored.has(name)) continue; // generation first, authored wins
         const path = [...expansion.path, name];
         out.push({
           id: tokenId(expansion.set, path),

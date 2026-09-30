@@ -15,6 +15,7 @@ import {
 import { rampBuildCommand } from './cli';
 import type { RampSettingsType, tokenRampManifest } from './index';
 import {
+  COMMITTED,
   computeRamp,
   DEFAULT_PHYSICS,
   parseScalar,
@@ -64,24 +65,39 @@ function physicsFrom(settings: RampSettingsType | undefined): RampConfig {
   };
 }
 
-/** Every group node carrying a ramp payload: `[path, payload, hasChildren]`. */
-export function rampCarriers(
-  files: Record<string, DtcgNode>,
-): Array<{ set: string; path: string[]; payload: unknown; children: boolean }> {
-  const out: Array<{
-    set: string;
-    path: string[];
-    payload: unknown;
-    children: boolean;
-  }> = [];
+/**
+ * A group carrying a ramp payload, and its real children split by who wrote them: `committed` —
+ * stops `ramp build` wrote (marked) — and `overrides` — everything the author wrote (unmarked).
+ */
+export interface RampCarrier {
+  set: string;
+  path: string[];
+  payload: unknown;
+  committed: string[];
+  overrides: string[];
+}
+
+/** True when a child node carries the mark `ramp build` puts on the stops it writes. */
+export function isCommitted(node: unknown): boolean {
+  const ext = (node as DtcgNode | undefined)?.$extensions as
+    | DtcgNode
+    | undefined;
+  return ext?.[RAMP_KEY] === COMMITTED;
+}
+
+/** Every group node carrying a ramp payload. */
+export function rampCarriers(files: Record<string, DtcgNode>): RampCarrier[] {
+  const out: RampCarrier[] = [];
   const walk = (node: DtcgNode, set: string, path: string[]): void => {
     const ext = node.$extensions as DtcgNode | undefined;
-    if (ext && RAMP_KEY in ext && !('$value' in node)) {
+    if (ext && RAMP_KEY in ext && !('$value' in node) && !('$ref' in node)) {
+      const children = Object.keys(node).filter((key) => !key.startsWith('$'));
       out.push({
         set,
         path,
         payload: ext[RAMP_KEY],
-        children: Object.keys(node).some((key) => !key.startsWith('$')),
+        committed: children.filter((key) => isCommitted(node[key])),
+        overrides: children.filter((key) => !isCommitted(node[key])),
       });
     }
     for (const [key, child] of Object.entries(node)) {
@@ -133,10 +149,23 @@ const PAYLOAD_SCHEMA = {
         { not: { type: 'object' } },
         {
           type: 'object',
-          properties: {
-            $extensions: {
-              type: 'object',
-              properties: { [RAMP_KEY]: { $ref: '#/$defs/payload' } },
+          // On a token the key is the committed-stop mark; on a group it is the payload.
+          if: { anyOf: [{ required: ['$value'] }, { required: ['$ref'] }] },
+          // biome-ignore lint/suspicious/noThenProperty: JSON Schema's if/then keyword, not a thenable
+          then: {
+            properties: {
+              $extensions: {
+                type: 'object',
+                properties: { [RAMP_KEY]: { const: COMMITTED } },
+              },
+            },
+          },
+          else: {
+            properties: {
+              $extensions: {
+                type: 'object',
+                properties: { [RAMP_KEY]: { $ref: '#/$defs/payload' } },
+              },
             },
           },
           additionalProperties: { $ref: '#/$defs/node' },
@@ -148,9 +177,9 @@ const PAYLOAD_SCHEMA = {
 };
 
 /**
- * Headless activation: the group codec (virtual ramps), the payload schema, a payload validator
- * (a virtual ramp that cannot compute must be LOUD in `check`, not silently absent), and the
- * `ramp build` command (committed ramps).
+ * Headless activation: the group codec (virtual stops — core lets an authored child override the
+ * one it names), the payload schema, a payload validator (a virtual ramp that cannot compute must
+ * be LOUD in `check`, not silently absent), and the `ramp build` command (committed stops).
  */
 export function activate(ctx: ActivateContext<typeof tokenRampManifest>): void {
   const settings = (): RampConfig =>
@@ -209,6 +238,18 @@ export function activate(ctx: ActivateContext<typeof tokenRampManifest>): void {
             file,
           });
           continue;
+        }
+        // An authored child that names no step overrides nothing — most often a typo, which
+        // would otherwise pass as one more token.
+        for (const name of carrier.overrides) {
+          if (scale.names.includes(name)) continue;
+          out.push({
+            code: 'ramp/unknown-stop',
+            severity: 'warning',
+            message: `'${where}.${name}' is not a step of '${carrier.payload.scalar}' — it overrides nothing`,
+            source: 'ext-token-ramp',
+            file,
+          });
         }
         const physics = physicsFor(settings(), carrier.payload);
         if ('error' in physics) {

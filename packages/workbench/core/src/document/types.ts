@@ -53,8 +53,9 @@ export interface Token {
   codecSource?: unknown;
   /**
    * True for a token a GROUP codec generated (one payload → many tokens). A view, not storage:
-   * no file node exists at its path, the store never writes it, and the curation verbs refuse to
-   * mutate it — the group's payload is the single source.
+   * no file node exists at its path and the store never writes it. The group's payload is its
+   * source; `token set` writes an authored override in its place, and the other curation verbs
+   * refuse it.
    */
   generated?: true;
 }

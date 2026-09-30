@@ -25,6 +25,13 @@ import { clampChroma, formatHex, oklch, parse as parseColor } from 'culori';
 export const RAMP_KEY = 'org.vertekum.generate/ramp';
 
 /**
+ * The mark `ramp build` puts on every stop it writes (`$extensions[RAMP_KEY]` on the stop). On disk
+ * a committed stop and an authored override are both real children; the mark is how a later build
+ * knows which ones it owns. An unmarked child is an override.
+ */
+export const COMMITTED = 'committed';
+
+/**
  * The gamut a computed stop is mapped into.
  *
  * `'none'` stores the arch's own chroma whatever it lands on — the behaviour before mapping

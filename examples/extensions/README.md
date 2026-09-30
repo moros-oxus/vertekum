@@ -84,10 +84,10 @@ document:
 `org.vertekum.generate/ramp` payload (`@vertekum/ext-token-ramp`): an anchor
 referencing `{brand.accent}` and a scalar naming the steps. The stops are
 **generated** into the model — aliasable, validated, exported to css — while the
-file stores only the payload. Editing a stop directly is refused;
-`vertekum ramp build` writes them as real tokens instead, and
-`ramp build --check` guards the committed form. The extension's docs walk the
-colour math.
+file stores only the payload. Writing a stop by hand (or `token set` on one)
+overrides just that stop — the rest keep generating; `vertekum ramp build` writes
+them all as real tokens instead, and `ramp build --check` guards the committed
+form. The extension's docs walk the colour math.
 
 ## The dialect, stated plainly
 

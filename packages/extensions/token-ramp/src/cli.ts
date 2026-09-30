@@ -4,15 +4,22 @@ import {
   type DtcgNode,
   restoreFiles,
 } from '@vertekum/core';
-import { followAliases, rampCarriers } from './api';
-import { computeRamp, type RampConfig, type RampPayload } from './ramp';
+import { followAliases, type RampCarrier, rampCarriers } from './api';
+import {
+  COMMITTED,
+  computeRamp,
+  RAMP_KEY,
+  type RampConfig,
+  type RampPayload,
+} from './ramp';
 
 /**
  * `vertekum ramp build [--check]` — the COMMITTED mode. Writes each ramp's computed stops as
- * real tokens under its group (regenerating existing children); the payload remains the single
- * source of truth. `--check` compares committed groups against a fresh computation and fails on
- * staleness — the CI guard. Virtual (childless) groups are the codec's business and are left
- * alone by `--check`.
+ * real tokens under its group, each MARKED as committed, so a later build knows which children it
+ * owns: it rewrites marked stops and never touches an unmarked child (an authored override) or
+ * `$root`. `--check` compares the marked stops against a fresh computation and fails on
+ * staleness — the CI guard. Overrides are never stale, and a step with no child is virtual —
+ * served by the codec.
  *
  * The handler edits the raw trees (the file is the model) and applies them as one undoable
  * command; the runner owns persistence, `--dry-run`, `--json`, and refuses a change that would
@@ -43,12 +50,7 @@ export function rampBuildCommand(
         throw new Error('no ramp payloads in the collection');
       }
 
-      const computed: Array<{
-        set: string;
-        path: string[];
-        children: boolean;
-        stops: Record<string, unknown>;
-      }> = [];
+      const computed: Computed[] = [];
       for (const carrier of carriers) {
         const payload = carrier.payload as RampPayload;
         const ramp = computeRamp(
@@ -65,9 +67,10 @@ export function rampBuildCommand(
       if (ctx.options.check === true) {
         const stale: string[] = [];
         for (const ramp of computed) {
-          if (!ramp.children) continue; // virtual — served by the codec, nothing committed
           const node = nodeAt(files, ramp.set, ramp.path);
-          for (const [name, stop] of Object.entries(ramp.stops)) {
+          for (const name of ramp.committed) {
+            if (!(name in ramp.stops)) continue; // a step the scalar no longer names
+            const stop = ramp.stops[name];
             const child = node?.[name] as DtcgNode | undefined;
             if (
               child?.$type !== 'color' ||
@@ -82,58 +85,77 @@ export function rampBuildCommand(
             `stale ramp stop(s): ${stale.join(', ')} — run 'ramp build'`,
           );
         }
-        const committed = computed.filter((r) => r.children).length;
+        const committed = computed.filter((r) => r.committed.length > 0).length;
         return {
           summary: `${committed} committed ramp(s) fresh, ${computed.length - committed} virtual`,
-          data: { ramps: rampData(computed) },
+          data: { ramps: rampData(computed, files) },
         };
       }
 
       const next = structuredClone(files);
       let stops = 0;
+      let kept = 0;
       for (const ramp of computed) {
         const node = nodeAt(next, ramp.set, ramp.path);
         if (!node) continue;
-        for (const key of Object.keys(node)) {
-          if (!key.startsWith('$')) delete node[key];
-        }
+        for (const name of ramp.committed) delete node[name];
         for (const [name, stop] of Object.entries(ramp.stops)) {
-          node[name] = { $type: 'color', $value: stop };
+          if (ramp.overrides.includes(name)) {
+            kept++;
+            continue;
+          }
+          node[name] = {
+            $type: 'color',
+            $value: stop,
+            $extensions: { [RAMP_KEY]: COMMITTED },
+          };
           stops++;
         }
       }
       document.apply(restoreFiles(next));
       return {
-        summary: `built ${computed.length} ramp(s), ${stops} stop(s)`,
-        data: { ramps: rampData(computed) },
+        summary: `built ${computed.length} ramp(s), ${stops} stop(s)${
+          kept > 0 ? `, ${kept} override(s) kept` : ''
+        }`,
+        data: { ramps: rampData(computed, next) },
       };
     },
   };
 }
 
+type Computed = RampCarrier & { stops: Record<string, unknown> };
+
 /**
- * The machine-readable result both modes emit under `--json`: every ramp's computed stops. A
- * first-class value source — documentation pipelines read this instead of parsing CSS.
+ * The machine-readable result both modes emit under `--json`: every ramp's EFFECTIVE stops — an
+ * override's value where the author wrote one, the file's value for a committed stop, else the
+ * computed one — and which steps are overridden. A first-class value source: documentation
+ * pipelines read this instead of parsing CSS.
  */
 function rampData(
-  computed: Array<{
-    set: string;
-    path: string[];
-    children: boolean;
-    stops: Record<string, unknown>;
-  }>,
+  computed: Computed[],
+  files: Record<string, DtcgNode>,
 ): Array<{
   set: string;
   path: string;
   committed: boolean;
+  overridden: string[];
   stops: Record<string, unknown>;
 }> {
-  return computed.map((ramp) => ({
-    set: ramp.set,
-    path: ramp.path.join('.'),
-    committed: ramp.children,
-    stops: ramp.stops,
-  }));
+  return computed.map((ramp) => {
+    const node = nodeAt(files, ramp.set, ramp.path);
+    const stops: Record<string, unknown> = {};
+    for (const [name, stop] of Object.entries(ramp.stops)) {
+      const child = node?.[name] as DtcgNode | undefined;
+      stops[name] = child && '$value' in child ? child.$value : stop;
+    }
+    return {
+      set: ramp.set,
+      path: ramp.path.join('.'),
+      committed: ramp.committed.length > 0,
+      overridden: ramp.overrides.filter((name) => name in ramp.stops),
+      stops,
+    };
+  });
 }
 
 function nodeAt(

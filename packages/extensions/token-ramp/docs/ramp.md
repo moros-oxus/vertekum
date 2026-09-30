@@ -112,13 +112,25 @@ overrides — with ladder tables merging by step key. The selected profile is th
 payload's `profile`, else `defaultProfile`, else none; an unknown name is an error
 that lists the defined profiles, never a silent fallback.
 
-## Virtual and committed
+## Virtual, overridden, committed
 
 A ramp group with no children is **virtual**: the stops exist in the model — for
 aliases, validation, and export — but are written nowhere; the payload is the only
-storage, and editing a stop directly is refused. `vertekum ramp build` **commits**
-them as real tokens (a group with children is never expanded twice), and
-`ramp build --check` fails when committed stops no longer match their payload — the
-CI guard for a moved anchor. Under `--json`, both modes emit every computed stop as
-`data.ramps` — the machine-readable value source. A ramp group may also carry its
-own `$root` token; it parses as the group's value beside the generated stops.
+storage.
+
+Generation comes first, and what is written wins. A real child of the group
+**overrides** the stop it names — a hand-tuned value where the arithmetic falls short
+— and every other stop still generates. An override is a fixed value: it takes no
+part in the calculation (the other stops still arch through the anchor alone) and
+does not follow the anchor when it moves. `token set` on a virtual stop writes an
+override; removing the override brings the computed stop back. Overriding the
+anchor's own step replaces it like any other.
+
+`vertekum ramp build` **commits** the stops as real tokens, each marked
+`"org.vertekum.generate/ramp": "committed"`. The mark is how a later build tells its
+own stops from overrides: it rewrites marked stops and leaves every unmarked child
+alone. `ramp build --check` fails when a marked stop no longer matches its payload —
+the CI guard for a moved anchor; overrides are never stale. Under `--json`, both
+modes emit every ramp as `data.ramps` — its effective stops and the overridden steps,
+the machine-readable value source. A ramp group may also carry its own `$root` token;
+it parses as the group's value beside the generated stops.

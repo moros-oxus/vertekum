@@ -54,12 +54,13 @@ export interface ValueTokenCodec {
 
 /**
  * A group codec: one carrier group → MANY generated child tokens (a colour ramp from an anchor,
- * a scale from a formula). The carrier rule is unchanged — a LEAF group carrying the key — which
- * is also what lets virtual and committed modes coexist without a flag: a group holding real
- * children never expands, so its payload is inert data a build command reads.
+ * a scale from a formula). Generation happens first, and a real child authored in the carrier
+ * replaces the generated child it names — an override. So a group may mix generated and authored
+ * children freely; a build command that writes generated children to disk tells its own apart
+ * from overrides by a mark of its own.
  *
- * Generated tokens are views, not storage: they carry `generated: true`, the curation verbs
- * refuse to mutate them, and the store never writes them — the payload is the single source.
+ * Generated tokens are views, not storage: they carry `generated: true` and the store never writes
+ * them. `token set` on one writes an override; the other curation verbs refuse it.
  */
 export interface GroupTokenCodec {
   /** The `$extensions` key this codec owns. Unique — registering a duplicate throws. */
