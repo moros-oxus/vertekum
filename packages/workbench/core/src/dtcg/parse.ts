@@ -6,6 +6,7 @@ import {
 import { tokenId } from '../document/identity';
 import type { Token } from '../document/types';
 import { materializeTokens } from './materialize';
+import { isPointerObject } from './pointer';
 
 /**
  * Reverse-DNS root for Vertekum's own `$extensions` keys (ADR-0020). Concerns are split by sub-key,
@@ -104,6 +105,13 @@ function carrierOf(
     }
   }
   return { codec, payload: (ext as DtcgNode)[codec.key] };
+}
+
+/** True when a value carries a value-position pointer anywhere inside it. */
+function holdsPointer(value: unknown): boolean {
+  if (isPointerObject(value)) return true;
+  if (!value || typeof value !== 'object') return false;
+  return Object.values(value as Record<string, unknown>).some(holdsPointer);
 }
 
 interface PendingExpansion {
@@ -260,11 +268,13 @@ export function parseCollection(
     const bySetPath = new Map(
       out.map((token) => [`${token.set}\u0000${token.path.join('.')}`, token]),
     );
-    const resolveIn =
+    // The chain's last token, or undefined when it dangles or cycles.
+    const endIn =
       (set: string) =>
-      (value: unknown): unknown => {
+      (value: unknown): { held: unknown; token?: Token } | undefined => {
         const seen = new Set<string>();
         let held = value;
+        let token: Token | undefined;
         while (typeof held === 'string' && /^\{[^}]+\}$/.test(held)) {
           const target = held.slice(1, -1);
           if (seen.has(target)) return undefined;
@@ -272,18 +282,29 @@ export function parseCollection(
           const scoped = [set, ...scopeOf(set)]
             .map((file) => bySetPath.get(`${file}\u0000${target}`))
             .find((found) => found !== undefined);
-          const token = scoped ?? byPath.get(target);
+          token = scoped ?? byPath.get(target);
           if (!token) return undefined;
           held = token.value;
         }
-        return held;
+        return { held, token };
+      };
+    const resolveIn = (set: string) => (value: unknown) =>
+      endIn(set)(value)?.held;
+    const targetIn =
+      (set: string) =>
+      (value: unknown): string[] | undefined => {
+        const token = endIn(set)(value)?.token;
+        if (!token || token.ref !== undefined || holdsPointer(token.value)) {
+          return undefined;
+        }
+        return token.path;
       };
 
     for (const expansion of pending) {
       const children = expansion.codec.expand(
         expansion.payload,
         { set: expansion.set, path: expansion.path },
-        { resolve: resolveIn(expansion.set) },
+        { resolve: resolveIn(expansion.set), target: targetIn(expansion.set) },
       );
       if (!children) continue;
       for (const [name, fields] of Object.entries(children)) {

@@ -30,6 +30,13 @@ export interface GroupCodecContext {
    * group is not addressable from here.
    */
   resolve(value: unknown): unknown;
+  /**
+   * The path of the token at the END of the chain `resolve` follows — the token that holds the
+   * value — when that value is a literal a value-position pointer can address
+   * (`#/<path>/$value/…`). Undefined for a non-reference, a dangling or cyclic chain, a `$ref`
+   * token (it holds no `$value`), or a value built from pointers.
+   */
+  target(value: unknown): string[] | undefined;
 }
 
 /** A value codec: one carrier node ⇄ one token. */

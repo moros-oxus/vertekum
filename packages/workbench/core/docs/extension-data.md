@@ -54,7 +54,11 @@ expands into **generated** child tokens (a colour ramp from an anchor). Generate
 tokens are views, not storage: they carry `generated: true`, no file node exists at
 their paths, and exporters receive them through the interchange form.
 `ctx.resolve(value)` follows alias chains against the parsed collection, so a payload
-may reference a real token (`"{brand.accent}"`).
+may reference a real token (`"{brand.accent}"`). `ctx.target(value)` names the token at
+the END of that chain — the one holding the value — when a value-position pointer can
+address it (`#/<path>/$value/…`), and is undefined for a non-reference, a dangling
+chain, a `$ref` token, or a value built from pointers. A codec uses it to generate
+tokens that borrow part of another token's value instead of copying it.
 
 **Generation first, authored wins.** A real child written in the carrier group is an
 **override**: it parses as an ordinary token and replaces the generated child of the

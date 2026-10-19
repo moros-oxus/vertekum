@@ -124,8 +124,9 @@ The codec seam in API terms — [the reference](./extension-data.md) covers the 
 
 - `TokenCodec` / `TokenCodecService` / `TOKEN_CODEC_SERVICE` — register a VALUE codec
   (`{ key, materialize, serialize }`; carrier ⇄ one token) or a GROUP codec
-  (`{ key, expand }`; leaf carrier group → generated child tokens, refused by the
-  mutation verbs). `token.codec`/`codecSource`/`generated` carry the provenance.
+  (`{ key, expand }`; carrier group → generated child tokens, beside which an
+  authored child overrides the one it names; `token set` on a generated token writes
+  that override, the other mutation verbs refuse it). `token.codec`/`codecSource`/`generated` carry the provenance.
   Registering after `hydrate` refreshes the derived token view
   (`document.invalidateDerived()`) without counting as a mutation.
 - `SchemaBindingService` / `SCHEMA_BINDING_SERVICE` — register a `SchemaBinding`

@@ -3,12 +3,18 @@ import { z } from 'zod';
 import { activate } from './api';
 
 export {
+  type AlphaMode,
+  alphaFor,
   anchorOf,
   computeRamp,
+  DEFAULT_ALPHA,
   DEFAULT_PHYSICS,
+  matchOver,
   parseScalar,
   physicsFor,
   RAMP_KEY,
+  type RampAlpha,
+  type RampAlphaSettings,
   type RampConfig,
   type RampGamut,
   type RampPayload,
@@ -37,10 +43,36 @@ export {
  * Multi-brand systems declare **profiles** — named partials of the same fields — and each ramp
  * payload selects one by name (`"profile": "brand-a"`), or `defaultProfile` routes every silent
  * payload through one. Resolution is per field: defaults ← top-level settings ← profile ←
- * payload overrides, with ladder tables merging by step key.
+ * payload overrides — `alpha` included — with ladder tables (`ladder`, `alpha.ladder`) merging by
+ * step key.
+ *
+ * - `alpha` — defaults for a ramp's translucent twin series (`A100` beside `100`): `mode`
+ *   (`solid`, `anchor`, `match`), `prefix`, and `background` (what `match` composites over).
+ *   Opacity is assigned exactly as lightness is: `alpha.opacity` is the curve (`first`, `last`,
+ *   `ease`) and `alpha.ladder` an explicit `step name → opacity` table that wins where it speaks.
+ *   They never turn the series on: only a payload's `alpha` does.
  *
  * Every field may also be overridden per ramp, inside the ramp's own payload.
  */
+const AlphaSettings = z
+  .object({
+    mode: z.enum(['solid', 'anchor', 'match']).optional(),
+    prefix: z
+      .string()
+      .regex(/^[A-Za-z][A-Za-z0-9-]*$/)
+      .optional(),
+    opacity: z
+      .object({
+        first: z.number().min(0).max(1).optional(),
+        last: z.number().min(0).max(1).optional(),
+        ease: z.number().positive().optional(),
+      })
+      .optional(),
+    ladder: z.record(z.number().min(0).max(1)).optional(),
+    background: z.unknown().optional(),
+  })
+  .optional();
+
 export const RampSettings = z.object({
   lightness: z
     .object({
@@ -67,10 +99,12 @@ export const RampSettings = z.object({
         lightFraction: z.number().positive().max(1).optional(),
         darkExponent: z.number().positive().optional(),
         gamut: z.enum(['srgb', 'display-p3', 'none']).optional(),
+        alpha: AlphaSettings,
       }),
     )
     .optional(),
   defaultProfile: z.string().optional(),
+  alpha: AlphaSettings,
 });
 export type RampSettingsType = z.infer<typeof RampSettings>;
 

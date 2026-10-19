@@ -87,6 +87,47 @@ step 600 (L 0.635, darker):   C = 0.115 × (0.635/0.688)^0.85        = 0.107  �
 step 1000 (L 0.270, darker):  C = 0.115 × (0.270/0.688)^0.85        = 0.052  → #002E2B
 ```
 
+## Alpha stops — a translucent twin
+
+With `alpha` on, every step gets a twin whose name carries a prefix (`A300` beside
+`300`). How the twin is made is the author's choice:
+
+- **`solid`** — the solid stop's colour, at the step's opacity.
+- **`anchor`** — the anchor's colour, at the step's opacity.
+- **`match`** — a colour and an opacity that, laid over a background, reproduce the
+  solid stop exactly.
+
+For `solid` and `anchor`, each twin's opacity is assigned exactly as each step's
+lightness is (§2), with the same two ways:
+
+- **The curve** (default): opacity travels from `alpha.opacity.first` (0.05 — barely
+  there) to `alpha.opacity.last` (0.9 — nearly solid), as
+  `first + (last − first) · t^ease`, where `t` runs evenly from 0 at the first step to
+  1 at the last. `ease: 1` spaces the steps evenly; raise it to keep the first twins
+  faint for longer, lower it to strengthen them sooner.
+- **The ladder**: an explicit `step → opacity` table (`alpha.ladder`), keyed by the
+  plain step name (`'300'`, not `'A300'`). Where the table speaks, it wins, and its
+  values are used as written.
+
+One difference from lightness: there is no anchor exception. The anchor keeps its own
+lightness on the step it lands on, but its twin takes the curve's or the ladder's
+opacity like every other twin.
+
+For `match`, nothing is chosen — everything is solved. Compositing a colour `C` at
+opacity `a` over a background `B` gives `a·C + (1−a)·B` per channel. For that to equal
+the solid stop `T`, each channel needs at least
+
+```
+a ≥ (T − B) / (1 − B)   where T > B   (the stop is lighter than the background)
+a ≥ (B − T) / B         where T < B   (darker)
+```
+
+so the opacity is the largest of the three channels' needs — the most transparent twin
+that can still reach `T` — rounded up, and then `C = B + (T − B) / a`. Browsers
+composite in the colour space's RGB channels, so the twin is stored in the gamut's RGB
+space (`srgb`, or `display-p3`) — converted elsewhere, the equation would no longer
+hold. Pale steps over a white page need little opacity; deep steps need more.
+
 ## Profiles — multi-brand physics
 
 A multi-brand system wants each brand's ladder declared once, not repeated in every
@@ -95,20 +136,28 @@ ramp. **Profiles** are named partials of the settings:
 ```ts
 tokenRampExtension({
   profiles: {
-    brand-a: { ladder: { '100': 0.958, /* … */ '1000': 0.27 } },
-    brand-b:  { lightness: { first: 0.97, last: 0.24, ease: 1.15 } },
+    brand-a: {
+      ladder: { '100': 0.958, /* … */ '1000': 0.27 },
+      alpha: { ladder: { '100': 0.04, /* … */ '1000': 0.88 } },
+    },
+    brand-b: {
+      lightness: { first: 0.97, last: 0.24, ease: 1.15 },
+      alpha: { opacity: { first: 0.06, last: 0.85, ease: 1.3 } },
+    },
   },
   defaultProfile: 'brand-a',
 })
 ```
 
 ```json
-{ "anchor": "{brand.brand-b-rose}", "scalar": "100-1000/100", "profile": "brand-b" }
+{ "anchor": "{brand.brand-b-rose}", "scalar": "100-1000/100", "profile": "brand-b", "alpha": true }
 ```
 
-Each ramp's effective physics resolves per field through four layers — built-in
-defaults ← top-level settings ← the selected profile ← the payload's own
-overrides — with ladder tables merging by step key. The selected profile is the
+Each ramp's effective physics — the alpha fields included — resolves per field through
+four layers: built-in defaults ← top-level settings ← the selected profile ← the
+payload's own overrides. `lightness` and `alpha.opacity` merge field by field;
+`ladder` and `alpha.ladder` merge by step key. A profile's `alpha` supplies defaults
+only — the twin series appears when the payload turns it on. The selected profile is the
 payload's `profile`, else `defaultProfile`, else none; an unknown name is an error
 that lists the defined profiles, never a silent fallback.
 

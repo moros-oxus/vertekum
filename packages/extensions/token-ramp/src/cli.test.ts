@@ -7,6 +7,11 @@ type Node = Record<string, unknown>;
 
 /** A kernel with the ramp extension, hydrated with one five-step teal ramp and what the author adds. */
 function project(authored: Node = {}) {
+  return projectWith({}, authored);
+}
+
+/** The same, with extra payload fields. */
+function projectWith(payload: Node, authored: Node = {}) {
   const kernel = createKernel();
   kernel.register(tokenRampExtension);
   kernel.start();
@@ -16,7 +21,11 @@ function project(authored: Node = {}) {
       color: {
         teal: {
           $extensions: {
-            [RAMP_KEY]: { anchor: '{brand.accent}', scalar: '100-500/100' },
+            [RAMP_KEY]: {
+              anchor: '{brand.accent}',
+              scalar: '100-500/100',
+              ...payload,
+            },
           },
           ...authored,
         },
@@ -112,4 +121,19 @@ test('data.ramps reports effective stops and names the overridden ones', async (
   expect(stops['200']).toBe('#ff0000');
   expect(Object.keys(stops)).toEqual(['100', '200', '300', '400', '500']);
   expect(Object.values(stops)).toContain('{brand.accent}'); // the anchor's step, as authored
+});
+
+test('ramp build writes and marks the alpha twins; a broken alpha series still builds the solid one', async () => {
+  const withAlpha = projectWith({ alpha: true });
+  const built = await withAlpha.build();
+  expect(built?.summary).toBe('built 1 ramp(s), 10 stop(s)');
+  const a300 = withAlpha.teal().A300 as Node;
+  expect((a300.$extensions as Node)[RAMP_KEY]).toBe('committed');
+  expect((await withAlpha.build({ check: true }))?.summary).toBe(
+    '1 committed ramp(s) fresh, 0 virtual',
+  );
+
+  const broken = projectWith({ alpha: { mode: 'match' } });
+  expect((await broken.build())?.summary).toBe('built 1 ramp(s), 5 stop(s)');
+  expect(broken.teal().A300).toBeUndefined();
 });

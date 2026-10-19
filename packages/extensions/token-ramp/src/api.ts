@@ -15,6 +15,7 @@ import {
 import { rampBuildCommand } from './cli';
 import type { RampSettingsType, tokenRampManifest } from './index';
 import {
+  alphaFor,
   COMMITTED,
   computeRamp,
   DEFAULT_PHYSICS,
@@ -22,7 +23,9 @@ import {
   physicsFor,
   RAMP_KEY,
   type RampConfig,
+  type RampContext,
   type RampPayload,
+  stopNames,
 } from './ramp';
 
 /** Follow alias chains (`"{a.b}"`) through the token list; cycle-guarded. */
@@ -39,6 +42,54 @@ export function followAliases(value: unknown, tokens: Token[]): unknown {
     held = token.value;
   }
   return held;
+}
+
+/**
+ * The path of the token at the END of an alias chain, when it holds a literal a value-position
+ * pointer can address — the token-list twin of the codec context's `target`.
+ */
+export function aliasTarget(
+  value: unknown,
+  tokens: Token[],
+): string[] | undefined {
+  const byPath = new Map(tokens.map((token) => [token.path.join('.'), token]));
+  const seen = new Set<string>();
+  let held = value;
+  let end: Token | undefined;
+  while (typeof held === 'string' && /^\{[^}]+\}$/.test(held)) {
+    const target = held.slice(1, -1);
+    if (seen.has(target)) return undefined;
+    seen.add(target);
+    end = byPath.get(target);
+    if (!end) return undefined;
+    held = end.sourceValue ?? end.value;
+  }
+  if (!end || end.ref !== undefined || end.sourceValue !== undefined) {
+    return undefined;
+  }
+  return end.path;
+}
+
+/**
+ * What a ramp needs from the collection beyond its anchor: the resolved alpha background (when
+ * the series is on and names one — at any layer) and the anchor's pointer target.
+ */
+export function rampContext(
+  payload: RampPayload,
+  config: RampConfig,
+  resolve: (value: unknown) => unknown,
+  target: (value: unknown) => string[] | undefined,
+): RampContext {
+  const alpha = alphaFor(config, payload);
+  const background =
+    alpha && !('error' in alpha) && alpha.background !== undefined
+      ? resolve(alpha.background)
+      : undefined;
+  const anchorTarget = target(payload.anchor);
+  return {
+    ...(background !== undefined ? { background } : {}),
+    ...(anchorTarget ? { anchorTarget } : {}),
+  };
 }
 
 function isPayload(payload: unknown): payload is RampPayload {
@@ -62,6 +113,7 @@ function physicsFrom(settings: RampSettingsType | undefined): RampConfig {
     ...(settings.defaultProfile
       ? { defaultProfile: settings.defaultProfile }
       : {}),
+    ...(settings.alpha ? { alpha: settings.alpha } : {}),
   };
 }
 
@@ -141,6 +193,37 @@ const PAYLOAD_SCHEMA = {
         lightFraction: { type: 'number' },
         darkExponent: { type: 'number' },
         gamut: { enum: ['srgb', 'display-p3', 'none'] },
+        alpha: {
+          anyOf: [
+            { const: true },
+            {
+              type: 'object',
+              properties: {
+                mode: { enum: ['solid', 'anchor', 'match'] },
+                prefix: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9-]*$' },
+                opacity: {
+                  type: 'object',
+                  properties: {
+                    first: { type: 'number', minimum: 0, maximum: 1 },
+                    last: { type: 'number', minimum: 0, maximum: 1 },
+                    ease: { type: 'number', exclusiveMinimum: 0 },
+                  },
+                  additionalProperties: false,
+                },
+                ladder: {
+                  type: 'object',
+                  additionalProperties: {
+                    type: 'number',
+                    minimum: 0,
+                    maximum: 1,
+                  },
+                },
+                background: { anyOf: [{ type: 'string' }, { type: 'object' }] },
+              },
+              additionalProperties: false,
+            },
+          ],
+        },
       },
       additionalProperties: false,
     },
@@ -189,10 +272,12 @@ export function activate(ctx: ActivateContext<typeof tokenRampManifest>): void {
     key: RAMP_KEY,
     expand(payload, _at, expandCtx) {
       if (!isPayload(payload)) return null;
+      const config = settings();
       const ramp = computeRamp(
         payload,
-        settings(),
+        config,
         expandCtx.resolve(payload.anchor),
+        rampContext(payload, config, expandCtx.resolve, expandCtx.target),
       );
       if ('error' in ramp) return null;
       return Object.fromEntries(
@@ -239,18 +324,6 @@ export function activate(ctx: ActivateContext<typeof tokenRampManifest>): void {
           });
           continue;
         }
-        // An authored child that names no step overrides nothing — most often a typo, which
-        // would otherwise pass as one more token.
-        for (const name of carrier.overrides) {
-          if (scale.names.includes(name)) continue;
-          out.push({
-            code: 'ramp/unknown-stop',
-            severity: 'warning',
-            message: `'${where}.${name}' is not a step of '${carrier.payload.scalar}' — it overrides nothing`,
-            source: 'ext-token-ramp',
-            file,
-          });
-        }
         const physics = physicsFor(settings(), carrier.payload);
         if ('error' in physics) {
           out.push({
@@ -262,16 +335,43 @@ export function activate(ctx: ActivateContext<typeof tokenRampManifest>): void {
           });
           continue;
         }
+        // An authored child that names no step overrides nothing — most often a typo, which
+        // would otherwise pass as one more token.
+        const names = stopNames(carrier.payload, settings());
+        for (const name of carrier.overrides) {
+          if (names.includes(name)) continue;
+          out.push({
+            code: 'ramp/unknown-stop',
+            severity: 'warning',
+            message: `'${where}.${name}' is not a step of '${carrier.payload.scalar}' — it overrides nothing`,
+            source: 'ext-token-ramp',
+            file,
+          });
+        }
         const ramp = computeRamp(
           carrier.payload,
           settings(),
           followAliases(carrier.payload.anchor, tokens),
+          rampContext(
+            carrier.payload,
+            settings(),
+            (value) => followAliases(value, tokens),
+            (value) => aliasTarget(value, tokens),
+          ),
         );
         if ('error' in ramp) {
           out.push({
             code: 'ramp/unresolved-anchor',
             severity: 'error',
             message: `'${where}': ${ramp.error}`,
+            source: 'ext-token-ramp',
+            file,
+          });
+        } else if (ramp.alphaError) {
+          out.push({
+            code: ramp.alphaError.code,
+            severity: 'error',
+            message: `'${where}': ${ramp.alphaError.message}`,
             source: 'ext-token-ramp',
             file,
           });

@@ -143,6 +143,51 @@ test('a child naming no step warns in check; a malformed committed mark is an er
   ).toBe(true);
 }, 60_000);
 
+test('alpha twins: generated beside the solid stops, pointer-linked to the anchor, overridable, committable', async () => {
+  const cwd = await fixture();
+  const { writeFile } = await import('node:fs/promises');
+  const corePath = join(cwd, 'tokens/core.json');
+  const core = JSON.parse(await readFile(corePath, 'utf8'));
+  core.color.teal.$extensions['org.vertekum.generate/ramp'].alpha = {
+    mode: 'anchor',
+  };
+  await writeFile(corePath, JSON.stringify(core, null, 2));
+
+  // Virtual: the twins export with their opacity; the solid series is untouched.
+  await run('node', [bin, 'build'], { cwd });
+  const css = await readFile(join(cwd, 'build/css/tokens.css'), 'utf8');
+  expect(css).toMatch(/--color-teal-100: oklch\([^)/]+\);/);
+  expect(css).toMatch(/--color-teal-A100: oklch\([^)]+\/ 0\.05\)/);
+  expect(css).toMatch(/--color-teal-A500: oklch\([^)]+\/ 0\.9\)/);
+  const check = await run('node', [bin, 'check', '--json'], { cwd });
+  expect(JSON.parse(check.stdout).ok).toBe(true);
+
+  // An alpha twin is overridden like any stop.
+  const set = await run(
+    'node',
+    [bin, 'token', 'set', 'color.teal.A300', '#ff000080'],
+    { cwd },
+  );
+  expect(set.stdout).toContain('overrode color.teal.A300');
+
+  // Committed: the twins are written pointer-linked to the anchor, marked, and stay valid.
+  await run('node', [bin, 'ramp', 'build'], { cwd });
+  const committed = JSON.parse(await readFile(corePath, 'utf8')).color.teal;
+  expect(committed.A100.$value).toEqual({
+    colorSpace: { $ref: '#/brand/accent/$value/colorSpace' },
+    components: { $ref: '#/brand/accent/$value/components' },
+    alpha: 0.05,
+  });
+  expect(committed.A100.$extensions['org.vertekum.generate/ramp']).toBe(
+    'committed',
+  );
+  expect(committed.A300.$extensions).toBeUndefined(); // the override, kept
+  const committedCheck = await run('node', [bin, 'check', '--json'], { cwd });
+  expect(JSON.parse(committedCheck.stdout).ok).toBe(true);
+  const fresh = await run('node', [bin, 'ramp', 'build', '--check'], { cwd });
+  expect(fresh.stdout).toContain('1 committed ramp(s) fresh');
+}, 120_000);
+
 test('an unresolvable anchor is loud in check', async () => {
   const cwd = await fixture();
   const corePath = join(cwd, 'tokens/core.json');

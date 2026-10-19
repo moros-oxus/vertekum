@@ -4,7 +4,13 @@ import {
   type DtcgNode,
   restoreFiles,
 } from '@vertekum/core';
-import { followAliases, type RampCarrier, rampCarriers } from './api';
+import {
+  aliasTarget,
+  followAliases,
+  type RampCarrier,
+  rampCarriers,
+  rampContext,
+} from './api';
 import {
   COMMITTED,
   computeRamp,
@@ -57,6 +63,12 @@ export function rampBuildCommand(
           payload,
           settings(),
           followAliases(payload.anchor, tokens),
+          rampContext(
+            payload,
+            settings(),
+            (value) => followAliases(value, tokens),
+            (value) => aliasTarget(value, tokens),
+          ),
         );
         if ('error' in ramp) {
           throw new Error(`'${carrier.path.join('.')}': ${ramp.error}`);

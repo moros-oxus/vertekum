@@ -335,6 +335,55 @@ test('a leaf group carrier expands into generated children, anchor resolved thro
   expect(base.codecSource).toEqual({ anchor: '{chain}' });
 });
 
+test('ctx.target names the token at the end of an alias chain — the one a pointer can address', () => {
+  const seen: Record<string, unknown> = {};
+  const probe: TokenCodec = {
+    key: 'org.test.generate/probe',
+    expand(payload, _at, ctx) {
+      for (const [name, value] of Object.entries(
+        payload as Record<string, unknown>,
+      )) {
+        seen[name] = ctx.target(value);
+      }
+      return null;
+    },
+  };
+  parseCollection(
+    {
+      'core.json': {
+        source: { $type: 'textCase', $value: 'uppercase' },
+        chain: { $type: 'textCase', $value: '{source}' },
+        pointed: { $type: 'textCase', $ref: '#/source' },
+        holder: {
+          $type: 'shadow',
+          $value: { color: { $ref: '#/source/$value' } },
+        },
+        probe: {
+          $extensions: {
+            'org.test.generate/probe': {
+              direct: '{source}',
+              chained: '{chain}',
+              literal: 'uppercase',
+              dangling: '{nope}',
+              refToken: '{pointed}',
+              pointerHeld: '{holder}',
+            },
+          },
+        },
+      },
+    },
+    [probe],
+  );
+  expect(seen).toEqual({
+    direct: ['source'],
+    chained: ['source'], // followed to the token that HOLDS the value
+    literal: undefined, // not a reference
+    dangling: undefined,
+    refToken: undefined, // a `$ref` token holds no `$value` to point into
+    pointerHeld: undefined, // a value made of pointers is not a literal
+  });
+});
+
 test("a carrier resolves its anchor in its OWN file first — one brand's anchor never feeds another's ramp", () => {
   // The same anchor path in two brand files; each file's carrier must follow its own.
   const carrier = {

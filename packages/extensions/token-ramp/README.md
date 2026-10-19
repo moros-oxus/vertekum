@@ -89,6 +89,7 @@ an override, drop its mark.
 | `hueDrift` | degrees (number) | no (default `0`) | Dark-side hue rotation, reached in full at the last step. Deep yellows drift toward orange instead of going olive. |
 | `profile` | a name from [`profiles`](#settings) | no | Which physics profile this ramp uses. Absent → `defaultProfile` → the base settings alone. An unknown name is an error, never a fallback. |
 | `ladder`, `lightness`, `lightFraction`, `darkExponent`, `gamut` | as in [settings](#settings) | no | Per-ramp overrides of the configured physics. |
+| `alpha` | `true`, or an object of the [alpha fields](#settings) (`mode`, `prefix`, `opacity`, `ladder`, `background`) | no | Turns on the translucent twin series (`A100` beside `100`). `true` uses the configured defaults; an object overrides them per ramp, exactly as `lightness` and `ladder` do for the solid series. |
 
 ## Settings
 
@@ -104,21 +105,97 @@ How a shade is calculated — the full walkthrough with a worked example is in
 | `lightFraction` | `0.2` | How washed-out the palest step is: its chroma is this fraction of the anchor's. |
 | `darkExponent` | `0.85` | How quickly chroma falls on the dark side (higher = duller deep shades). |
 | `gamut` | `'srgb'` | The colour space every **computed** stop is mapped into — `'srgb'`, `'display-p3'`, or `'none'` to store the arch's own chroma wherever it lands. Mapping holds lightness and hue and reduces chroma to the gamut boundary, so a stop is always a colour the target can show. The anchor's own step is never mapped. |
-| `profiles` | — | Named partials of the fields above — one per brand, typically. A payload selects one with `"profile": "<name>"`. Resolution is per field: defaults ← top-level settings ← profile ← payload overrides, ladders merging by step key. |
+| `alpha.mode` | `'solid'` | How each [alpha stop](#alpha-stops) is made: `'solid'`, `'anchor'`, or `'match'`. |
+| `alpha.prefix` | `'A'` | Prepended to each step name to name its twin (`A100`). A letter, then letters, digits, hyphens. |
+| `alpha.opacity.first` | `0.05` | The first twin's opacity (0–1). `solid`/`anchor` modes. |
+| `alpha.opacity.last` | `0.9` | The last twin's opacity. |
+| `alpha.opacity.ease` | `1` | How the opacity travels between them — the same curve as `lightness.ease`. |
+| `alpha.ladder` | — | An explicit `step name → opacity` table, keyed by the plain step name (`'300'`, not `'A300'`). Wins over the curve for the steps it names; values are used as written. |
+| `alpha.background` | — | The surface `'match'` composites over: a colour or a reference. Required for `'match'`, at some layer. |
+| `profiles` | — | Named partials of the fields above — `alpha` included — one per brand, typically. A payload selects one with `"profile": "<name>"`. Resolution is per field: defaults ← top-level settings ← profile ← payload overrides; `lightness` and `alpha.opacity` merge per field, `ladder` and `alpha.ladder` merge by step key. |
 | `defaultProfile` | — | The profile a payload without `profile` uses. |
+
+The `alpha` settings are defaults only: they never turn the twin series on — a payload's
+`alpha` does.
 
 ```ts
 // Multi-brand: declare each brand's physics once; each ramp payload says one word.
 extensions: [
   tokenRampExtension({
     profiles: {
-      brand-a: { ladder: { '100': 0.958, '200': 0.91, /* … */ '1000': 0.27 } },
-      brand-b:  { lightness: { first: 0.97, last: 0.24, ease: 1.15 } },
+      brand-a: {
+        ladder: { '100': 0.958, '200': 0.91, /* … */ '1000': 0.27 },
+        alpha: { ladder: { '100': 0.04, '200': 0.08, /* … */ '1000': 0.88 } },
+      },
+      brand-b: {
+        lightness: { first: 0.97, last: 0.24, ease: 1.15 },
+        alpha: { mode: 'anchor', opacity: { first: 0.06, ease: 1.3 } },
+      },
     },
     defaultProfile: 'brand-a',
   }),
 ],
 ```
+
+A ramp payload then says `"profile": "brand-b"` and `"alpha": true`, and gets brand
+b's lightness curve for its solid stops and brand b's opacity curve for its twins.
+
+## Alpha stops
+
+A payload with `alpha` generates a translucent twin of every step, its name prefixed:
+`color.red.100 … 1000` (solid) and `color.red.A100 … A1000` (alpha).
+
+```json
+"org.vertekum.generate/ramp": {
+  "anchor": "{color.brand.red}",
+  "scalar": "100-1000/100",
+  "alpha": { "mode": "match", "background": "{color.surface.page}" }
+}
+```
+
+| Field | Values | Default | Meaning |
+| --- | --- | --- | --- |
+| `mode` | `"solid"`, `"anchor"`, `"match"` | `"solid"` | How each alpha stop is made — below. |
+| `prefix` | a letter, then letters, digits, hyphens | `"A"` | Prepended to each step name (`A100`, `A050` — padding stays inside). |
+| `opacity.first` | 0–1 | `0.05` | The first twin's opacity. `solid` and `anchor` only. |
+| `opacity.last` | 0–1 | `0.9` | The last twin's opacity. |
+| `opacity.ease` | > 0 | `1` | How the opacity travels between them: `1` = evenly spaced, `>1` keeps the first twins faint for longer, `<1` the reverse. |
+| `ladder` | `step name → opacity` | — | Explicit per-step opacity, keyed by the plain step name; wins over the curve for the steps it names, values used as written. `solid` and `anchor` only. |
+| `background` | a colour or a reference | — | The surface the stops are laid over. `match` only, and required there. |
+
+Opacity works exactly like lightness: a curve from `first` to `last` bent by `ease`, an
+explicit ladder that wins where it speaks, and the same layering — every field can be
+set in settings, in a profile, or per ramp, the curve merging per field and the ladder
+by step key. Both can be supplied together, in one profile or one payload:
+
+```json
+{ "anchor": "{color.brand.red}", "scalar": "100-1000/100",
+  "lightness": { "ease": 1.1 }, "ladder": { "500": 0.715 },
+  "alpha": { "opacity": { "first": 0.04, "ease": 1.4 }, "ladder": { "500": 0.4 } } }
+```
+
+- **`solid`** — `A300` is solid `300`'s colour at step 300's opacity.
+- **`anchor`** — every alpha stop is the anchor's colour; only the opacity steps.
+- **`match`** — `A300` is the translucent colour that, laid over `background`, looks
+  exactly like solid `300`. It is stored in the gamut's RGB space (`srgb`, or
+  `display-p3`), where the composite holds; `gamut: 'none'` cannot match. A ramp split
+  into light and dark files gives each file's payload its own background.
+
+Where an alpha stop is exactly the anchor's colour — every stop in `anchor` mode, and
+the anchor step's twin in `solid` mode — and the anchor is a reference to a stored
+colour, the stop borrows it by JSON Pointer instead of copying it:
+
+```json
+"A100": { "$type": "color", "$value": {
+  "colorSpace": { "$ref": "#/color/brand/red/$value/colorSpace" },
+  "components": { "$ref": "#/color/brand/red/$value/components" },
+  "alpha": 0.05
+} }
+```
+
+Alpha stops are overridden, committed and checked by name like any stop. A twin
+follows its *computed* solid stop, never an override of it. A schema that names both
+series in dfn: `color.<hue>.[100-1000/100 | A(100-1000/100)]`.
 
 ## What `check` enforces
 
@@ -132,6 +209,12 @@ extensions: [
   the scalar (`color.teal.30` under `100-1000/100`): it overrides nothing, and is
   most often a typo.
 - The committed mark: on a stop, the ramp key must be the string `"committed"`.
+- `ramp/missing-background` — `alpha.mode` is `"match"` with no `background`.
+- `ramp/unresolved-background` — the background dangles, is not a colour, or is not
+  opaque.
+- `ramp/alpha-gamut` — `"match"` under `gamut: 'none'`.
+
+An alpha error drops the alpha stops only; the solid series still generates.
 
 ## License
 

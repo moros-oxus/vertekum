@@ -1,19 +1,22 @@
-import { inGamut, oklch, parse as parseColor } from 'culori';
+import { converter, inGamut, oklch, parse as parseColor } from 'culori';
 import { expect, test } from 'vitest';
 import {
   anchorOf,
   computeRamp,
   DEFAULT_PHYSICS,
+  matchOver,
   parseScalar,
   physicsFor,
   type RampPhysics,
   type RampStop,
+  type RampValue,
+  stopNames,
 } from './ramp';
 
 const inSrgb = inGamut('rgb');
 
 /** A stop as culori sees it, for gamut and round-trip assertions (literal anchors only). */
-const asColor = (step: RampStop | string) => {
+const asColor = (step: RampValue) => {
   const stop = step as RampStop;
   return {
     mode: 'oklch' as const,
@@ -101,7 +104,7 @@ test('hueDrift rotates only the dark side, reaching the full drift at the last s
   const drifted = driftedR.stops;
   // Light side identical; the last step's hue moved by the full drift.
   expect((drifted['100'] as RampStop).hex).toBe((still['100'] as RampStop).hex);
-  const h = (step: Record<string, RampStop | string>, name: string) =>
+  const h = (step: Record<string, RampValue>, name: string) =>
     (step[name] as RampStop).components[2];
   expect(h(drifted, '1000') - h(still, '1000')).toBeCloseTo(-18, 0);
 });
@@ -334,4 +337,217 @@ test('profiles resolve through the four-layer chain, ladders merging by step key
     { anchor: '#000', scalar: '100-300/100' },
   );
   expect('error' in badDefault && badDefault.error).toContain('ghost');
+});
+
+// ── alpha stops ──────────────────────────────────────────────────────────────
+
+const TEN = '100-1000/100';
+const solidAndAlpha = (
+  payload: Partial<Parameters<typeof computeRamp>[0]>,
+  context: Parameters<typeof computeRamp>[3] = {},
+  config = DEFAULT_PHYSICS,
+  anchor: unknown = '#1DB1A8',
+) => {
+  const ramp = computeRamp(
+    { anchor: '#1DB1A8', scalar: TEN, ...payload },
+    config,
+    anchor,
+    context,
+  );
+  if ('error' in ramp) throw new Error(ramp.error);
+  return ramp;
+};
+const stopOf = (value: unknown) => value as RampStop;
+
+test('no alpha → exactly the solid series, as before', () => {
+  const ramp = solidAndAlpha({});
+  expect(Object.keys(ramp.stops)).toHaveLength(10);
+  expect(ramp.alphaError).toBeUndefined();
+});
+
+test("alpha: true → an A-prefixed twin per step, solid mode: the solid colour at the default curve's opacity", () => {
+  const { stops } = solidAndAlpha({ alpha: true });
+  expect(Object.keys(stops)).toEqual([
+    ...['100', '200', '300', '400', '500', '600', '700', '800', '900', '1000'],
+    ...[
+      'A100',
+      'A200',
+      'A300',
+      'A400',
+      'A500',
+      'A600',
+      'A700',
+      'A800',
+      'A900',
+      'A1000',
+    ],
+  ]);
+  const solid = stopOf(stops['200']);
+  const alpha = stopOf(stops.A200);
+  expect(alpha.colorSpace).toBe(solid.colorSpace);
+  expect(alpha.components).toEqual(solid.components);
+  expect(alpha.hex).toBe(solid.hex);
+  // first 0.05 → last 0.9, evenly: step 2 of 10 sits at 0.05 + 0.85 · 1/9.
+  expect(stopOf(stops.A100).alpha).toBe(0.05);
+  expect(alpha.alpha).toBe(0.144);
+  expect(stopOf(stops.A1000).alpha).toBe(0.9);
+});
+
+test('the prefix wraps the padded name; a ladder beats the curve where it speaks', () => {
+  const { stops } = solidAndAlpha({
+    scalar: '050-500/50',
+    alpha: { prefix: 'T', ladder: { '100': 0.5 } },
+  });
+  expect(stops).toHaveProperty('T050');
+  expect(stopOf(stops.T100).alpha).toBe(0.5);
+});
+
+test('anchor mode: every alpha stop is the anchor colour; only the opacity steps', () => {
+  const { stops } = solidAndAlpha({ alpha: { mode: 'anchor' } });
+  const anchor = anchorOf('#1DB1A8')?.stop as RampStop;
+  for (const name of ['A100', 'A500', 'A1000']) {
+    expect(stopOf(stops[name]).components).toEqual(anchor.components);
+  }
+  expect(stopOf(stops.A100).alpha).toBe(0.05);
+});
+
+test('pointer-linked: anchor-mode stops and the solid anchor twin borrow the colour by $ref', () => {
+  const pointer = (alpha: number) => ({
+    colorSpace: { $ref: '#/brand/accent/$value/colorSpace' },
+    components: { $ref: '#/brand/accent/$value/components' },
+    alpha,
+  });
+  const stored = anchorOf('#1DB1A8')?.stop;
+  const anchorMode = solidAndAlpha(
+    { anchor: '{brand.accent}', alpha: { mode: 'anchor' } },
+    { anchorTarget: ['brand', 'accent'] },
+    DEFAULT_PHYSICS,
+    stored,
+  );
+  expect(anchorMode.stops.A100).toEqual(pointer(0.05));
+  expect(anchorMode.stops.A1000).toEqual(pointer(0.9));
+
+  const solidMode = solidAndAlpha(
+    { anchor: '{brand.accent}', alpha: true },
+    { anchorTarget: ['brand', 'accent'] },
+    DEFAULT_PHYSICS,
+    stored,
+  );
+  const anchorStep = Object.entries(solidMode.stops).find(
+    ([, value]) => value === '{brand.accent}',
+  )?.[0] as string;
+  expect(solidMode.stops[`A${anchorStep}`]).toMatchObject({
+    colorSpace: { $ref: '#/brand/accent/$value/colorSpace' },
+  });
+  // The other solid twins are literals — a pointer would follow an override of the sibling.
+  expect(stopOf(solidMode.stops.A100).colorSpace).toBe('oklch');
+
+  // A reference with no addressable target (or a literal anchor) gives literals.
+  const unaddressed = solidAndAlpha({
+    anchor: '{brand.accent}',
+    alpha: { mode: 'anchor' },
+  });
+  expect(stopOf(unaddressed.stops.A100).colorSpace).toBe('oklch');
+});
+
+/** Lay a stop over a background, channel by channel, in the stop's own RGB space. */
+function composite(stop: RampStop, background: [number, number, number]) {
+  return stop.components.map(
+    (c, k) => stop.alpha * c + (1 - stop.alpha) * (background[k] as number),
+  );
+}
+const srgbOf = (value: unknown): [number, number, number] => {
+  const color =
+    typeof value === 'string' ? parseColor(value) : asColor(value as RampStop);
+  const rgb = converter('rgb')(color);
+  if (!rgb) throw new Error(`not a colour: ${JSON.stringify(value)}`);
+  return [rgb.r, rgb.g, rgb.b];
+};
+
+test('match mode: each alpha stop laid over the background reproduces its solid stop', () => {
+  for (const background of ['#FFFFFF', '#111318']) {
+    const { stops } = solidAndAlpha(
+      { alpha: { mode: 'match', background } },
+      { background },
+    );
+    for (const step of ['100', '300', '700', '1000']) {
+      const alpha = stopOf(stops[`A${step}`]);
+      expect(alpha.colorSpace).toBe('srgb');
+      expect(alpha.alpha).toBeGreaterThan(0);
+      expect(alpha.alpha).toBeLessThanOrEqual(1);
+      const target = srgbOf(stops[step]);
+      composite(alpha, srgbOf(background)).forEach((channel, k) => {
+        expect(Math.abs(channel - (target[k] as number))).toBeLessThan(1 / 255);
+      });
+    }
+  }
+});
+
+test('match solver: the smallest opacity that reaches the target; equal colours need none', () => {
+  expect(matchOver([1, 1, 1], [1, 1, 1])).toEqual({
+    components: [1, 1, 1],
+    alpha: 0,
+  });
+  // Halfway from white to black is black at 50%.
+  expect(matchOver([0.5, 0.5, 0.5], [1, 1, 1])).toEqual({
+    components: [0, 0, 0],
+    alpha: 0.5,
+  });
+});
+
+test('match under display-p3 stores display-p3; under none it cannot match — the solid series survives', () => {
+  const p3 = solidAndAlpha(
+    { gamut: 'display-p3', alpha: { mode: 'match', background: '#FFFFFF' } },
+    { background: '#FFFFFF' },
+  );
+  expect(stopOf(p3.stops.A300).colorSpace).toBe('display-p3');
+
+  const none = solidAndAlpha(
+    { gamut: 'none', alpha: { mode: 'match', background: '#FFFFFF' } },
+    { background: '#FFFFFF' },
+  );
+  expect(none.alphaError?.code).toBe('ramp/alpha-gamut');
+  expect(Object.keys(none.stops)).toHaveLength(10);
+
+  const missing = solidAndAlpha({ alpha: { mode: 'match' } });
+  expect(missing.alphaError?.code).toBe('ramp/missing-background');
+  const unresolved = solidAndAlpha(
+    { alpha: { mode: 'match', background: '{nope}' } },
+    { background: undefined },
+  );
+  expect(unresolved.alphaError?.code).toBe('ramp/unresolved-background');
+  const translucent = solidAndAlpha(
+    { alpha: { mode: 'match', background: '#FFFFFF80' } },
+    { background: '#FFFFFF80' },
+  );
+  expect(translucent.alphaError?.code).toBe('ramp/unresolved-background');
+});
+
+test('alpha settings layer like the physics; only the payload turns the series on', () => {
+  const config = {
+    ...DEFAULT_PHYSICS,
+    alpha: { mode: 'anchor' as const, opacity: { first: 0.1 } },
+    profiles: { brand: { alpha: { ladder: { '200': 0.3 } } } },
+    defaultProfile: 'brand',
+  };
+  const on = solidAndAlpha({ alpha: true }, {}, config);
+  expect(stopOf(on.stops.A100).alpha).toBe(0.1);
+  expect(stopOf(on.stops.A200).alpha).toBe(0.3);
+  const anchor = anchorOf('#1DB1A8')?.stop as RampStop;
+  expect(stopOf(on.stops.A500).components).toEqual(anchor.components);
+
+  const off = solidAndAlpha({}, {}, config);
+  expect(Object.keys(off.stops)).toHaveLength(10);
+});
+
+test('stopNames lists the solid names, then the alpha names when the series is on', () => {
+  expect(
+    stopNames({ anchor: '#000', scalar: '100-300/100' }, DEFAULT_PHYSICS),
+  ).toEqual(['100', '200', '300']);
+  expect(
+    stopNames(
+      { anchor: '#000', scalar: '100-200/100', alpha: { prefix: 'B' } },
+      DEFAULT_PHYSICS,
+    ),
+  ).toEqual(['100', '200', 'B100', 'B200']);
 });
