@@ -1,5 +1,13 @@
 # @vertekum/ext-token-ramp
 
+## 0.12.1
+
+### Patch Changes
+
+- [`62e44af`](https://github.com/moros-oxus/vertekum/commit/62e44afcb9d6ef0700bea3e9f34fb1b67601a56f) Thanks [@tschemmer](https://github.com/tschemmer)! - `match` alpha twins are stored in oklch like every other ramp stop — still solved in the gamut's RGB space, at a precision that converts back within half a channel step — and a twin with no chroma is written with hue 0 instead of the conversion's noise.
+- Updated dependencies []:
+  - @vertekum/core@0.12.1
+
 ## 0.12.0
 
 ### Minor Changes
