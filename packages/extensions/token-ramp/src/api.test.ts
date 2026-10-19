@@ -131,7 +131,7 @@ test('match resolves its background in the carrier scope; a bad background drops
   });
   expect(
     (matched.at('color.teal.A300')?.value as { colorSpace: string }).colorSpace,
-  ).toBe('srgb');
+  ).toBe('oklch');
 
   const broken = rampKernel({ alpha: { mode: 'match', background: '{nope}' } });
   expect(broken.at('color.teal.300')?.generated).toBe(true);

@@ -177,9 +177,10 @@ by step key. Both can be supplied together, in one profile or one payload:
 - **`solid`** — `A300` is solid `300`'s colour at step 300's opacity.
 - **`anchor`** — every alpha stop is the anchor's colour; only the opacity steps.
 - **`match`** — `A300` is the translucent colour that, laid over `background`, looks
-  exactly like solid `300`. It is stored in the gamut's RGB space (`srgb`, or
-  `display-p3`), where the composite holds; `gamut: 'none'` cannot match. A ramp split
-  into light and dark files gives each file's payload its own background.
+  exactly like solid `300`. It is solved in the gamut's RGB space (`srgb`, or
+  `display-p3`), where browsers composite, and stored in oklch like every stop;
+  `gamut: 'none'` cannot match. A ramp split into light and dark files gives each
+  file's payload its own background.
 
 Where an alpha stop is exactly the anchor's colour — every stop in `anchor` mode, and
 the anchor step's twin in `solid` mode — and the anchor is a reference to a stored

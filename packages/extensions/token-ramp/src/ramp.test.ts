@@ -450,35 +450,70 @@ test('pointer-linked: anchor-mode stops and the solid anchor twin borrow the col
   expect(stopOf(unaddressed.stops.A100).colorSpace).toBe('oklch');
 });
 
-/** Lay a stop over a background, channel by channel, in the stop's own RGB space. */
-function composite(stop: RampStop, background: [number, number, number]) {
-  return stop.components.map(
-    (c, k) => stop.alpha * c + (1 - stop.alpha) * (background[k] as number),
-  );
-}
-const srgbOf = (value: unknown): [number, number, number] => {
+/** A colour's channels in an RGB space — `rgb` (sRGB) or `p3` — the space `match` composites in. */
+const channelsIn = (
+  space: 'rgb' | 'p3',
+  value: unknown,
+): [number, number, number] => {
   const color =
     typeof value === 'string' ? parseColor(value) : asColor(value as RampStop);
-  const rgb = converter('rgb')(color);
+  const rgb = converter(space)(color);
   if (!rgb) throw new Error(`not a colour: ${JSON.stringify(value)}`);
   return [rgb.r, rgb.g, rgb.b];
 };
 
-test('match mode: each alpha stop laid over the background reproduces its solid stop', () => {
-  for (const background of ['#FFFFFF', '#111318']) {
+/** The stored twin, converted back to the space it was solved in, laid over the background. */
+function composite(
+  space: 'rgb' | 'p3',
+  stop: RampStop,
+  background: string,
+): number[] {
+  const backdrop = channelsIn(space, background);
+  return channelsIn(space, stop).map(
+    (c, k) => stop.alpha * c + (1 - stop.alpha) * (backdrop[k] as number),
+  );
+}
+
+test('match mode: twins are stored in oklch, and laid over the background reproduce their solid stops', () => {
+  for (const [gamut, space] of [
+    ['srgb', 'rgb'],
+    ['display-p3', 'p3'],
+  ] as const) {
+    for (const background of ['#FFFFFF', '#111318']) {
+      const { stops } = solidAndAlpha(
+        { gamut, alpha: { mode: 'match', background } },
+        { background },
+      );
+      for (const step of ['100', '300', '700', '1000']) {
+        const alpha = stopOf(stops[`A${step}`]);
+        expect(alpha.colorSpace).toBe('oklch');
+        expect(alpha.alpha).toBeGreaterThan(0);
+        expect(alpha.alpha).toBeLessThanOrEqual(1);
+        const target = channelsIn(space, stops[step]);
+        composite(space, alpha, background).forEach((channel, k) => {
+          expect(
+            Math.abs(channel - (target[k] as number)),
+            `${gamut} over ${background}, A${step}`,
+          ).toBeLessThan(0.5 / 255);
+        });
+      }
+    }
+  }
+});
+
+test('an achromatic twin is written with hue 0, not the conversion noise', () => {
+  // A grey ramp over black and over white: every solved twin is grey, so its chroma rounds to 0.
+  for (const background of ['#000000', '#FFFFFF']) {
     const { stops } = solidAndAlpha(
-      { alpha: { mode: 'match', background } },
+      { anchor: '#777777', alpha: { mode: 'match', background } },
       { background },
+      DEFAULT_PHYSICS,
+      '#777777',
     );
-    for (const step of ['100', '300', '700', '1000']) {
-      const alpha = stopOf(stops[`A${step}`]);
-      expect(alpha.colorSpace).toBe('srgb');
-      expect(alpha.alpha).toBeGreaterThan(0);
-      expect(alpha.alpha).toBeLessThanOrEqual(1);
-      const target = srgbOf(stops[step]);
-      composite(alpha, srgbOf(background)).forEach((channel, k) => {
-        expect(Math.abs(channel - (target[k] as number))).toBeLessThan(1 / 255);
-      });
+    for (const step of ['100', '500', '1000']) {
+      const [, c, h] = stopOf(stops[`A${step}`]).components;
+      expect(c, `A${step} over ${background}`).toBe(0);
+      expect(h, `A${step} over ${background}`).toBe(0);
     }
   }
 });
@@ -495,13 +530,7 @@ test('match solver: the smallest opacity that reaches the target; equal colours 
   });
 });
 
-test('match under display-p3 stores display-p3; under none it cannot match — the solid series survives', () => {
-  const p3 = solidAndAlpha(
-    { gamut: 'display-p3', alpha: { mode: 'match', background: '#FFFFFF' } },
-    { background: '#FFFFFF' },
-  );
-  expect(stopOf(p3.stops.A300).colorSpace).toBe('display-p3');
-
+test('under gamut none, match cannot composite — the solid series survives', () => {
   const none = solidAndAlpha(
     { gamut: 'none', alpha: { mode: 'match', background: '#FFFFFF' } },
     { background: '#FFFFFF' },

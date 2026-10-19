@@ -18,6 +18,7 @@ import type {
 } from '@vertekum/core';
 import { isResolverFile } from '@vertekum/core';
 import { z } from 'zod';
+import { restoreNameCase } from './case';
 import { correctKnownLimitations } from './to-terrazzo';
 
 /**
@@ -154,10 +155,17 @@ export const terrazzoExporter: Exporter = {
         ? result
         : (result?.outputFiles ?? []);
 
-      return files.map((file) => ({
-        path: String(file.filename),
-        content: String(file.contents),
-      }));
+      // CSS names keep their token's case — Terrazzo lowercases its declarations (see case.ts).
+      return files.map((file) => {
+        const path = String(file.filename);
+        const content = String(file.contents);
+        return {
+          path,
+          content: path.endsWith('.css')
+            ? restoreNameCase(content, input.tokens)
+            : content,
+        };
+      });
     } finally {
       await rm(staging, { recursive: true, force: true });
     }

@@ -124,9 +124,12 @@ a ≥ (B − T) / B         where T < B   (darker)
 
 so the opacity is the largest of the three channels' needs — the most transparent twin
 that can still reach `T` — rounded up, and then `C = B + (T − B) / a`. Browsers
-composite in the colour space's RGB channels, so the twin is stored in the gamut's RGB
-space (`srgb`, or `display-p3`) — converted elsewhere, the equation would no longer
-hold. Pale steps over a white page need little opacity; deep steps need more.
+composite in RGB channels, so the twin is *solved* in the gamut's RGB space (`srgb`, or
+`display-p3`), then *stored* in oklch like every other stop, at a precision that
+converts back to the same RGB within half a channel step. A twin with no chroma (a
+near-black, a near-white) is stored with hue 0: its hue has no effect, and the
+conversion's own value would be noise. Pale steps over a white page need little
+opacity; deep steps need more.
 
 ## Profiles — multi-brand physics
 

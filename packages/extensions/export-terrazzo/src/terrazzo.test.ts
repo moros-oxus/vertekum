@@ -193,3 +193,83 @@ test('a dangling $ref fails terrazzo loudly (same contract as dangling aliases)'
     }),
   ).rejects.toThrow();
 });
+
+// ── CSS names keep their token's case ────────────────────────────────────────
+
+const CASED: DtcgNode = {
+  color: {
+    neutral: {
+      A100: {
+        $type: 'color',
+        $value: { ...color('#000000', [0, 0, 0]), alpha: 0.08 },
+      },
+      a200: {
+        $type: 'color',
+        $value: { ...color('#000000', [0, 0, 0]), alpha: 0.16 },
+      },
+    },
+    // A lowercase path whose name ENDS like a cased one: it must stay lowercase.
+    deep: {
+      color: {
+        neutral: {
+          a100: {
+            $type: 'color',
+            $value: color('#111111', [0.07, 0.07, 0.07]),
+          },
+        },
+      },
+    },
+  },
+  theme: { veil: { $type: 'color', $value: '{color.neutral.A100}' } },
+};
+
+async function casedSheet(plugin: ReturnType<typeof css>): Promise<string> {
+  const files = { 'core.json': CASED };
+  const tokens = parseCollection(files);
+  const out = await terrazzoExporter.transform({
+    base: tokens,
+    variants: [],
+    tokens,
+    resolver: emptyResolver(),
+    files,
+    options: { plugins: [plugin] },
+  });
+  return out.map((f) => f.content).join('\n');
+}
+
+test('CSS names keep their token’s case — declarations and references agree, however variableName spells them', async () => {
+  const kebab = (id: string) => id.replace(/\./g, '-');
+  const namings = {
+    default: css(),
+    'prefixed, case kept': css({
+      variableName: (token) => `--tui-${kebab(token.id)}`,
+    }),
+    'prefixed, lowercased': css({
+      variableName: (token) => `--tui-${kebab(token.id)}`.toLowerCase(),
+    }),
+  };
+  for (const [label, plugin] of Object.entries(namings)) {
+    const sheet = await casedSheet(plugin);
+    const prefix = label === 'default' ? '' : 'tui-';
+    expect(sheet, label).toContain(`--${prefix}color-neutral-A100:`);
+    expect(sheet, label).toContain(`var(--${prefix}color-neutral-A100)`);
+    expect(sheet, label).not.toContain(`--${prefix}color-neutral-a100`);
+    // Untouched: a path with no capital, and a lowercase path that merely ends like one.
+    expect(sheet, label).toContain(`--${prefix}color-neutral-a200:`);
+    expect(sheet, label).toContain(`--${prefix}color-deep-color-neutral-a100:`);
+  }
+});
+
+test('two paths differing only by case are ambiguous — both are left as Terrazzo wrote them', async () => {
+  const { restoreNameCase } = await import('./case');
+  const tokens = parseCollection({
+    'core.json': {
+      x: {
+        A1: { $type: 'number', $value: 1 },
+        a1: { $type: 'number', $value: 2 },
+      },
+    },
+  });
+  const sheet = ':root {\n\t--x-a1: 1;\n\t--x-a1: 2;\n}\n';
+  expect(restoreNameCase(sheet, tokens)).toBe(sheet);
+});

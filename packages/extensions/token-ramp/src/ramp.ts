@@ -152,11 +152,11 @@ export interface RampPayload {
 }
 
 /**
- * A stored DTCG colour value. Solid stops are oklch; a `match` alpha stop is stored in the RGB
- * space it was solved in — the composite equation holds there and nowhere else.
+ * A stored DTCG colour value in oklch notation — every stop, a `match` twin included (it is
+ * solved in an RGB space and stored back in oklch).
  */
 export interface RampStop {
-  colorSpace: 'oklch' | 'srgb' | 'display-p3';
+  colorSpace: 'oklch';
   components: [number, number, number];
   alpha: number;
   hex: string;
@@ -543,8 +543,14 @@ function isColourObject(value: unknown): boolean {
   );
 }
 
+/** The DTCG colour spaces a ramp reads: its own oklch stops, and an authored background's. */
+type ReadSpace = 'oklch' | 'srgb' | 'display-p3';
+
 /** culori's view of a stored colour. */
-function culoriOf(stop: RampStop) {
+function culoriOf(stop: {
+  colorSpace: ReadSpace;
+  components: [number, number, number];
+}) {
   const [a, b, c] = stop.components;
   if (stop.colorSpace === 'srgb')
     return { mode: 'rgb' as const, r: a, g: b, b: c };
@@ -575,8 +581,6 @@ function backgroundOf(value: unknown) {
       ...culoriOf({
         colorSpace: object.colorSpace,
         components: object.components as [number, number, number],
-        alpha: 1,
-        hex: '',
       }),
       alpha: typeof object.alpha === 'number' ? object.alpha : 1,
     };
@@ -712,9 +716,18 @@ function alphaSeries(input: {
       backdrop,
     );
     const [r, g, b] = components;
+    // Solved in RGB, STORED in oklch like every stop. Converting back to the same RGB space
+    // recovers the solved colour within the storage precision, so the composite still holds.
+    const solved = oklch({ mode: space, r, g, b });
+    const storedL = round(solved.l ?? 0, 4);
+    const storedC = round(solved.c ?? 0, 4);
+    // With no chroma the conversion's hue is noise (a near-black reads 89.9): write 0 — with
+    // C = 0 the hue changes nothing. Not DTCG's "none": core and the exporters don't read it yet.
+    const storedH =
+      storedC === 0 ? 0 : round((((solved.h ?? 0) % 360) + 360) % 360, 1);
     out[nameAt(index)] = {
-      colorSpace: gamut === 'srgb' ? 'srgb' : 'display-p3',
-      components,
+      colorSpace: 'oklch',
+      components: [storedL, storedC, storedH],
       alpha: opacity,
       hex: formatHex({ mode: space, r, g, b }).toUpperCase(),
     };
