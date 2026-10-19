@@ -1,5 +1,13 @@
 # @vertekum/core
 
+## 0.12.0
+
+### Patch Changes
+
+- [`ca66a50`](https://github.com/moros-oxus/vertekum/commit/ca66a503d2b75baa8daf4703427ea92ca146a546) Thanks [@tschemmer](https://github.com/tschemmer)! - A group codec's context gains `target(value)`: the path of the token at the end of an alias chain, when a value-position JSON Pointer can address it — so a generated token can borrow part of another token's value instead of copying it.
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.12.0
+
 ## 0.11.0
 
 ### Minor Changes
