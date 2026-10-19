@@ -1,5 +1,13 @@
 # @vertekum/ext-export-terrazzo
 
+## 0.12.1
+
+### Patch Changes
+
+- [`62e44af`](https://github.com/moros-oxus/vertekum/commit/62e44afcb9d6ef0700bea3e9f34fb1b67601a56f) Thanks [@tschemmer](https://github.com/tschemmer)! - CSS custom-property names keep their token's case (`color.neutral.A100` → `--color-neutral-A100`), in declarations and `var()` references alike, whatever the `variableName` passed to `@terrazzo/plugin-css` does.
+- Updated dependencies []:
+  - @vertekum/core@0.12.1
+
 ## 0.12.0
 
 ### Patch Changes

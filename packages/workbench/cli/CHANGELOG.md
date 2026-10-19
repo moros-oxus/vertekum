@@ -1,5 +1,14 @@
 # @vertekum/cli
 
+## 0.12.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/core@0.12.1
+  - vertekum@0.3.0
+  - @vertekum/server@0.3.0
+
 ## 0.12.0
 
 ### Patch Changes

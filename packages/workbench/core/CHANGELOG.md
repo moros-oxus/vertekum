@@ -1,5 +1,12 @@
 # @vertekum/core
 
+## 0.12.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.12.1
+
 ## 0.12.0
 
 ### Patch Changes
