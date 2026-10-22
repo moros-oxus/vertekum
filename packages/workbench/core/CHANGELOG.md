@@ -1,5 +1,16 @@
 # @vertekum/core
 
+## 0.13.0
+
+### Minor Changes
+
+- [`53c75b8`](https://github.com/moros-oxus/vertekum/commit/53c75b875003f3be8205b74dece8e768c03c8b0c) Thanks [@tschemmer](https://github.com/tschemmer)! - Token verbs address a token in a set: `token add --set` only refuses a path the target set already holds, so a brand override of a shared path can be added; `token set` and `token remove` take `--set`, and `token move` takes `--from`; a path held by several sets without the flag is refused, naming them (it used to act on the first match). `token set --set` on a set that lacks the path creates the override there. Saves write only the files that changed, each in its own source key order, so a padded `"050"` no longer moves after `"100"`.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @vertekum/schema-dtcg@0.13.0
+
 ## 0.12.1
 
 ### Patch Changes
