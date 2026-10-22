@@ -29,7 +29,10 @@ export function requireArg(ctx: CommandContext, name: string): string {
   return value;
 }
 
-/** The token at a dotted path, or undefined. Paths are unique, so at most one matches. */
+/**
+ * The token at a dotted path, or undefined — the first match in any set. Use `addressToken` where a
+ * verb acts on a token: a path may sit in several sets (a shared token and its brand overrides).
+ */
 export function tokenAtPath(
   document: Document,
   path: string,
@@ -37,12 +40,62 @@ export function tokenAtPath(
   return document.getAllTokens().find((t) => t.path.join('.') === path);
 }
 
-/** True when any token sits beneath `path` — i.e. the path names a group rather than a token. */
-export function isGroupPath(document: Document, path: string): boolean {
+/** Every set's token at a dotted path — one per set at most. */
+export function tokensAtPath(document: Document, path: string): Token[] {
+  return document.getAllTokens().filter((t) => t.path.join('.') === path);
+}
+
+/** Refuse a set name the project does not have, listing the ones it does. */
+export function requireSet(document: Document, set: string): void {
+  if (!document.getSets().includes(set)) {
+    throw new Error(
+      `no set '${set}' — existing sets: ${document.getSets().join(', ') || '(none)'}`,
+    );
+  }
+}
+
+/**
+ * The token a verb acts on. With `set`, that set's token at the path (undefined when the set lacks
+ * it). Without, the path's only token — and a path several sets hold is REFUSED, naming them: a
+ * silent first match would edit the shared token when a brand's was meant, or the reverse.
+ * `flag` names the option that disambiguates (`--set`, or `--from` for a move).
+ */
+export function addressToken(
+  document: Document,
+  path: string,
+  set: string | undefined,
+  flag = '--set',
+): Token | undefined {
+  const held = tokensAtPath(document, path);
+  if (set !== undefined) {
+    requireSet(document, set);
+    return held.find((t) => t.set === set);
+  }
+  if (held.length > 1) {
+    throw new Error(
+      `'${path}' is in ${held.map((t) => t.set).join(', ')} — pass ${flag}`,
+    );
+  }
+  return held[0];
+}
+
+/**
+ * True when any token sits beneath `path` — i.e. the path names a group rather than a token. With
+ * `set`, only that set's tokens count.
+ */
+export function isGroupPath(
+  document: Document,
+  path: string,
+  set?: string,
+): boolean {
   const prefix = `${path}.`;
   return document
     .getAllTokens()
-    .some((t) => t.path.join('.').startsWith(prefix));
+    .some(
+      (t) =>
+        (set === undefined || t.set === set) &&
+        t.path.join('.').startsWith(prefix),
+    );
 }
 
 /**

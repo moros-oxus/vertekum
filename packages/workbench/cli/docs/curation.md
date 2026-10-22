@@ -19,6 +19,8 @@ one model:
 
 - **The runner persists.** A verb mutates the in-memory document; the runner writes the
   changed collection files afterwards, once. No verb has its own way to touch the disk.
+  Only the files that changed are written, and each keeps its own key order: a padded
+  `"050"` stays before `"100"`, and keys the file didn't have go after the ones it did.
 - **`--dry-run` and `--json` always work** ([contract](./contract.md#shared-flags)) —
   they are the runner's, so no verb can forget them.
 - **A verb may not make things worse.** After the mutation, the runner re-checks and
@@ -49,10 +51,10 @@ never a silent string write.
 
 | Verb                            | Does                                                | Flags                                   |
 | ------------------------------- | --------------------------------------------------- | --------------------------------------- |
-| `token add <path> <value>`      | create a token at a dotted path                     | `--type <type>` (required unless a group above declares one), `--description <text>`, `--set <set>` (default `tokens`) |
-| `token set <path> [value]`      | change a token's value, type, or description        | `--type <type>`, `--description <text>` (omit `value` when only these change) |
-| `token remove <path>`           | delete a token                                      | —                                       |
-| `token move <path> <set>`       | move a token to another set (set = file)            | —                                       |
+| `token add <path> <value>`      | create a token at a dotted path                     | `--type <type>` (required unless a group above declares one), `--description <text>`, `--set <set>` (default: the first set) |
+| `token set <path> [value]`      | change a token's value, type, or description        | `--type <type>`, `--description <text>` (omit `value` when only these change), `--set <set>` |
+| `token remove <path>`           | delete a token                                      | `--set <set>`                           |
+| `token move <path> <set>`       | move a token to another set (set = file)            | `--from <set>`                          |
 | `token rename <from> <to>`      | rename a token **or group**, rewriting every reference to it | `--allow-group`                  |
 
 `token rename` plans first: it refuses on a collision at the destination, and renaming a
@@ -62,6 +64,37 @@ beneath the path moves, not a formality. The summary reports both counts:
 ```
 renamed color.grey → color.gray: 12 token(s), 7 reference(s)
 ```
+
+### A path in several sets
+
+The same path may sit in several sets: a shared token and the brand overrides that
+resolvers layer over it. `token add --set <set>` only refuses a path the **target** set
+already holds, so an override is added like any token.
+
+`token set`, `token remove` and `token move` act on one set's token. A path held by one
+set needs no flag. A path held by several sets must be addressed (`--set <set>`, or
+`--from <set>` for a move), or the verb refuses and names them:
+
+```
+'color.accent' is in core, globex/palette — pass --set
+```
+
+`token set --set <set>` on a set that lacks the path, while another set holds it,
+creates the override there, taking the other token's type and description for whatever
+the call doesn't change.
+
+A shared token that references something a brand lacks dangles for that brand, so it is
+refused until the brand overrides it. Add the brand overrides first, then the shared
+token:
+
+```bash
+vertekum token add color.accent '{color.brand.500}' --type color --set globex/palette
+vertekum token add color.accent '{color.berry.500}' --type color --set core
+```
+
+`token rename` moves a path in every set at once, by design.
+
+### Generated tokens
 
 A **generated** token (a ramp stop, produced by an extension payload on its group) has
 no node of its own. `token set` on one writes an **override** — a real token at that

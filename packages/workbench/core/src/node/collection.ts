@@ -8,6 +8,7 @@ import {
 } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import type { DtcgNode } from '../dtcg/parse';
+import { keyOrder, stringifyOrdered } from './json-order';
 
 /**
  * Read every `*.json` file in a collection directory as parsed JSON, RECURSIVELY — subdirectories
@@ -47,23 +48,32 @@ export type JsonIndent = string | number;
 export const DEFAULT_INDENT: JsonIndent = 2;
 
 /**
- * Write each named file back to the collection directory as pretty JSON, then dir-sync: the
- * collection must match the record, so remove managed `*.json` no longer present (this is how a
- * removed set's file is deleted). Scope is strictly `.json` in this dir — non-json siblings and
- * files elsewhere (`.vertekum/`, changelog) are untouched.
+ * Write files back to the collection directory as pretty JSON, then dir-sync: the collection must
+ * match the record, so remove managed `*.json` no longer present (this is how a removed set's file
+ * is deleted). Scope is strictly `.json` in this dir — non-json siblings and files elsewhere
+ * (`.vertekum/`, changelog) are untouched.
+ *
+ * `only` limits the writes to the named files (the record still drives the dir-sync), so a save
+ * touches exactly what changed. `templates` gives a file's current text, whose key order the
+ * write keeps (`json-order.ts`); a file without one is written in model order.
  */
 export async function writeCollection(
   dir: string,
   files: Record<string, unknown>,
   indent: JsonIndent = DEFAULT_INDENT,
+  options: { only?: string[]; templates?: Record<string, string> } = {},
 ): Promise<void> {
   await mkdir(dir, { recursive: true });
-  for (const [name, data] of Object.entries(files)) {
+  const names = options.only ?? Object.keys(files);
+  for (const name of names) {
+    if (!(name in files)) continue;
     // Nested set names (`brands/brand-a.json`) need their directories to exist.
     await mkdir(dirname(join(dir, name)), { recursive: true });
+    const template = options.templates?.[name];
+    const order = template === undefined ? new Map() : keyOrder(template);
     await writeFile(
       join(dir, name),
-      `${JSON.stringify(data, null, indent)}\n`,
+      `${stringifyOrdered(files[name], order, indent)}\n`,
       'utf8',
     );
   }

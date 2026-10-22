@@ -618,3 +618,128 @@ test('token set consults the chain and stores an upgraded type', async () => {
     { value: 8, unit: 'px' },
   ]);
 });
+
+// ── a path in several sets: overrides, and addressing by set ─────────────────
+
+/** A shared set and a brand set, the shared token already in place. */
+async function layered(): Promise<Document> {
+  const document = createDocument();
+  document.hydrate(serializeDocument([], ['theme', 'lilly'], new Map()));
+  await add(document, 'color.brand', '#000000', {
+    type: 'color',
+    set: 'theme',
+  });
+  return document;
+}
+const inSet = (document: Document, set: string, path: string) =>
+  document
+    .getAllTokens()
+    .find((t) => t.set === set && t.path.join('.') === path);
+
+test('token add --set adds an override at a path another set already holds', async () => {
+  const document = await layered();
+  await add(document, 'color.brand', '#ffffff', {
+    type: 'color',
+    set: 'lilly',
+  });
+  expect(inSet(document, 'theme', 'color.brand')).toBeDefined();
+  expect(inSet(document, 'lilly', 'color.brand')).toBeDefined();
+  // The target set is still checked: the same path twice in one set is refused.
+  await expect(
+    add(document, 'color.brand', '#ffffff', { type: 'color', set: 'lilly' }),
+  ).rejects.toThrow("'color.brand' already exists in 'lilly'");
+});
+
+test('a path in several sets must be addressed with --set; a path in one set needs no flag', async () => {
+  const document = await layered();
+  await add(document, 'color.brand', '#ffffff', {
+    type: 'color',
+    set: 'lilly',
+  });
+  const ambiguous = "'color.brand' is in theme, lilly — pass --set";
+  await expect(
+    run('token set', document, { path: 'color.brand', value: '#ff0000' }),
+  ).rejects.toThrow(ambiguous);
+  await expect(
+    run('token remove', document, { path: 'color.brand' }),
+  ).rejects.toThrow(ambiguous);
+  await expect(
+    run('token move', document, { path: 'color.brand', set: 'theme' }),
+  ).rejects.toThrow("'color.brand' is in theme, lilly — pass --from");
+
+  // Addressed, each verb acts on exactly that set's token.
+  await run(
+    'token set',
+    document,
+    { path: 'color.brand', value: '#ff0000' },
+    { set: 'lilly' },
+  );
+  expect(
+    (inSet(document, 'lilly', 'color.brand')?.value as { components: number[] })
+      .components[0],
+  ).toBeGreaterThan(0.5);
+  expect(
+    (inSet(document, 'theme', 'color.brand')?.value as { components: number[] })
+      .components[0],
+  ).toBe(0);
+  await run(
+    'token remove',
+    document,
+    { path: 'color.brand' },
+    { set: 'lilly' },
+  );
+  expect(inSet(document, 'lilly', 'color.brand')).toBeUndefined();
+
+  // Back to one set: no flag needed.
+  await run('token set', document, { path: 'color.brand', value: '#00ff00' });
+});
+
+test('token set --set creates the override in a set that lacks the path', async () => {
+  const document = await layered();
+  const result = await run(
+    'token set',
+    document,
+    { path: 'color.brand', value: '#ffffff' },
+    { set: 'lilly' },
+  );
+  expect(result?.summary).toBe('overrode color.brand in lilly');
+  const override = inSet(document, 'lilly', 'color.brand');
+  expect(override?.type).toBe('color');
+  expect(inSet(document, 'theme', 'color.brand')).toBeDefined();
+  // No set holds the path at all: still a plain "no token" (token add creates).
+  await expect(
+    run('token set', document, { path: 'nope', value: '1' }, { set: 'lilly' }),
+  ).rejects.toThrow("no token at 'nope'");
+  await expect(
+    run(
+      'token set',
+      document,
+      { path: 'color.brand', value: '1' },
+      { set: 'ghost' },
+    ),
+  ).rejects.toThrow("no set 'ghost'");
+});
+
+test('token move --from picks the source when several sets hold the path', async () => {
+  const document = await layered();
+  document.hydrate(
+    serializeDocument(
+      document.getAllTokens(),
+      ['theme', 'lilly', 'novo'],
+      new Map(),
+    ),
+  );
+  await add(document, 'color.brand', '#ffffff', {
+    type: 'color',
+    set: 'lilly',
+  });
+  await run(
+    'token move',
+    document,
+    { path: 'color.brand', set: 'novo' },
+    { from: 'lilly' },
+  );
+  expect(inSet(document, 'novo', 'color.brand')).toBeDefined();
+  expect(inSet(document, 'lilly', 'color.brand')).toBeUndefined();
+  expect(inSet(document, 'theme', 'color.brand')).toBeDefined();
+});
