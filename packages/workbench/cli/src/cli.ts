@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { Command } from 'commander';
+import { runBatch } from './commands/batch';
 import { runBuild } from './commands/build';
 import { runCheck } from './commands/check';
 import { runDescribe } from './commands/describe';
@@ -122,6 +125,35 @@ export function createProgram(project: Project | undefined): Command {
     );
 
   program
+    .command('batch <file>')
+    .description(
+      'run several commands, validated once and written once (`-` reads stdin)',
+    )
+    .option('--dry-run', 'run and validate the whole batch, write nothing')
+    .option('--json', 'emit machine-readable output')
+    .option('--cwd <dir>', 'project directory')
+    .action((file: string, options) =>
+      withProject(async (p) => {
+        let text: string;
+        try {
+          text =
+            file === '-'
+              ? await readStdin()
+              : await readFile(resolve(file), 'utf8');
+        } catch {
+          process.stderr.write(`can't read batch file '${file}'\n`);
+          return 2;
+        }
+        return runBatch({
+          project: p,
+          text,
+          json: options.json,
+          dryRun: options.dryRun,
+        });
+      }),
+    );
+
+  program
     .command('describe')
     .description('print the live inventory: extensions, exporters, validators')
     .option('--json', 'emit machine-readable output')
@@ -174,6 +206,13 @@ export function createProgram(project: Project | undefined): Command {
   if (project) attachCommands(program, project);
 
   return program;
+}
+
+/** All of stdin, as text — a batch piped in with `-`. */
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks).toString('utf8');
 }
 
 /** Entry point used by `bin/vertekum.mjs`. Usage errors exit 2; the work's own failures exit 1. */

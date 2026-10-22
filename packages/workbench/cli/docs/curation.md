@@ -92,6 +92,8 @@ vertekum token add color.accent '{color.brand.500}' --type color --set globex/pa
 vertekum token add color.accent '{color.berry.500}' --type color --set core
 ```
 
+Or put both in a [batch](./batch.md), where only the end state has to pass, in any order.
+
 `token rename` moves a path in every set at once, by design.
 
 ### Generated tokens

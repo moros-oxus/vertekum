@@ -36,6 +36,7 @@ instead of guessing them.
 | [`watch`](./docs/watch.md)               | rebuild on change: generators, then check, then the export targets       |
 | [`describe`](./docs/describe.md)         | print the live inventory: extensions, exporters, validators, schemas, commands, compositions |
 | [`token` / `group` / `set` / `resolver` …](./docs/curation.md) | the curation verbs: structural edits that rewrite references and refuse to break the collection |
+| [`batch`](./docs/batch.md)               | run several commands as one change: validated once, written once         |
 | [`migrate values`](./docs/curation.md#migrate-values) | convert stored string values to 2025.10 object notation     |
 | [`schema eject`](./docs/schemas.md)      | copy a schema into the working directory so it can be changed            |
 | `dev`                                    | launch the Vertekum UI — optional peer; see [the contract](./docs/contract.md#vertekum-dev) |

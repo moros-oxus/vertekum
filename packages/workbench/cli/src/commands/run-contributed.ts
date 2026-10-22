@@ -5,7 +5,7 @@ import type {
   CommandResult,
   Diagnostic,
 } from '@vertekum/core';
-import type { Command } from 'commander';
+import { Command } from 'commander';
 import type { Project } from '../loadProject';
 import { saveProject } from '../saveProject';
 import { collectProposed, formatDiagnostic } from './check';
@@ -23,7 +23,7 @@ function signature(d: Diagnostic): string {
  * the tool unusable exactly when it is most needed. The rule is narrower and honest: you may not
  * make it worse.
  */
-async function newErrors(
+export async function newErrors(
   project: Project,
   before: Diagnostic[],
 ): Promise<Diagnostic[]> {
@@ -161,11 +161,23 @@ export async function runContributed(input: {
   return 0;
 }
 
+/** What a parsed command line resolves to: the command, its named arguments, its options. */
+export interface ParsedCommand {
+  descriptor: CommandDescriptor;
+  args: Record<string, string>;
+  options: Record<string, unknown>;
+}
+
 /**
- * Attach every contributed command to the program, creating parent commands on demand so
- * 'token rename' becomes `vertekum token rename`.
+ * Declare every registered command on a program, creating parent commands on demand so
+ * 'token rename' becomes `vertekum token rename`. `onAction` receives what commander parsed; the
+ * CLI runs it, a batch collects it.
  */
-export function attachCommands(program: Command, project: Project): void {
+function declareCommands(
+  program: Command,
+  project: Project,
+  onAction: (parsed: ParsedCommand) => Promise<void>,
+): void {
   const parents = new Map<string, Command>();
 
   for (const descriptor of project.kernel.commands.list()) {
@@ -221,14 +233,87 @@ export function attachCommands(program: Command, project: Project): void {
       const options = actionArgs[count] as Record<string, unknown>;
       const named: Record<string, string> = {};
       (descriptor.args ?? []).forEach((arg, i) => {
-        named[arg.name] = values[i] as string;
+        if (values[i] !== undefined) named[arg.name] = values[i] as string;
       });
-      process.exitCode = await runContributed({
-        project,
-        command: descriptor,
-        args: named,
-        options,
-      });
+      await onAction({ descriptor, args: named, options });
     });
   }
+}
+
+/** Attach every contributed command to the program, each run by the runner. */
+export function attachCommands(program: Command, project: Project): void {
+  declareCommands(program, project, async ({ descriptor, args, options }) => {
+    process.exitCode = await runContributed({
+      project,
+      command: descriptor,
+      args,
+      options,
+    });
+  });
+}
+
+/** The host's own verbs: they report, serve or scaffold, and none can run inside a batch. */
+const HOST_VERBS = new Set([
+  'build',
+  'check',
+  'describe',
+  'watch',
+  'init',
+  'dev',
+  'batch',
+  'migrate',
+]);
+
+/** The runner-owned flags. Inside a batch they belong to the batch, never to one line. */
+const BATCH_FLAGS: Array<[string, string]> = [
+  ['dryRun', '--dry-run'],
+  ['json', '--json'],
+  ['cwd', '--cwd'],
+];
+
+/**
+ * Parse one argument vector into the command it names, WITHOUT running it — exactly the parsing
+ * the CLI does, so a batch line means what it would mean typed. A fresh program per call:
+ * commander keeps option values between parses. Throws a usage error naming the problem.
+ */
+export async function parseCommandLine(
+  project: Project,
+  argv: string[],
+): Promise<ParsedCommand> {
+  const first = argv[0];
+  if (first !== undefined && HOST_VERBS.has(first)) {
+    throw new Error(
+      `'${first}' can't run in a batch — only commands that change tokens can`,
+    );
+  }
+  let parsed: ParsedCommand | undefined;
+  const program = new Command('vertekum');
+  program.exitOverride();
+  // Usage errors become the thrown message, not stderr noise.
+  const quiet = { writeOut: () => {}, writeErr: () => {} };
+  program.configureOutput(quiet);
+  declareCommands(program, project, async (result) => {
+    parsed = result;
+  });
+  const silence = (command: Command): void => {
+    command.exitOverride();
+    command.configureOutput(quiet);
+    for (const sub of command.commands) silence(sub);
+  };
+  silence(program);
+  try {
+    await program.parseAsync(argv, { from: 'user' });
+  } catch (error) {
+    const message = (error as Error).message.replace(/^error: /, '');
+    throw new Error(message);
+  }
+  if (!parsed) {
+    throw new Error(`'${argv.join(' ')}' is not a command`);
+  }
+  for (const [key, flag] of BATCH_FLAGS) {
+    if ((parsed as ParsedCommand).options[key] !== undefined) {
+      throw new Error(`${flag} belongs to the batch, not to a line`);
+    }
+  }
+  return parsed;
 }

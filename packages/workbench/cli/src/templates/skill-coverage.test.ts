@@ -26,6 +26,8 @@ const TOKENS_SKILL_MUST_MENTION = [
   'set add',
   'set remove',
   '--allow-group',
+  '--set <set>',
+  'batch',
   '--dry-run',
   '--json',
   // schemas / vocabulary

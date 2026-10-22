@@ -50,6 +50,13 @@ npx vertekum set add <name>               # a set is a FILE; also: set remove
   formality: it moves every token beneath the path.
 - **`--dry-run`** works on every mutating command, and `--json` reports what changed. Use
   `--dry-run` whenever you are unsure what a change touches.
+- **A path in several sets** (a shared token and its brand overrides): `token add --set <set>`
+  adds an override; `token set` / `token remove` need `--set <set>` (`token move`: `--from`)
+  once more than one set holds the path, and refuse without it.
+- **Many changes at once** go in a batch: `npx vertekum batch <file>` runs one command per line,
+  validates only the END state and writes once — all or nothing. Use it when an intermediate
+  step would break a rule (a shared token before the brand override it needs), and
+  `batch <file> --dry-run` to preview the whole sequence.
 
 ## The vocabulary says what you may not do
 
