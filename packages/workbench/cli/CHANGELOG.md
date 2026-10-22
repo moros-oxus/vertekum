@@ -1,5 +1,18 @@
 # @vertekum/cli
 
+## 0.13.0
+
+### Minor Changes
+
+- [`d3f2b51`](https://github.com/moros-oxus/vertekum/commit/d3f2b51d2bfcdadc0063f70afc7186da780a9dc2) Thanks [@tschemmer](https://github.com/tschemmer)! - New `vertekum batch <file>` (or `-` for stdin): runs several commands — the curation verbs and contributed commands — against one in-memory project, validates the end state once and writes once. All or nothing: every line is parsed first, a failing command stops the batch, and nothing is written unless the whole batch passes, so `--dry-run` previews an entire sequence. Lines are written as on the command line; a JSON array of argument arrays also works.
+
+### Patch Changes
+
+- Updated dependencies [[`53c75b8`](https://github.com/moros-oxus/vertekum/commit/53c75b875003f3be8205b74dece8e768c03c8b0c)]:
+  - @vertekum/core@0.13.0
+  - vertekum@0.3.0
+  - @vertekum/server@0.3.0
+
 ## 0.12.1
 
 ### Patch Changes

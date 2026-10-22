@@ -1,5 +1,12 @@
 # @vertekum/ext-export-figma
 
+## 0.13.0
+
+### Patch Changes
+
+- Updated dependencies [[`53c75b8`](https://github.com/moros-oxus/vertekum/commit/53c75b875003f3be8205b74dece8e768c03c8b0c)]:
+  - @vertekum/core@0.13.0
+
 ## 0.12.1
 
 ### Patch Changes
