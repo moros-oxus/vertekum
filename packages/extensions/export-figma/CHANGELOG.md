@@ -1,5 +1,18 @@
 # @vertekum/ext-export-figma
 
+## 0.14.0
+
+### Minor Changes
+
+- [`0f3ab77`](https://github.com/moros-oxus/vertekum/commit/0f3ab77f67e942527b23a30ca5c6e160dbc390ae) Thanks [@tschemmer](https://github.com/tschemmer)! - The Figma model contract moves to `draft.05`: a deprecated token's variables and style carry `deprecated` (the `$deprecated` reason, or `""`), so a design-tool consumer can mark them instead of hiding them.
+
+- [`a3ee32c`](https://github.com/moros-oxus/vertekum/commit/a3ee32cc69dc07d40b6bbe987f856d6c530c2450) Thanks [@tschemmer](https://github.com/tschemmer)! - A merged model no longer splits a text style per composition when its compositions differ only in members the style binds (font family, size, weight, px letter spacing): the style is emitted once, unprefixed, and follows the design file's mode. A style member names `variable` only when that variable exists in the model.
+
+### Patch Changes
+
+- Updated dependencies [[`0f3ab77`](https://github.com/moros-oxus/vertekum/commit/0f3ab77f67e942527b23a30ca5c6e160dbc390ae)]:
+  - @vertekum/core@0.14.0
+
 ## 0.13.0
 
 ### Patch Changes
