@@ -271,3 +271,108 @@ test('no absences, no sentinels: no NOT_AVAILABLE collection and no marker', asy
   expect(m.collections.some((c) => c.name === 'NOT_AVAILABLE')).toBe(false);
   expect(m.source.notAvailable).toBeUndefined();
 });
+
+/** The family moves into each brand's palette file: same name, a different family per brand. */
+const familyPerBrand = (files: Record<string, DtcgNode>) => {
+  const core = files['core.json'] as Record<string, unknown>;
+  delete core.font;
+  (files['brand-a/light.json'] as Record<string, unknown>).font = {
+    sans: { $type: 'fontFamily', $value: ['Inter', 'sans-serif'] },
+  };
+  (files['brand-b/light.json'] as Record<string, unknown>).font = {
+    sans: { $type: 'fontFamily', $value: ['Lora', 'serif'] },
+  };
+};
+
+const body = (files: Record<string, DtcgNode>) =>
+  (files['core.json'] as Record<string, { $value: Record<string, unknown> }>)
+    .body as { $value: Record<string, unknown> };
+
+test('a style whose brands differ only in a member it binds is shared, bound to the variable', async () => {
+  const m = await model(collection(familyPerBrand));
+  expect(m.styles.map((s) => s.name)).toEqual(['body']);
+  expect(
+    m.styles[0]?.properties.find((p) => p.property === 'font-family'),
+  ).toEqual({
+    property: 'font-family',
+    value: 'Inter, sans-serif', // the first composition's plain value
+    variable: 'font/sans',
+  });
+  expect(m.source.notices.join('\n')).not.toMatch(/style 'body'/);
+});
+
+test('a brand that overrides the typography token itself still splits the style', async () => {
+  const m = await model(
+    collection((files) => {
+      familyPerBrand(files);
+      (files['brand-b/light.json'] as Record<string, unknown>).body = {
+        $type: 'typography',
+        $value: { ...body(files).$value, fontWeight: 700 },
+      };
+    }),
+  );
+  expect(m.styles.map((s) => s.name).sort()).toEqual([
+    'brand-a/body',
+    'brand-b/body',
+  ]);
+  expect(m.source.notices.join('\n')).toMatch(
+    /style 'body' differs between compositions/,
+  );
+});
+
+test('a member that never binds (line height) still splits when its chain differs', async () => {
+  const m = await model(
+    collection((files) => {
+      body(files).$value.lineHeight = '{leading.body}';
+      (files['brand-a/light.json'] as Record<string, unknown>).leading = {
+        body: { $type: 'number', $value: 1.5 },
+      };
+      (files['brand-b/light.json'] as Record<string, unknown>).leading = {
+        body: { $type: 'number', $value: 1.6 },
+      };
+    }),
+  );
+  expect(m.styles.map((s) => s.name).sort()).toEqual([
+    'brand-a/body',
+    'brand-b/body',
+  ]);
+});
+
+test('an em letter spacing never binds, so it splits too', async () => {
+  const m = await model(
+    collection((files) => {
+      body(files).$value.letterSpacing = '{tracking.body}';
+      for (const [brand, value] of [
+        ['brand-a', 0.01],
+        ['brand-b', 0.02],
+      ] as const) {
+        (files[`${brand}/light.json`] as Record<string, unknown>).tracking = {
+          body: { $type: 'dimension', $value: { value, unit: 'em' } },
+        };
+      }
+    }),
+  );
+  expect(m.styles.map((s) => s.name).sort()).toEqual([
+    'brand-a/body',
+    'brand-b/body',
+  ]);
+});
+
+test('a member referencing a token with no variable names none, and still counts its chain', async () => {
+  const m = await model(
+    collection((files) => {
+      body(files).$value.fontWeight = '{weight.curve}';
+      for (const brand of ['brand-a', 'brand-b']) {
+        (files[`${brand}/light.json`] as Record<string, unknown>).weight = {
+          // A type with no Figma variable: the reference is materialized, never bound.
+          curve: { $type: 'cubicBezier', $value: [0, 0, 1, 1] },
+        };
+      }
+    }),
+    ['brand-a'],
+  );
+  const weight = m.styles
+    .find((s) => s.name === 'body')
+    ?.properties.find((p) => p.property === 'font-weight');
+  expect(weight?.variable).toBeUndefined();
+});

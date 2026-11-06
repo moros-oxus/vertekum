@@ -265,6 +265,30 @@ async function convert(
   return undefined;
 }
 
+/**
+ * Whether a design tool binds this text-style property to a variable of this type, so the style
+ * follows the mode. Line height never binds: a variable bound to it is read as pixels, while a
+ * token line height is a multiplier. Text case and decoration can't bind at all.
+ */
+const BINDABLE: Record<string, FigmaType> = {
+  'font-family': 'STRING',
+  'font-size': 'FLOAT',
+  'font-weight': 'FLOAT',
+  'letter-spacing': 'FLOAT',
+};
+
+export function bindable(
+  property: string,
+  type: FigmaType,
+  value: unknown,
+): boolean {
+  if (BINDABLE[property] !== type) return false;
+  if (property === 'letter-spacing') {
+    return typeof value === 'string' && value.trim().endsWith('px');
+  }
+  return true;
+}
+
 /** Typography members → text-style properties; shadow layers → effect-style properties. */
 const TYPOGRAPHY_MEMBERS: Record<string, string> = {
   fontFamily: 'font-family',
@@ -371,8 +395,9 @@ export async function buildModelWithDeps(
     ].filter(([, modifier]) => modifier in input.resolver.modifiers),
   );
 
-  // First pass — every variable NAME that will exist, so alias edges can check their targets.
-  const variableNames = new Set<string>();
+  // First pass — every variable that will exist (name → type), so alias edges and style
+  // bindings can check their targets.
+  const variableNames = new Map<string, FigmaType>();
   const atomsOf = async (
     token: Token,
     value: unknown,
@@ -406,7 +431,9 @@ export async function buildModelWithDeps(
     if (token.type === 'typography' || token.type === 'shadow') continue;
     const atoms = await atomsOf(token, token.value);
     if (!atoms) continue;
-    for (const atom of atoms) variableNames.add(nameOf(token, atom.suffix));
+    for (const atom of atoms) {
+      variableNames.set(nameOf(token, atom.suffix), atom.type);
+    }
   }
 
   // Variable construction for one token across a mode set.
@@ -477,33 +504,49 @@ export async function buildModelWithDeps(
 
   const buildStyle = (token: Token): void => {
     const value = token.value;
-    // A style has no modes: it depends on its own file and every file its members reach.
-    deps.set(`style:${slash(token.path)}`, {
-      default: [
-        ...chainFiles(
-          token.sourceValue ?? value,
-          basePaths,
-          new Set([token.set ?? 'tokens']),
-        ),
-      ]
-        .sort()
-        .join('|'),
-    });
-    if (token.type === 'typography' && value && typeof value === 'object') {
-      const raw = (token.sourceValue ?? value) as Record<string, unknown>;
+    const own = new Set([token.set ?? 'tokens']);
+    const recordDeps = (files: Set<string>) =>
+      deps.set(`style:${slash(token.path)}`, {
+        default: [...files].sort().join('|'),
+      });
+    const raw = token.sourceValue ?? value;
+    if (
+      token.type === 'typography' &&
+      value &&
+      typeof value === 'object' &&
+      raw &&
+      typeof raw === 'object'
+    ) {
+      const authoredMembers = raw as Record<string, unknown>;
       const resolved = value as Record<string, unknown>;
       const properties: FigmaStyleProperty[] = [];
+      const bound = new Set<string>();
       for (const [member, property] of Object.entries(TYPOGRAPHY_MEMBERS)) {
         if (!(member in resolved)) continue;
-        const authored = raw[member];
-        properties.push({
-          property,
-          value: styleValue(deref(resolved[member], basePaths)),
-          ...(dtcg.tokens.isReference(authored)
-            ? { variable: dotToSlash(dtcg.tokens.referenceToPath(authored)) }
-            : {}),
-        });
+        const authored = authoredMembers[member];
+        const plain = styleValue(deref(resolved[member], basePaths));
+        // `variable` names a variable that exists — a reference to anything else is
+        // materialized, like an alias whose target has no variable.
+        const target = dtcg.tokens.isReference(authored)
+          ? dotToSlash(dtcg.tokens.referenceToPath(authored))
+          : undefined;
+        const type =
+          target !== undefined ? variableNames.get(target) : undefined;
+        if (target !== undefined && type !== undefined) {
+          if (bindable(property, type, plain)) bound.add(member);
+          properties.push({ property, value: plain, variable: target });
+        } else {
+          properties.push({ property, value: plain });
+        }
       }
+      // A style has no modes: it depends on its own file and on every file an UNBOUND member
+      // reaches. A bound member is resolved per mode by the design tool, like an alias, so it
+      // adds nothing — which is what lets one style serve every composition.
+      const files = new Set(own);
+      for (const [member, authored] of Object.entries(authoredMembers)) {
+        if (!bound.has(member)) chainFiles(authored, basePaths, files);
+      }
+      recordDeps(files);
       model.styles.push({
         kind: 'text',
         name: slash(token.path),
@@ -512,6 +555,7 @@ export async function buildModelWithDeps(
       });
       return;
     }
+    recordDeps(chainFiles(raw, basePaths, own));
     if (token.type === 'shadow') {
       const layers = Array.isArray(value) ? value : [value];
       const properties: FigmaStyleProperty[] = layers.flatMap((layer, index) =>

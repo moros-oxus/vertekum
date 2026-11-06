@@ -28,8 +28,13 @@ vocabulary:
 - **References survive as alias edges** (per mode); a reference whose target has no
   variable is materialized instead — never dropped.
 - **Figma is variables and styles**: typography tokens become text styles, shadows
-  become effect styles, each with resolved per-property values and bindings to
-  member variables where the member was authored as a reference.
+  become effect styles, each with resolved per-property values. A text-style member
+  authored as a reference to a token that has a variable names it in `variable`; a
+  reference to anything else is materialized and names none.
+- A text style **binds** the members a design tool can follow per mode: `font-family`
+  (STRING), `font-size`, `font-weight` and a `px` `letter-spacing` (FLOAT). Line
+  height never binds — a variable bound to it is read as pixels, while a token line
+  height is a multiplier — and neither do text case or decoration.
 - Every variable carries the **Figma-typed value** (`COLOR` as `{r,g,b,a}` floats,
   dimensions as unitless px `FLOAT`, `STRING`, `BOOLEAN`) *and* the verbatim DTCG
   `source` — a consumer of the model loses nothing to any importer's dialect.
@@ -78,7 +83,10 @@ never from what the values happen to be today:
 - A variable a composition doesn't have simply has no value for that composition's
   modes.
 - Styles carry no modes in Figma, so a style whose files differ is emitted once per
-  composition (`acme/typography/body`); otherwise it stays shared.
+  composition (`acme/typography/body`); otherwise it stays shared. A member the style
+  binds counts like an alias — its own file only — so a style whose compositions differ
+  only in bound members (each brand's font family) stays shared and follows the mode.
+  A shared style's plain values are the first composition's.
 
 ### Not available
 

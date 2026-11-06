@@ -56,6 +56,7 @@ function fixture(): ExporterInput {
     token('space.gap', 'dimension', { value: 0.5, unit: 'rem' }),
     token('flag.rounded', 'boolean', true),
     token('brand.mark', 'fontFamily', ['Circular', 'sans-serif'], 'brand'),
+    token('font.regular', 'fontWeight', 400),
     token('typography.body', 'typography', {
       fontFamily: ['Circular'],
       fontSize: { value: 16, unit: 'px' },
