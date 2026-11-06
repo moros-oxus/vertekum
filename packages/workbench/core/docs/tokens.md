@@ -109,6 +109,48 @@ depends on which sets the active selection merged.
 A reference whose target's `$type` disagrees with the referencing token's effective type
 is a validation error — a reference borrows a value, not a type.
 
+## Retiring a token — `$deprecated`
+
+A token is retired in two steps, across releases:
+
+1. **Deprecate it.** `$deprecated` is `true`, or a string saying why and what to use
+   instead. The token still exists and still resolves; everything that consumes it keeps
+   working.
+2. **Remove it**, in a later release. Removal is the deletion of the token from its file —
+   there is no separate "marked for deletion" state.
+
+```json
+{
+  "color": {
+    "$type": "color",
+    "accent": { "$value": "{color.brand}", "$deprecated": "Use {color.primary}" },
+    "legacy": {
+      "$deprecated": "The legacy palette is removed in 2.0",
+      "red": { "$value": "#c8102e" },
+      "kept": { "$value": "#ffffff", "$deprecated": false }
+    }
+  }
+}
+```
+
+A group's `$deprecated` applies to everything beneath it, generated tokens included; a
+descendant opts out with `$deprecated: false`. The model exposes the **effective** value as
+`token.deprecated` (`true` or the reason; an empty reason counts as `true`) and what the node
+itself carries as `token.deprecatedOwn` — only the latter is ever written, so a group's
+deprecation stays on the group.
+
+What reports it:
+
+- `check` warns `token/deprecated-reference` wherever a token that is **not** deprecated
+  references one that is — by alias, composite member, or pointer — naming what still has to
+  move. A warning: it never fails the run.
+- `build --json` lists every deprecated token (`deprecated: [{ path, set, message? }]`).
+- The release engine's diff reports a newly deprecated token as its own change
+  (`deprecated`, a `patch`); release notes give it a **Deprecated** section. Removal is
+  `removed`, a `major`.
+- An exporter may carry it to its consumers — the Figma model does (`deprecated` on variables
+  and styles).
+
 ## `$extensions`
 
 The spec's vendor-extension bucket. Keys under `org.vertekum.*` are reserved for the

@@ -263,6 +263,85 @@ export const aliasValidator: Validator = {
   },
 };
 
+/** The token path a pointer addresses — its segments up to the first `$` member (`$root` aside). */
+function pointerTokenPath(ref: string): string | null {
+  const segments = parsePointer(ref);
+  if (!segments) return null;
+  const end = segments.findIndex((s) => s.startsWith('$') && s !== ROOT_TOKEN);
+  const path = end === -1 ? segments : segments.slice(0, end);
+  return path.length > 0 ? path.join('.') : null;
+}
+
+/** Every token path an authored value references: curly aliases and pointer objects, anywhere. */
+function referencedPaths(value: unknown, out: string[] = []): string[] {
+  if (isReference(value)) {
+    out.push(referenceToPath(value));
+  } else if (isPointerObject(value)) {
+    const path = pointerTokenPath(value.$ref);
+    if (path !== null) out.push(path);
+  } else if (Array.isArray(value)) {
+    for (const item of value) referencedPaths(item, out);
+  } else if (value !== null && typeof value === 'object') {
+    for (const item of Object.values(value)) referencedPaths(item, out);
+  }
+  return out;
+}
+
+/** Live uses of deprecated tokens in one bundle: a deprecated token's own uses are silent. */
+function checkDeprecations(tokens: Token[], composition: string): Diagnostic[] {
+  const byPath = indexByPath(tokens);
+  const out: Diagnostic[] = [];
+  for (const token of tokens) {
+    if (token.deprecated !== undefined) continue;
+    const paths = referencedPaths(token.sourceValue ?? token.value);
+    if (token.ref !== undefined) {
+      const path = pointerTokenPath(token.ref);
+      if (path !== null) paths.push(path);
+    }
+    for (const path of new Set(paths)) {
+      const target = byPath.get(path) ?? byPath.get(`${path}.${ROOT_TOKEN}`);
+      if (target?.deprecated === undefined) continue;
+      const why =
+        typeof target.deprecated === 'string' ? ` — ${target.deprecated}` : '';
+      out.push({
+        code: 'token/deprecated-reference',
+        severity: 'warning',
+        message: `'${token.path.join('.')}' references deprecated '${path}'${why}`,
+        source: 'core',
+        file: `${token.set}.json`,
+        target: { kind: 'set', name: composition },
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Live uses of deprecated tokens (DTCG `$deprecated`). A warning, never an error: deprecation is
+ * the announcement that comes BEFORE removal, and each warning names what still has to move.
+ * Checked per composition, like references — which token a path denotes depends on it.
+ */
+export const deprecationValidator: Validator = {
+  id: 'core.deprecations',
+  name: 'Deprecated tokens in use',
+  async validate({ tokens, resolvers }) {
+    if (resolvers.size === 0) return checkDeprecations(tokens, 'flat');
+    const seen = new Set<string>();
+    const out: Diagnostic[] = [];
+    for (const [name, resolver] of resolvers) {
+      const input = resolveExporterInput(resolver, tokens);
+      for (const list of [input.base, ...input.variants.map((v) => v.tokens)]) {
+        for (const diagnostic of checkDeprecations(list, name)) {
+          if (seen.has(diagnostic.message)) continue;
+          seen.add(diagnostic.message);
+          out.push(diagnostic);
+        }
+      }
+    }
+    return out;
+  },
+};
+
 /**
  * Semantic resolver validity, namespaced under `resolver/` — the issue vocabulary the resolver arc
  * designed IS the public contract. `unknown-source` is skipped: it is structural, reported
@@ -425,6 +504,7 @@ export const targetValidator: Validator = {
 /** The always-on set `vertekum check` runs before any registry-supplied validators. */
 export const builtinValidators: Validator[] = [
   aliasValidator,
+  deprecationValidator,
   resolverValidator,
   targetValidator,
 ];

@@ -8,6 +8,9 @@ function line(c: TokenChange): string {
   if (c.kind === 'renamed' && c.fromPath)
     return `${c.fromPath.join('.')} → ${path}`;
   if (c.kind === 'retyped' && c.fromType) return `${path} (was ${c.fromType})`;
+  if (c.kind === 'deprecated' && typeof c.deprecated === 'string') {
+    return `${path} — ${c.deprecated}`;
+  }
   return path;
 }
 
@@ -27,6 +30,7 @@ function renderChangelog(
   ]) {
     release.changed(line(c));
   }
+  for (const c of notes.groups.deprecated) release.deprecated(line(c));
   for (const c of notes.groups.removed) release.removed(line(c));
   changelog.addRelease(release);
   return changelog.toString();

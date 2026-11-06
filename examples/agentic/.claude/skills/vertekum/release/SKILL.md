@@ -23,7 +23,7 @@ The release engine classifies every change against the last released baseline:
 | --- | --- |
 | token removed, renamed, or retyped | `major` |
 | token added | `minor` |
-| value changed | `patch` |
+| value changed, or token deprecated | `patch` |
 
 The release severity is the **highest** classification in the diff. Use this vocabulary when
 describing the impact of a token change — "this pass renames two tokens, so the token release

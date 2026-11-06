@@ -7,7 +7,8 @@ export type ChangeKind =
   | 'removed'
   | 'renamed'
   | 'retyped'
-  | 'changed';
+  | 'changed'
+  | 'deprecated';
 
 export interface TokenChange {
   kind: ChangeKind;
@@ -16,7 +17,10 @@ export interface TokenChange {
   path: string[];
   fromPath?: string[]; // 'renamed'
   fromType?: string; // 'retyped'
-  fields?: { value: boolean; description: boolean }; // 'changed'
+  /** 'changed': which fields moved; `deprecation` (present when true) — un-deprecated or re-worded. */
+  fields?: { value: boolean; description: boolean; deprecation?: boolean };
+  /** 'deprecated': the token's reason, or `true` when none was given. */
+  deprecated?: true | string;
 }
 
 const SEVERITY: Record<ChangeKind, Severity> = {
@@ -25,6 +29,8 @@ const SEVERITY: Record<ChangeKind, Severity> = {
   retyped: 'major',
   added: 'minor',
   changed: 'patch',
+  // Announcing a removal is not one: the token still exists and still works.
+  deprecated: 'patch',
 };
 
 const RANK: Record<Severity, number> = { major: 3, minor: 2, patch: 1 };
@@ -60,11 +66,25 @@ export function diffTokens(baseline: Token[], current: Token[]): TokenChange[] {
       changes.push({ kind: 'renamed', id, path: c.path, fromPath: b.path });
       continue;
     }
+    // Newly deprecated: its own change, announced in its own changelog section. Any other move of
+    // the deprecation — lifted, or re-worded — is an ordinary change of the token.
+    const newlyDeprecated =
+      b.deprecated === undefined && c.deprecated !== undefined;
+    if (newlyDeprecated) {
+      changes.push({
+        kind: 'deprecated',
+        id,
+        path: c.path,
+        deprecated: c.deprecated,
+      });
+    }
+    const deprecation = !newlyDeprecated && !eq(b.deprecated, c.deprecated);
     const fields = {
       value: !eq(b.value, c.value),
       description: (b.description ?? '') !== (c.description ?? ''),
+      ...(deprecation ? { deprecation } : {}),
     };
-    if (fields.value || fields.description) {
+    if (fields.value || fields.description || deprecation) {
       changes.push({ kind: 'changed', id, path: c.path, fields });
     }
   }

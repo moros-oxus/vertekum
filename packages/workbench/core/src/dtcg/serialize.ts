@@ -48,6 +48,10 @@ export function tokenNode(token: Token, codecs?: CodecLookup): DtcgNode {
     ...(token.description !== undefined
       ? { $description: token.description }
       : {}),
+    // The token's OWN `$deprecated` only — an inherited one stays on its group.
+    ...(token.deprecatedOwn !== undefined
+      ? { $deprecated: token.deprecatedOwn }
+      : {}),
     // Omit `$extensions` when empty — writing `{}` onto every token is noise the author never wrote.
     ...(Object.keys(extensions).length > 0 ? { $extensions: extensions } : {}),
   };

@@ -171,14 +171,25 @@ function mergeCollection(
           type: variable.type,
           valuesByMode: {},
           ...(variable.source ? { source: variable.source } : {}),
+          ...(variable.deprecated !== undefined
+            ? { deprecated: variable.deprecated }
+            : {}),
           scopes: variable.scopes,
           codeSyntax: variable.codeSyntax,
         };
         byName.set(variable.name, merged);
-      } else if (merged.type !== variable.type) {
-        notices.push(
-          `'${variable.name}' is ${merged.type} elsewhere and ${variable.type} in '${composition}' — kept ${merged.type}`,
-        );
+      } else {
+        if (merged.type !== variable.type) {
+          notices.push(
+            `'${variable.name}' is ${merged.type} elsewhere and ${variable.type} in '${composition}' — kept ${merged.type}`,
+          );
+        }
+        // One variable, one deprecation: the first composition's, with the disagreement said.
+        if (merged.deprecated !== variable.deprecated) {
+          notices.push(
+            `'${variable.name}' is deprecated differently in '${composition}' — kept the first composition's`,
+          );
+        }
       }
       for (const [mode, value] of Object.entries(variable.valuesByMode)) {
         const to = map.get(mode);

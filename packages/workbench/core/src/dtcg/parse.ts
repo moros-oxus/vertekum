@@ -114,6 +114,36 @@ function holdsPointer(value: unknown): boolean {
   return Object.values(value as Record<string, unknown>).some(holdsPointer);
 }
 
+/** A node's `$deprecated` as authored: boolean or string, anything else ignored. */
+function ownDeprecation(node: DtcgNode): boolean | string | undefined {
+  const value = node.$deprecated;
+  return typeof value === 'boolean' || typeof value === 'string'
+    ? value
+    : undefined;
+}
+
+/** The effective deprecation below a node: its own (an empty reason still counts), else inherited. */
+function effectiveDeprecation(
+  own: boolean | string | undefined,
+  inherited: true | string | undefined,
+): true | string | undefined {
+  if (own === undefined) return inherited;
+  if (own === false) return undefined;
+  return own === true || own === '' ? true : own;
+}
+
+/** `deprecated`/`deprecatedOwn` fields for a token, omitted when absent. */
+function deprecationFields(
+  own: boolean | string | undefined,
+  inherited: true | string | undefined,
+): Pick<Token, 'deprecated' | 'deprecatedOwn'> {
+  const effective = effectiveDeprecation(own, inherited);
+  return {
+    ...(effective !== undefined ? { deprecated: effective } : {}),
+    ...(own !== undefined ? { deprecatedOwn: own } : {}),
+  };
+}
+
 interface PendingExpansion {
   codec: GroupTokenCodec;
   payload: unknown;
@@ -121,6 +151,8 @@ interface PendingExpansion {
   path: string[];
   /** The carrier's authored child names — each overrides the generated child it names. */
   authored: Set<string>;
+  /** The group's effective deprecation — its generated children inherit it. */
+  deprecated?: true | string;
 }
 
 function walk(
@@ -131,16 +163,19 @@ function walk(
   codecs: TokenCodec[],
   pending: PendingExpansion[],
   inherited?: string,
+  inheritedDeprecation?: true | string,
 ): void {
+  const own = ownDeprecation(node);
   if (isTokenNode(node)) {
     const ext = node.$extensions as DtcgNode | undefined;
-    const own = typeof node.$type === 'string' ? node.$type : undefined;
+    const ownType = typeof node.$type === 'string' ? node.$type : undefined;
     const token: Token = {
       id: tokenId(set, path),
       path,
-      type: own ?? inherited ?? '',
+      type: ownType ?? inherited ?? '',
       value: node.$value,
       set,
+      ...deprecationFields(own, inheritedDeprecation),
     };
     // $value XOR $ref (enforced by the format binding) — $value wins on a malformed node.
     if (!('$value' in node) && typeof node.$ref === 'string') {
@@ -172,6 +207,9 @@ function walk(
       authored: new Set(
         Object.keys(node).filter((key) => !key.startsWith('$')),
       ),
+      ...(effectiveDeprecation(own, inheritedDeprecation) !== undefined
+        ? { deprecated: effectiveDeprecation(own, inheritedDeprecation) }
+        : {}),
     });
   } else if (carrier && !isGroupCodec(carrier.codec)) {
     const fields = carrier.codec.materialize(carrier.payload, { set, path });
@@ -185,6 +223,7 @@ function walk(
         set,
         codec: carrier.codec.key,
         codecSource: carrier.payload,
+        ...deprecationFields(own, inheritedDeprecation),
       };
       if (fields.description !== undefined) {
         token.description = fields.description;
@@ -199,6 +238,7 @@ function walk(
   }
 
   const groupType = typeof node.$type === 'string' ? node.$type : inherited;
+  const groupDeprecation = effectiveDeprecation(own, inheritedDeprecation);
 
   // The root token is a CHILD, so it is walked like one — which gives it `$type` inheritance and
   // its own `$description`/`$extensions` handling for free, rather than a second parsing path.
@@ -212,6 +252,7 @@ function walk(
       codecs,
       pending,
       groupType,
+      groupDeprecation,
     );
   }
 
@@ -226,6 +267,7 @@ function walk(
         codecs,
         pending,
         groupType,
+        groupDeprecation,
       );
     }
   }
@@ -320,6 +362,9 @@ export function parseCollection(
           codec: expansion.codec.key,
           codecSource: expansion.payload,
           generated: true,
+          ...(expansion.deprecated !== undefined
+            ? { deprecated: expansion.deprecated }
+            : {}),
           ...(fields.description !== undefined
             ? { description: fields.description }
             : {}),

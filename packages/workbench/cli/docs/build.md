@@ -64,9 +64,16 @@ add one.
         { "path": "build/css/tokens.css", "bytes": 2048 }
       ]
     }
+  ],
+  "deprecated": [
+    { "path": "color.accent", "set": "core", "message": "Use {color.primary}" }
   ]
 }
 ```
+
+`deprecated` lists every deprecated token (DTCG `$deprecated`, group deprecation
+inherited) in path order — what a release note announces before the tokens go. The text
+output ends with `N tokens deprecated — vertekum check lists their uses` when there are any.
 
 `files[].path` is relative to the working directory (the target's `out` already
 prefixed); `bytes` is the content size, so a pipeline can notice an empty or exploded

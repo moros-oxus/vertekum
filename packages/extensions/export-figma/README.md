@@ -43,13 +43,17 @@ vocabulary:
 - `source.fingerprint` is `sha256:` of the model's collections and styles — never of
   `source` itself — so two models compare equal exactly when a design file would hold
   the same thing.
+- A deprecated token's variables and style carry **`deprecated`**: the DTCG
+  `$deprecated` reason, or `""` when it gave none. A consumer should **show** it (a
+  description, a warning) and keep the entity — a deprecated token still exists. A
+  removed token is simply absent from the model.
 - `scopes` and `codeSyntax` are reserved fields; nothing populates them yet.
 
 ### Versioning
 
 The model's `version` names its **contract** — the shape `model.schema.json`
 accepts — not a package release and not the tokens it holds. While the shape is
-still settling, the version is a draft (`draft.01` … `draft.04`); once the shape
+still settling, the version is a draft (`draft.01` … `draft.05`); once the shape
 is declared stable, it takes a calendar version (`YYYY.MM`). The schema is closed,
 so any change to the shape — an added optional field included — takes a new
 version, and many package releases can share one. Readers should refuse a version
@@ -82,6 +86,8 @@ never from what the values happen to be today:
 - A collection only one composition has is kept whole.
 - A variable a composition doesn't have simply has no value for that composition's
   modes.
+- A variable's `deprecated` is the first composition's; compositions that disagree are
+  named in a notice.
 - Styles carry no modes in Figma, so a style whose files differ is emitted once per
   composition (`acme/typography/body`); otherwise it stays shared. A member the style
   binds counts like an alias — its own file only — so a style whose compositions differ

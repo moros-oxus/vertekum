@@ -57,6 +57,9 @@ npx vertekum set add <name>               # a set is a FILE; also: set remove
   validates only the END state and writes once — all or nothing. Use it when an intermediate
   step would break a rule (a shared token before the brand override it needs), and
   `batch <file> --dry-run` to preview the whole sequence.
+- **Retire a token in two releases.** First mark it `$deprecated` with what to use instead
+  (`"$deprecated": "Use {color.primary}"`, on a token or a whole group); remove it in a later
+  release. `check` warns `token/deprecated-reference` on every live use — move those first.
 
 ## The vocabulary says what you may not do
 

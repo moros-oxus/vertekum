@@ -33,3 +33,15 @@ test('writeChangelog creates a section for the release version', async () => {
   expect(files.get('CHANGELOG.md')).toContain('1.0.0');
   expect(files.get('CHANGELOG.md')).toContain('a');
 });
+
+test('a deprecation renders in the Deprecated section, with its reason', async () => {
+  const { client, files } = fakeClient();
+  const changes = diffTokens(
+    [tok('old', '#000')],
+    [{ ...tok('old', '#000'), deprecated: 'Use {new}' }],
+  );
+  const notes = buildReleaseNotes(changes, '1.0.1', suggestBump(changes));
+  await writeChangelog(client, 'CHANGELOG.md', notes);
+  const md = files.get('CHANGELOG.md') ?? '';
+  expect(md).toMatch(/### Deprecated\s+- old — Use \{new\}/);
+});

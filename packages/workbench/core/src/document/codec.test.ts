@@ -670,3 +670,24 @@ test('a group carrier may hold $root: the root token parses and the children gen
   );
   expect(value.map((t) => t.path.join('.'))).toEqual(['chip.$root']);
 });
+
+test('generated children inherit the group carrier’s $deprecated; an authored override opts out', () => {
+  const tokens = parseCollection(
+    {
+      'core.json': {
+        source: { $type: 'textCase', $value: 'uppercase' },
+        legacy: {
+          $deprecated: 'Use {ramp}',
+          old: {
+            $extensions: { 'org.test.generate/pair': { anchor: '{source}' } },
+            loud: { $type: 'textCase', $value: 'LOUD', $deprecated: false },
+          },
+        },
+      },
+    },
+    [rampish],
+  );
+  const byPath = new Map(tokens.map((t) => [t.path.join('.'), t]));
+  expect(byPath.get('legacy.old.base')?.deprecated).toBe('Use {ramp}');
+  expect(byPath.get('legacy.old.loud')).not.toHaveProperty('deprecated');
+});

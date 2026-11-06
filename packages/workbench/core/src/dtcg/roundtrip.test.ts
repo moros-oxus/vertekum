@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
-import { updateTokenValue } from '../document/commands';
+import { replaceToken, updateTokenValue } from '../document/commands';
 import { createDocument } from '../document/document';
 import type { DtcgNode } from './parse';
 
@@ -182,4 +182,35 @@ test('editing a neighbour leaves a $ref node alone, with its authored notation',
     .getAllTokens()
     .find((t) => t.path.join('.') === 'alias');
   expect(alias?.value).toBe(7);
+});
+
+test('a group’s $deprecated stays on the group when a token in it is rewritten', () => {
+  const document = createDocument();
+  document.hydrate({
+    'core.json': {
+      legacy: {
+        $type: 'dimension',
+        $deprecated: 'Going in 2.0',
+        gap: { $value: '4px' },
+        own: { $value: '2px', $deprecated: 'Use {space.1}' },
+      },
+    },
+  });
+  const token = document
+    .getAllTokens()
+    .find((t) => t.path.join('.') === 'legacy.gap');
+  if (!token) throw new Error('missing');
+  expect(token.deprecated).toBe('Going in 2.0');
+  document.apply(replaceToken(token.id, { ...token, value: '5px' }));
+  const own = document
+    .getAllTokens()
+    .find((t) => t.path.join('.') === 'legacy.own');
+  if (!own) throw new Error('missing');
+  document.apply(replaceToken(own.id, { ...own, value: '3px' }));
+
+  const legacy = (document.getFiles()['core.json'] as DtcgNode)
+    .legacy as DtcgNode;
+  expect(legacy.$deprecated).toBe('Going in 2.0');
+  expect(legacy.gap).not.toHaveProperty('$deprecated');
+  expect((legacy.own as DtcgNode).$deprecated).toBe('Use {space.1}');
 });

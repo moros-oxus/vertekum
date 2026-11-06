@@ -194,3 +194,48 @@ test('the version constant and the shipped schema name the same contract', async
   const model = await buildModel(fixture(), { composition: 'brand-a' });
   expect(model.version).toBe(MODEL_VERSION);
 });
+
+test('deprecation rides on variables (every atom) and styles, and validates', async () => {
+  const input = fixture();
+  const mark = (path: string, deprecated: true | string) => {
+    for (const list of [input.base, ...input.variants.map((v) => v.tokens)]) {
+      for (const t of list)
+        if (t.path.join('.') === path) t.deprecated = deprecated;
+    }
+  };
+  mark('space.gap', 'Use {space.inset}');
+  mark('flag.rounded', true);
+  mark('typography.body', 'Use typography.text');
+  mark('spacing.inset', 'Going in 2.0');
+  const model = await buildModel(input, {
+    composition: 'brand-a',
+    types: {
+      spacial: () => [
+        { suffix: 'top-bottom', type: 'FLOAT', value: 0 },
+        { suffix: 'left-right', type: 'FLOAT', value: 0 },
+      ],
+    },
+  });
+  const variables = model.collections.flatMap((c) => c.variables);
+  const byName = new Map(variables.map((v) => [v.name, v]));
+  expect(byName.get('space/gap')?.deprecated).toBe('Use {space.inset}');
+  expect(byName.get('flag/rounded')?.deprecated).toBe(''); // `true` — no reason given
+  expect(byName.get('spacing/inset/top-bottom')?.deprecated).toBe(
+    'Going in 2.0',
+  );
+  expect(byName.get('spacing/inset/left-right')?.deprecated).toBe(
+    'Going in 2.0',
+  );
+  expect(byName.get('color/text')).not.toHaveProperty('deprecated');
+  expect(
+    model.styles.find((s) => s.name === 'typography/body')?.deprecated,
+  ).toBe('Use typography.text');
+  const AjvModule = await import('ajv/dist/2020.js');
+  const Ajv = (AjvModule.default ?? AjvModule) as unknown as new (
+    o: object,
+  ) => { compile(s: object): ((d: unknown) => boolean) & { errors?: unknown } };
+  const validate = new Ajv({ strict: false }).compile(MODEL_SCHEMA);
+  const valid = validate(JSON.parse(JSON.stringify(model)));
+  expect(validate.errors ?? null).toBeNull();
+  expect(valid).toBe(true);
+});

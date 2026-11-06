@@ -182,3 +182,37 @@ test('one composition passes through untouched, stamped with its identity', () =
     compositions: ['showcase'],
   });
 });
+
+test('a deprecated variable stays deprecated through the merge; a disagreement keeps the first and says so', () => {
+  // Values differ per brand, so the collection merges per variable (brands' own files) — the
+  // only way two compositions can disagree on one token's deprecation.
+  const marked = (deprecated?: string, light = 'a'): FigmaCollection => ({
+    name: 'color-mode',
+    modes: ['light', 'dark'],
+    variables: [
+      {
+        ...variable('color/bg', { light, dark: 'b' }),
+        ...(deprecated !== undefined ? { deprecated } : {}),
+      },
+    ],
+  });
+  const agree = mergeModels([
+    model('acme', [marked('Use {color.surface}')]),
+    model('globex', [marked('Use {color.surface}', 'c')]),
+  ]);
+  expect(agree.collections[0]?.variables[0]?.deprecated).toBe(
+    'Use {color.surface}',
+  );
+  expect(agree.source.notices.join('\n')).not.toMatch(/deprecat/);
+
+  const differ = mergeModels([
+    model('acme', [marked('Use {color.surface}')]),
+    model('globex', [marked(undefined, 'c')]),
+  ]);
+  expect(differ.collections[0]?.variables[0]?.deprecated).toBe(
+    'Use {color.surface}',
+  );
+  expect(differ.source.notices).toContain(
+    "'color/bg' is deprecated differently in 'globex' — kept the first composition's",
+  );
+});

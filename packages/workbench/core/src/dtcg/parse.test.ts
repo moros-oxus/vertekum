@@ -360,3 +360,50 @@ test('values without pointers carry no sourceValue', () => {
   const tokens = parseCollection({ 'core.json': { plain: { $value: 4 } } });
   expect(tokens[0]?.sourceValue).toBeUndefined();
 });
+
+test('$deprecated: a token’s own, a group’s inherited, and a false opt-out', () => {
+  const tokens = parseCollection({
+    'core.json': {
+      color: {
+        $type: 'color',
+        old: { $value: '#f00', $deprecated: 'Use {color.new}' },
+        flagged: { $value: '#0f0', $deprecated: true },
+        blank: { $value: '#00f', $deprecated: '' },
+        new: { $value: '#fff' },
+      },
+      legacy: {
+        $type: 'dimension',
+        $deprecated: 'The legacy scale goes in 2.0',
+        gap: { $value: '4px' },
+        nested: { deep: { $value: '8px' } },
+        kept: { $value: '2px', $deprecated: false },
+        reworded: { $value: '1px', $deprecated: 'Use {space.1}' },
+      },
+    },
+  });
+  const byPath = new Map(tokens.map((t) => [t.path.join('.'), t]));
+  expect(byPath.get('color.old')?.deprecated).toBe('Use {color.new}');
+  expect(byPath.get('color.flagged')?.deprecated).toBe(true);
+  expect(byPath.get('color.blank')?.deprecated).toBe(true); // an empty reason is still deprecated
+  expect(byPath.get('color.new')).not.toHaveProperty('deprecated');
+  expect(byPath.get('legacy.gap')?.deprecated).toBe(
+    'The legacy scale goes in 2.0',
+  );
+  expect(byPath.get('legacy.nested.deep')?.deprecated).toBe(
+    'The legacy scale goes in 2.0',
+  );
+  expect(byPath.get('legacy.kept')).not.toHaveProperty('deprecated');
+  expect(byPath.get('legacy.reworded')?.deprecated).toBe('Use {space.1}');
+  // Only what the author wrote ON the token is its own; the group's stays the group's.
+  expect(byPath.get('legacy.gap')).not.toHaveProperty('deprecatedOwn');
+  expect(byPath.get('legacy.kept')?.deprecatedOwn).toBe(false);
+  expect(byPath.get('color.old')?.deprecatedOwn).toBe('Use {color.new}');
+});
+
+test('a non-boolean, non-string $deprecated is not a deprecation', () => {
+  const [token] = parseCollection({
+    'core.json': { a: { $type: 'color', $value: '#f00', $deprecated: 1 } },
+  });
+  expect(token).not.toHaveProperty('deprecated');
+  expect(token).not.toHaveProperty('deprecatedOwn');
+});

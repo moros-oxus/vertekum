@@ -10,6 +10,7 @@ export interface ReleaseNotes {
     removed: TokenChange[];
     renamed: TokenChange[];
     retyped: TokenChange[];
+    deprecated: TokenChange[];
   };
 }
 
@@ -32,6 +33,7 @@ export function buildReleaseNotes(
     removed: [],
     renamed: [],
     retyped: [],
+    deprecated: [],
   };
   for (const ch of changes) groups[ch.kind].push(ch);
   return { bump, version, groups };

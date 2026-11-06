@@ -3,6 +3,7 @@ import {
   type ExporterService,
   runTargets,
   type Target,
+  type Token,
   TYPE_LOWERING_SERVICE,
   type TypeLoweringService,
   targetId,
@@ -101,6 +102,7 @@ export async function runBuild(options: BuildOptions): Promise<number> {
     }
   }
 
+  const deprecated = deprecationsOf(project.document.getAllTokens());
   const payload = {
     ok: true,
     dryRun: options.dryRun === true,
@@ -113,6 +115,7 @@ export async function runBuild(options: BuildOptions): Promise<number> {
         bytes: Buffer.byteLength(f.content, 'utf8'),
       })),
     })),
+    deprecated,
   };
 
   if (options.json) {
@@ -128,5 +131,38 @@ export async function runBuild(options: BuildOptions): Promise<number> {
       }
     }
   }
+  if (!options.json && deprecated.length > 0) {
+    process.stdout.write(
+      `${deprecated.length} token${deprecated.length === 1 ? '' : 's'} deprecated — vertekum check lists their uses\n`,
+    );
+  }
   return 0;
+}
+
+/**
+ * Every deprecated token in the collection (DTCG `$deprecated`, inherited from groups), in path
+ * order — what a release note announces before the tokens are removed.
+ */
+export function deprecationsOf(
+  tokens: Token[],
+): Array<{ path: string; set: string; message?: string }> {
+  const out = new Map<
+    string,
+    { path: string; set: string; message?: string }
+  >();
+  for (const token of tokens) {
+    if (token.deprecated === undefined) continue;
+    const path = token.path.join('.');
+    const set = token.set ?? 'tokens';
+    out.set(`${set}\u0000${path}`, {
+      path,
+      set,
+      ...(typeof token.deprecated === 'string'
+        ? { message: token.deprecated }
+        : {}),
+    });
+  }
+  return [...out.values()].sort(
+    (a, b) => a.path.localeCompare(b.path) || a.set.localeCompare(b.set),
+  );
 }

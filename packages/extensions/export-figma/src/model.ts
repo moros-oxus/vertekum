@@ -26,7 +26,7 @@ import {
  * The schema is closed, so ANY shape change — an added optional field included — takes a new
  * version, spent when a package releases it.
  */
-export const MODEL_VERSION = 'draft.04';
+export const MODEL_VERSION = 'draft.05';
 
 export type FigmaType = 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN';
 
@@ -45,6 +45,8 @@ export interface FigmaVariable {
    * made in the design tool belongs when it flows back.
    */
   sources?: Record<string, string>;
+  /** DTCG `$deprecated`: the reason, or `""` when none was given. Absent = not deprecated. */
+  deprecated?: string;
   /** Reserved: nothing populates these yet; the schema keeps their seat. */
   scopes: string[];
   codeSyntax: Record<string, string>;
@@ -75,6 +77,8 @@ export interface FigmaStyle {
   name: string;
   properties: FigmaStyleProperty[];
   source: { $type: string; $value: unknown };
+  /** DTCG `$deprecated`: the reason, or `""` when none was given. Absent = not deprecated. */
+  deprecated?: string;
 }
 
 export interface FigmaModel {
@@ -263,6 +267,16 @@ async function convert(
   }
   if (typeof value === 'boolean') return { type: 'BOOLEAN', value };
   return undefined;
+}
+
+/** A token's deprecation in the model's form: the reason, `""` for a bare `true`. */
+function deprecationOf(
+  token: Token,
+): { deprecated: string } | Record<string, never> {
+  if (token.deprecated === undefined) return {};
+  return {
+    deprecated: typeof token.deprecated === 'string' ? token.deprecated : '',
+  };
 }
 
 /**
@@ -474,6 +488,8 @@ export async function buildModelWithDeps(
             type: atom.type,
             valuesByMode: {},
             source: { $type: token.type, $value: token.value },
+            // One variable, one deprecation: the token's, as the first mode holds it.
+            ...deprecationOf(held),
             scopes: [],
             codeSyntax: {},
           };
@@ -552,6 +568,7 @@ export async function buildModelWithDeps(
         name: slash(token.path),
         properties,
         source: { $type: token.type, $value: token.value },
+        ...deprecationOf(token),
       });
       return;
     }
@@ -573,6 +590,7 @@ export async function buildModelWithDeps(
         name: slash(token.path),
         properties,
         source: { $type: token.type, $value: token.value },
+        ...deprecationOf(token),
       });
     }
   };

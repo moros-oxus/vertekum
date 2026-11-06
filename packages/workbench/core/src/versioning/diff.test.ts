@@ -74,3 +74,52 @@ describe('diffTokens', () => {
     expect(suggestBump(diffTokens(before, after))).toBe('major');
   });
 });
+
+describe('deprecation', () => {
+  test('a newly deprecated token is its own change (patch), carrying the reason', () => {
+    const changes = diffTokens(
+      [tok('a', ['color', 'old'], '#000')],
+      [tok('a', ['color', 'old'], '#000', { deprecated: 'Use {color.new}' })],
+    );
+    expect(changes).toEqual([
+      {
+        kind: 'deprecated',
+        id: 'a',
+        path: ['color', 'old'],
+        deprecated: 'Use {color.new}',
+      },
+    ]);
+    expect(suggestBump(changes)).toBe('patch');
+  });
+
+  test('a value change and a deprecation in one release are both reported', () => {
+    const changes = diffTokens(
+      [tok('a', ['color', 'old'], '#000')],
+      [tok('a', ['color', 'old'], '#111', { deprecated: true })],
+    );
+    expect(changes.map((c) => c.kind).sort()).toEqual([
+      'changed',
+      'deprecated',
+    ]);
+  });
+
+  test('an un-deprecated or re-worded deprecation is a change, not a deprecation', () => {
+    const undone = diffTokens(
+      [tok('a', ['x'], '#000', { deprecated: true })],
+      [tok('a', ['x'], '#000')],
+    );
+    expect(undone).toEqual([
+      {
+        kind: 'changed',
+        id: 'a',
+        path: ['x'],
+        fields: { value: false, description: false, deprecation: true },
+      },
+    ]);
+    const still = diffTokens(
+      [tok('a', ['x'], '#000', { deprecated: true })],
+      [tok('a', ['x'], '#000', { deprecated: true })],
+    );
+    expect(still).toEqual([]);
+  });
+});

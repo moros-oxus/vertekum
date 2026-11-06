@@ -167,6 +167,7 @@ export {
 export {
   aliasValidator,
   builtinValidators,
+  deprecationValidator,
   resolverValidator,
   targetValidator,
 } from './validate/builtin-validators';

@@ -98,6 +98,10 @@ export function lowerTokens(
         ...(child.description !== undefined
           ? { description: child.description }
           : {}),
+        // A lowered child is still the deprecated token, in parts.
+        ...(token.deprecated !== undefined
+          ? { deprecated: token.deprecated }
+          : {}),
       });
     }
   }

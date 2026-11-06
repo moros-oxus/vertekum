@@ -26,6 +26,17 @@ export interface Token {
   /** DTCG `$description` — a human-readable note about the token's purpose. */
   description?: string;
   /**
+   * The token's EFFECTIVE DTCG deprecation: `true`, or the author's reason (`"Use {color.new}"`).
+   * Its own `$deprecated` when it has one, else the nearest group's — a descendant's
+   * `$deprecated: false` opts out. A view: what is written back is `deprecatedOwn`.
+   */
+  deprecated?: true | string;
+  /**
+   * The `$deprecated` authored ON this token's node, `false` included — what the write path
+   * emits, so a group's deprecation stays on the group and is never copied onto its tokens.
+   */
+  deprecatedOwn?: boolean | string;
+  /**
    * The set this token belongs to — its source file's name minus `.json` (set = file).
    * `parseCollection` always stamps it; brand-new in-editor tokens fall back to the default set
    * (`'tokens'`) at save time. Not a semantic field — `diffTokens` ignores it.

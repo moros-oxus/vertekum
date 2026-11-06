@@ -19,3 +19,20 @@ test('buildReleaseNotes groups changes by kind', () => {
   expect(notes.groups.removed.map((c) => c.id)).toEqual(['x']);
   expect(notes.groups.added.map((c) => c.id)).toEqual(['y']);
 });
+
+test('buildReleaseNotes has a deprecated group', () => {
+  const changes = diffTokens(
+    [{ id: 'x', path: ['x'], type: 'color', value: '#000' }],
+    [
+      {
+        id: 'x',
+        path: ['x'],
+        type: 'color',
+        value: '#000',
+        deprecated: 'Use {y}',
+      },
+    ],
+  );
+  const notes = buildReleaseNotes(changes, '0.2.1', 'patch');
+  expect(notes.groups.deprecated.map((c) => c.id)).toEqual(['x']);
+});

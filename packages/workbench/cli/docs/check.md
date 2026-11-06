@@ -31,7 +31,9 @@ any error.
    tokens are validated but reach no output; flat projects, which merge every file,
    never warn), paths two modifiers both override (`resolver/shared-override`, a
    warning — resolution picks the one resolved last, but a mode-based target such as
-   Figma can show only that one's values), export-target shape (unknown exporters and compositions, options
+   Figma can show only that one's values), live uses of deprecated tokens
+   (`token/deprecated-reference`, a warning naming what still references a `$deprecated`
+   token), export-target shape (unknown exporters and compositions, options
    validated against each exporter's schema), plus any validator a loaded extension
    registered.
 
