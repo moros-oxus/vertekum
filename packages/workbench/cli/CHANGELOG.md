@@ -1,5 +1,15 @@
 # @vertekum/cli
 
+## 0.14.0
+
+### Patch Changes
+
+- [`0f3ab77`](https://github.com/moros-oxus/vertekum/commit/0f3ab77f67e942527b23a30ca5c6e160dbc390ae) Thanks [@tschemmer](https://github.com/tschemmer)! - Tokens can be retired with DTCG `$deprecated` (on a token or a group, inherited, `false` opts out): `check` warns `token/deprecated-reference` on every live use, `build --json` lists deprecated tokens, and the release diff reports a newly deprecated token as its own `deprecated` change (patch) with a Deprecated section in the changelog.
+- Updated dependencies [[`0f3ab77`](https://github.com/moros-oxus/vertekum/commit/0f3ab77f67e942527b23a30ca5c6e160dbc390ae)]:
+  - @vertekum/core@0.14.0
+  - vertekum@0.3.0
+  - @vertekum/server@0.3.0
+
 ## 0.13.0
 
 ### Minor Changes
