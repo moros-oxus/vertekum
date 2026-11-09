@@ -1,5 +1,17 @@
 # @vertekum/ext-export-figma
 
+## 0.15.0
+
+### Minor Changes
+
+- [`1909d93`](https://github.com/moros-oxus/vertekum/commit/1909d93109e0de1a67b75be110b212540bd6a837) Thanks [@tschemmer](https://github.com/tschemmer)! - A line-height token referenced by text styles is exported as a px variable (the style's font size × the multiplier, per mode, rounded to 2 decimals), and the text style binds its line height to it, so a style whose compositions differ in line height stays shared. The Figma model is contract `draft.06`.
+
+### Patch Changes
+
+- [`1909d93`](https://github.com/moros-oxus/vertekum/commit/1909d93109e0de1a67b75be110b212540bd6a837) Thanks [@tschemmer](https://github.com/tschemmer)! - A text style member that references a token whose own value is a reference (`"{font.weight.bold}"`) is now bound to that token's variable, so the style is no longer split per composition, and a font size referencing a dimension token now names its variable.
+- Updated dependencies []:
+  - @vertekum/core@0.15.0
+
 ## 0.14.0
 
 ### Minor Changes
