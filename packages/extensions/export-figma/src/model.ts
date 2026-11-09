@@ -24,9 +24,10 @@ import {
  * The contract version: names the model's SHAPE (what `model.schema.json` accepts), not a package
  * release or token content. `draft.NN` while the shape is unstable; `YYYY.MM` once declared stable.
  * The schema is closed, so ANY shape change — an added optional field included — takes a new
- * version, spent when a package releases it.
+ * version, as does a change in what a field's values MEAN (draft.06: a line-height variable holds
+ * px). A version is spent when a package releases it.
  */
-export const MODEL_VERSION = 'draft.05';
+export const MODEL_VERSION = 'draft.06';
 
 export type FigmaType = 'COLOR' | 'FLOAT' | 'STRING' | 'BOOLEAN';
 
@@ -224,11 +225,11 @@ function px(value: { value: number; unit: string }): number {
 }
 
 async function figmaColor(value: unknown): Promise<unknown> {
-  const srgb = (await dtcg.values.convertColor(value, 'srgb')) as {
-    components?: number[];
-    alpha?: number;
-  };
-  if (!Array.isArray(srgb.components)) return undefined;
+  // A value that isn't a colour (an unresolved reference) converts to nothing — never a throw.
+  const srgb = (await dtcg.values.convertColor(value, 'srgb')) as
+    | { components?: number[]; alpha?: number }
+    | undefined;
+  if (!Array.isArray(srgb?.components)) return undefined;
   const [r, g, b] = srgb.components;
   return { r, g, b, a: srgb.alpha ?? 1 };
 }
@@ -281,14 +282,16 @@ function deprecationOf(
 
 /**
  * Whether a design tool binds this text-style property to a variable of this type, so the style
- * follows the mode. Line height never binds: a variable bound to it is read as pixels, while a
- * token line height is a multiplier. Text case and decoration can't bind at all.
+ * follows the mode. A bound letter spacing or line height is read as pixels, so those bind only
+ * when the value is px — a line height is px when its variable was translated (`lineHeights`),
+ * and a multiplier otherwise. Text case and decoration can't bind at all.
  */
 const BINDABLE: Record<string, FigmaType> = {
   'font-family': 'STRING',
   'font-size': 'FLOAT',
   'font-weight': 'FLOAT',
   'letter-spacing': 'FLOAT',
+  'line-height': 'FLOAT',
 };
 
 export function bindable(
@@ -297,7 +300,7 @@ export function bindable(
   value: unknown,
 ): boolean {
   if (BINDABLE[property] !== type) return false;
-  if (property === 'letter-spacing') {
+  if (property === 'letter-spacing' || property === 'line-height') {
     return typeof value === 'string' && value.trim().endsWith('px');
   }
   return true;
@@ -341,6 +344,131 @@ export function claimsOf(
     }
   }
   return claimed;
+}
+
+type Bundle = Map<string, Token>;
+
+/** A line-height token's variable, translated to px. */
+interface LineHeight {
+  /** px per mode, 2 decimals. */
+  byMode: Map<string, number>;
+  /** px in the default bundle — the style's plain value. */
+  plain: number;
+  /** The text styles whose `lineHeight` references the token (their font size is a dependency). */
+  styles: Token[];
+}
+
+const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+/** The token a reference names — a group reference reaches its `$root`. */
+function referenced(value: unknown, bundle: Bundle): Token | undefined {
+  if (!dtcg.tokens.isReference(value)) return undefined;
+  const path = dtcg.tokens.referenceToPath(value);
+  return bundle.get(path) ?? bundle.get(`${path}.${ROOT_TOKEN}`);
+}
+
+/**
+ * Line heights: a token a text style's `lineHeight` references holds a multiplier, while a design
+ * tool reads a line height bound to a variable as px. So the token's variable holds the token
+ * TRANSLATED — the referencing style's font size × the multiplier, per mode, 2 decimals — when
+ * that is well-defined. Otherwise it stays the multiplier (unbound, as before) and a notice says
+ * why. The token keeps its value; the variable's `source` still says what it holds.
+ */
+function lineHeights(
+  allTokens: Bundle,
+  base: Bundle,
+  modesOf: (path: string) => Array<{ mode: string; bundle: Bundle }>,
+  allBundles: Bundle[],
+  notices: string[],
+): Map<string, LineHeight> {
+  const referencing = new Map<string, Token[]>();
+  for (const token of allTokens.values()) {
+    if (token.type !== 'typography') continue;
+    const raw = token.sourceValue ?? token.value;
+    if (!raw || typeof raw !== 'object') continue;
+    const target = referenced(
+      (raw as Record<string, unknown>).lineHeight,
+      allTokens,
+    );
+    if (!target) continue;
+    const key = target.path.join('.');
+    referencing.set(key, [...(referencing.get(key) ?? []), token]);
+  }
+
+  const indexes = new Map<Bundle, ReturnType<typeof dtcg.tokens.indexByPath>>();
+  const resolved = (token: Token, bundle: Bundle): unknown => {
+    const held = bundle.get(token.path.join('.')) ?? token;
+    if (!dtcg.tokens.isReference(held.value)) return held.value;
+    let index = indexes.get(bundle);
+    if (!index) {
+      index = dtcg.tokens.indexByPath([...bundle.values()]);
+      indexes.set(bundle, index);
+    }
+    return dtcg.tokens.resolveValue(held, index);
+  };
+  /** The one font size (px) the styles share in a bundle; a string says why there isn't one. */
+  const sizeIn = (styles: Token[], bundle: Bundle): number | string => {
+    const sizes = new Set<number>();
+    for (const style of styles) {
+      const held = bundle.get(style.path.join('.')) ?? style;
+      const member = (held.value as Record<string, unknown> | undefined)
+        ?.fontSize;
+      const size = deref(member, bundle);
+      if (!isDimension(size)) {
+        return "is the line height of a style whose font size isn't a dimension";
+      }
+      sizes.add(round2(px(size)));
+    }
+    const [only] = sizes;
+    return sizes.size === 1 && only !== undefined
+      ? only
+      : 'is the line height of styles with different font sizes';
+  };
+
+  const out = new Map<string, LineHeight>();
+  for (const [key, styles] of referencing) {
+    const token = allTokens.get(key);
+    if (!token) continue;
+    const name = exportPath(token.path).join('.');
+    const keep = (why: string) =>
+      notices.push(`'${name}' ${why} — kept as a multiplier, not bound`);
+    const modes = modesOf(key);
+    const covered = new Set(modes.map((m) => m.bundle));
+    const baseSize = sizeIn(styles, base);
+    if (typeof baseSize === 'string') {
+      keep(baseSize);
+      continue;
+    }
+    // A size that varies along an axis the variable has no modes for can't be one value per mode.
+    if (
+      allBundles.some(
+        (bundle) => !covered.has(bundle) && sizeIn(styles, bundle) !== baseSize,
+      )
+    ) {
+      keep(
+        'is a line height whose font size varies where its variable has no modes',
+      );
+      continue;
+    }
+    const byMode = new Map<string, number>();
+    let why: string | undefined;
+    for (const { mode, bundle } of modes) {
+      const size = sizeIn(styles, bundle);
+      const multiplier = resolved(token, bundle);
+      if (typeof size === 'string') why = size;
+      else if (typeof multiplier !== 'number') why = "isn't a number";
+      else byMode.set(mode, round2(size * multiplier));
+      if (why !== undefined) break;
+    }
+    if (why !== undefined) {
+      keep(why);
+      continue;
+    }
+    const multiplier = resolved(token, base);
+    if (typeof multiplier !== 'number') continue;
+    out.set(key, { byMode, plain: round2(baseSize * multiplier), styles });
+  }
+  return out;
 }
 
 /** Build the Figma-shaped model from a resolved composition. */
@@ -441,14 +569,39 @@ export async function buildModelWithDeps(
       if (!allTokens.has(path)) allTokens.set(path, token);
     }
   }
+  // A token's type comes from what it RESOLVES to: a reference (`"{font.weight.bold}"`) is a
+  // string until it's followed, and typing it as one would refuse every binding to it.
+  const allIndex = dtcg.tokens.indexByPath([...allTokens.values()]);
   for (const token of allTokens.values()) {
     if (token.type === 'typography' || token.type === 'shadow') continue;
-    const atoms = await atomsOf(token, token.value);
+    // A reference that doesn't resolve here keeps its raw value, typed as before.
+    const value = dtcg.tokens.isReference(token.value)
+      ? (dtcg.tokens.resolveValue(token, allIndex) ?? token.value)
+      : token.value;
+    const atoms = await atomsOf(token, value);
     if (!atoms) continue;
     for (const atom of atoms) {
       variableNames.set(nameOf(token, atom.suffix), atom.type);
     }
   }
+
+  // The modes a path's variable takes: its modifier's contexts, else the set's one mode.
+  const modesOf = (path: string) => {
+    const axis = axes.find((a) => a.modifier === claimed.get(path));
+    return axis
+      ? axis.contexts.map((context) => ({
+          mode: context,
+          bundle: axis.bundles.get(context) ?? basePaths,
+        }))
+      : [{ mode: 'default', bundle: basePaths }];
+  };
+  const translated = lineHeights(
+    allTokens,
+    basePaths,
+    modesOf,
+    [...new Set([basePaths, ...axes.flatMap((a) => [...a.bundles.values()])])],
+    notices,
+  );
 
   // Variable construction for one token across a mode set.
   const buildVariables = async (
@@ -460,9 +613,44 @@ export async function buildModelWithDeps(
       return 'style';
     }
     const byName = new Map<string, FigmaVariable>();
+    const lineHeight = translated.get(token.path.join('.'));
     for (const { mode, bundle } of modes) {
       const held = bundle.get(token.path.join('.')) ?? token;
       const raw = held.value;
+      if (lineHeight) {
+        // A line height translated to px: a value of its own, never an alias. It depends on
+        // its own chain and on every file the styles' font size reaches.
+        const name = nameOf(token);
+        const variable = byName.get(name) ?? {
+          name,
+          type: 'FLOAT' as const,
+          valuesByMode: {},
+          source: { $type: token.type, $value: token.value },
+          ...deprecationOf(held),
+          scopes: [],
+          codeSyntax: {},
+        };
+        byName.set(name, variable);
+        const value = lineHeight.byMode.get(mode);
+        if (value !== undefined) variable.valuesByMode[mode] = value;
+        const file = held.set ?? 'tokens';
+        variable.sources = { ...variable.sources, [mode]: file };
+        const files = chainFiles(raw, bundle, new Set([file]));
+        for (const style of lineHeight.styles) {
+          const heldStyle = bundle.get(style.path.join('.')) ?? style;
+          files.add(heldStyle.set ?? 'tokens');
+          chainFiles(
+            (heldStyle.value as Record<string, unknown>).fontSize,
+            bundle,
+            files,
+          );
+        }
+        deps.set(name, {
+          ...deps.get(name),
+          [mode]: [...files].sort().join('|'),
+        });
+        continue;
+      }
       // A whole-value curly reference: alias when the target is a variable, else materialize.
       let aliasTarget: string | undefined;
       let value = raw;
@@ -540,7 +728,15 @@ export async function buildModelWithDeps(
       for (const [member, property] of Object.entries(TYPOGRAPHY_MEMBERS)) {
         if (!(member in resolved)) continue;
         const authored = authoredMembers[member];
-        const plain = styleValue(deref(resolved[member], basePaths));
+        const lineHeight =
+          member === 'lineHeight'
+            ? translated.get(
+                referenced(authored, allTokens)?.path.join('.') ?? '',
+              )
+            : undefined;
+        const plain = lineHeight
+          ? `${lineHeight.plain}px`
+          : styleValue(deref(resolved[member], basePaths));
         // `variable` names a variable that exists — a reference to anything else is
         // materialized, like an alias whose target has no variable.
         const target = dtcg.tokens.isReference(authored)

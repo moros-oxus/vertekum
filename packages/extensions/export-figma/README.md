@@ -32,9 +32,19 @@ vocabulary:
   authored as a reference to a token that has a variable names it in `variable`; a
   reference to anything else is materialized and names none.
 - A text style **binds** the members a design tool can follow per mode: `font-family`
-  (STRING), `font-size`, `font-weight` and a `px` `letter-spacing` (FLOAT). Line
-  height never binds — a variable bound to it is read as pixels, while a token line
-  height is a multiplier — and neither do text case or decoration.
+  (STRING), `font-size`, `font-weight`, a `px` `letter-spacing` and a `px`
+  `line-height` (FLOAT). Text case and decoration never bind.
+- A design tool reads a bound line height as **px**, while a token line height is a
+  multiplier. So the variable of a token a text style's `lineHeight` references holds
+  the token **translated**: the style's font size × the multiplier, per mode, rounded
+  to 2 decimals (56 × 1.2143 → `68`). The style's `line-height` is then a px string
+  (`"68px"`) and binds; the variable's `source` keeps the token's own value. The
+  variable depends on the font size's files too, so it takes a mode per composition
+  whenever the size differs. It stays a multiplier — unbound, with a notice — when one
+  token is the line height of styles with different font sizes, or when the size
+  varies where the variable has no modes. A line height written as a literal in the
+  typography token has no variable and stays a multiplier, which already follows the
+  font size.
 - Every variable carries the **Figma-typed value** (`COLOR` as `{r,g,b,a}` floats,
   dimensions as unitless px `FLOAT`, `STRING`, `BOOLEAN`) *and* the verbatim DTCG
   `source` — a consumer of the model loses nothing to any importer's dialect.
@@ -53,10 +63,11 @@ vocabulary:
 
 The model's `version` names its **contract** — the shape `model.schema.json`
 accepts — not a package release and not the tokens it holds. While the shape is
-still settling, the version is a draft (`draft.01` … `draft.05`); once the shape
+still settling, the version is a draft (`draft.01` … `draft.06`); once the shape
 is declared stable, it takes a calendar version (`YYYY.MM`). The schema is closed,
 so any change to the shape — an added optional field included — takes a new
-version, and many package releases can share one. Readers should refuse a version
+version, as does a change in what a field's values mean (`draft.06`: a line-height
+variable holds px). Many package releases can share one version. Readers should refuse a version
 they don't know rather than guess at its shape.
 
 ### Several compositions in one model

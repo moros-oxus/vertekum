@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "vertekum:figma-model/draft.05",
+  "$id": "vertekum:figma-model/draft.06",
   "title": "Figma-shaped model",
-  "description": "A resolved view of one or more compositions in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version draft.05 — the version names this contract shape, not the tokens a document holds.",
+  "description": "A resolved view of one or more compositions in Figma's vocabulary: collections with modes, variables with per-mode values and alias edges, and styles. Version draft.06 — the version names this contract shape, not the tokens a document holds.",
   "type": "object",
   "required": ["version", "source", "collections", "styles"],
   "additionalProperties": false,
   "properties": {
-    "version": { "const": "draft.05" },
+    "version": { "const": "draft.06" },
     "source": {
       "type": "object",
       "required": ["compositions", "generator", "notices"],
@@ -87,8 +87,13 @@
               "additionalProperties": false,
               "properties": {
                 "property": { "type": "string" },
-                "value": {},
-                "variable": { "type": "string" }
+                "value": {
+                  "description": "The plain value. A text style's line-height is a px string (\"68px\") when its variable holds the token translated to px, and a unitless multiplier otherwise."
+                },
+                "variable": {
+                  "type": "string",
+                  "description": "The variable this member references (it exists in the model). A design tool binds it when the property takes that variable's type; letter-spacing and line-height bind only when the value is px."
+                }
               }
             }
           },

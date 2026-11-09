@@ -320,7 +320,7 @@ test('a brand that overrides the typography token itself still splits the style'
   );
 });
 
-test('a member that never binds (line height) still splits when its chain differs', async () => {
+test('a line height through a brand file is translated to px and bound, so the style is shared', async () => {
   const m = await model(
     collection((files) => {
       body(files).$value.lineHeight = '{leading.body}';
@@ -332,10 +332,42 @@ test('a member that never binds (line height) still splits when its chain differ
       };
     }),
   );
-  expect(m.styles.map((s) => s.name).sort()).toEqual([
-    'brand-a/body',
-    'brand-b/body',
-  ]);
+  expect(m.styles.map((s) => s.name)).toEqual(['body']);
+  expect(
+    m.styles[0]?.properties.find((p) => p.property === 'line-height'),
+  ).toEqual({
+    property: 'line-height',
+    value: '12px', // 8px × 1.5, the first composition's
+    variable: 'leading/body',
+  });
+  const leading = m.collections
+    .flatMap((c) => c.variables)
+    .find((v) => v.name === 'leading/body');
+  expect(Object.values(leading?.valuesByMode ?? {}).sort()).toEqual([12, 12.8]);
+});
+
+test('a line height whose size varies where its variable has no modes stays a multiplier', async () => {
+  const m = await model(
+    collection((files) => {
+      body(files).$value.lineHeight = '{leading.body}';
+      (files['core.json'] as Record<string, unknown>).leading = {
+        body: { $type: 'number', $value: 1.5 },
+      };
+      // `space.gap` (the size) is overridden by the dark context: it varies by scheme, while
+      // `leading.body` lives in a set collection with one mode.
+      (files['brand-a/dark.json'] as Record<string, unknown>).space = {
+        gap: { $type: 'dimension', $value: { value: 10, unit: 'px' } },
+      };
+    }),
+    ['brand-a'],
+  );
+  const lineHeight = m.styles[0]?.properties.find(
+    (p) => p.property === 'line-height',
+  );
+  expect(lineHeight?.value).toBe(1.5);
+  expect(m.source.notices.join('\n')).toMatch(
+    /'leading\.body' .*kept as a multiplier/,
+  );
 });
 
 test('an em letter spacing never binds, so it splits too', async () => {
@@ -375,4 +407,267 @@ test('a member referencing a token with no variable names none, and still counts
     .find((s) => s.name === 'body')
     ?.properties.find((p) => p.property === 'font-weight');
   expect(weight?.variable).toBeUndefined();
+});
+
+/**
+ * The semantic shape: each typography token is a group whose `$root` composite references one
+ * child per property, and a brand's own theme file overrides only the child it changes.
+ */
+function semantic(edit?: (files: Record<string, DtcgNode>) => void) {
+  const brand = (name: string) => ({
+    version: '2025.10',
+    sets: {
+      core: { sources: [{ $ref: 'core.json' }] },
+      theme: {
+        sources: [{ $ref: 'theme.json' }, { $ref: `${name}/theme.json` }],
+      },
+    },
+    resolutionOrder: [{ $ref: '#/sets/core' }, { $ref: '#/sets/theme' }],
+  });
+  const files: Record<string, DtcgNode> = {
+    'core.json': {
+      font: {
+        sans: { $type: 'fontFamily', $value: ['Inter', 'sans-serif'] },
+        size: {
+          400: { $type: 'dimension', $value: { value: 16, unit: 'px' } },
+          800: { $type: 'dimension', $value: { value: 56, unit: 'px' } },
+        },
+        weight: {
+          regular: { $type: 'fontWeight', $value: 400 },
+          bold: { $type: 'fontWeight', $value: 700 },
+        },
+        leading: { tight: { $type: 'number', $value: 1.2 } },
+      },
+    },
+    'theme.json': {
+      display: {
+        $root: {
+          $type: 'typography',
+          $value: {
+            fontFamily: '{display.family}',
+            fontSize: '{display.size}',
+            fontWeight: '{display.weight}',
+            lineHeight: '{display.leading}',
+            letterSpacing: '{display.tracking}',
+          },
+        },
+        family: { $type: 'fontFamily', $value: '{font.sans}' },
+        size: { $type: 'dimension', $value: '{font.size.800}' },
+        weight: { $type: 'fontWeight', $value: '{font.weight.bold}' },
+        leading: { $type: 'number', $value: 1.2143 },
+        tracking: {
+          $type: 'dimension',
+          $value: { value: -0.56, unit: 'px' },
+        },
+      },
+    },
+    'brand-a/theme.json': {},
+    'brand-b/theme.json': {},
+    'brand-a.resolver.json': brand('brand-a'),
+    'brand-b.resolver.json': brand('brand-b'),
+  };
+  edit?.(files);
+  const document = createDocument();
+  document.hydrate(files);
+  return document;
+}
+
+const override = (
+  files: Record<string, DtcgNode>,
+  brand: string,
+  child: string,
+  token: Record<string, unknown>,
+) => {
+  const file = files[`${brand}/theme.json`] as Record<
+    string,
+    Record<string, unknown>
+  >;
+  file.display = { ...file.display, [child]: token };
+};
+
+const displayStyle = (m: FigmaModel) => {
+  const style = m.styles.find((s) => s.name === 'display');
+  return Object.fromEntries(
+    (style?.properties ?? []).map((p) => [p.property, p]),
+  );
+};
+
+const variableOf = (m: FigmaModel, name: string) =>
+  m.collections.flatMap((c) => c.variables).find((v) => v.name === name);
+
+test('semantic: a brand overriding a property child that aliases a primitive still shares the style', async () => {
+  const m = await model(
+    semantic((files) =>
+      override(files, 'brand-b', 'weight', {
+        $type: 'fontWeight',
+        $value: '{font.weight.regular}',
+      }),
+    ),
+  );
+  expect(m.styles.map((s) => s.name)).toEqual(['display']);
+  expect(m.source.notices.join('\n')).not.toMatch(/differs between/);
+  const props = displayStyle(m);
+  expect(props['font-family']?.variable).toBe('display/family');
+  expect(props['font-size']?.variable).toBe('display/size');
+  expect(props['font-weight']?.variable).toBe('display/weight');
+  expect(props['letter-spacing']?.variable).toBe('display/tracking');
+  expect(props['line-height']?.variable).toBe('display/leading');
+});
+
+test('semantic: an override holding the same value still shares the style', async () => {
+  const m = await model(
+    semantic((files) =>
+      override(files, 'brand-b', 'weight', {
+        $type: 'fontWeight',
+        $value: '{font.weight.bold}',
+      }),
+    ),
+  );
+  expect(m.styles.map((s) => s.name)).toEqual(['display']);
+});
+
+test('semantic: a size child aliasing a dimension primitive binds, typed FLOAT', async () => {
+  const m = await model(semantic());
+  expect(displayStyle(m)['font-size']).toEqual({
+    property: 'font-size',
+    value: '56px',
+    variable: 'display/size',
+  });
+  expect(variableOf(m, 'display/size')?.type).toBe('FLOAT');
+  expect(variableOf(m, 'display/weight')?.type).toBe('FLOAT');
+});
+
+test('semantic: the line height is size × multiplier in px, rounded to 2 decimals, per brand', async () => {
+  const m = await model(
+    semantic((files) =>
+      override(files, 'brand-b', 'leading', { $type: 'number', $value: 1.3 }),
+    ),
+  );
+  expect(m.styles.map((s) => s.name)).toEqual(['display']);
+  expect(displayStyle(m)['line-height']).toEqual({
+    property: 'line-height',
+    value: '68px', // 56 × 1.2143 = 68.0008
+    variable: 'display/leading',
+  });
+  const leading = variableOf(m, 'display/leading');
+  expect(leading?.type).toBe('FLOAT');
+  expect(Object.values(leading?.valuesByMode ?? {}).sort()).toEqual([68, 72.8]);
+  // The model still says what the token holds.
+  expect(leading?.source).toEqual({ $type: 'number', $value: 1.2143 });
+});
+
+test('semantic: only the size differs — the line height still gets a px value per brand', async () => {
+  const m = await model(
+    semantic((files) =>
+      override(files, 'brand-b', 'size', {
+        $type: 'dimension',
+        $value: '{font.size.400}',
+      }),
+    ),
+  );
+  expect(m.styles.map((s) => s.name)).toEqual(['display']);
+  const leading = variableOf(m, 'display/leading');
+  expect(Object.values(leading?.valuesByMode ?? {}).sort()).toEqual([
+    19.43, 68,
+  ]);
+});
+
+test('semantic: one line-height token under styles of different sizes stays a multiplier', async () => {
+  const m = await model(
+    semantic((files) => {
+      const theme = files['theme.json'] as Record<string, unknown>;
+      theme.caption = {
+        $type: 'typography',
+        $value: {
+          fontFamily: '{font.sans}',
+          fontSize: '{font.size.400}',
+          fontWeight: 400,
+          lineHeight: '{display.leading}',
+        },
+      };
+    }),
+  );
+  expect(displayStyle(m)['line-height']).toEqual({
+    property: 'line-height',
+    value: 1.2143,
+    variable: 'display/leading',
+  });
+  expect(
+    Object.values(variableOf(m, 'display/leading')?.valuesByMode ?? {}),
+  ).toContain(1.2143);
+  expect(m.source.notices.join('\n')).toMatch(
+    /'display\.leading' is the line height of styles with different font sizes/,
+  );
+});
+
+test('semantic: a literal line height in the composite is left as it is', async () => {
+  const m = await model(
+    semantic((files) => {
+      const theme = files['theme.json'] as Record<
+        string,
+        Record<string, { $value: Record<string, unknown> }>
+      >;
+      const root = theme.display?.$root;
+      if (root) root.$value.lineHeight = 1.5;
+    }),
+  );
+  expect(displayStyle(m)['line-height']).toEqual({
+    property: 'line-height',
+    value: 1.5,
+  });
+});
+
+test('semantic: a line-height child aliasing a shared token is materialized, not an alias', async () => {
+  const m = await model(
+    semantic((files) => {
+      const theme = files['theme.json'] as Record<
+        string,
+        Record<string, unknown>
+      >;
+      if (theme.display) {
+        theme.display.leading = {
+          $type: 'number',
+          $value: '{font.leading.tight}',
+        };
+      }
+    }),
+  );
+  const leading = variableOf(m, 'display/leading');
+  expect(leading?.alias).toBeUndefined();
+  expect(Object.values(leading?.valuesByMode ?? {})).toEqual(
+    expect.arrayContaining([67.2]),
+  );
+});
+
+test('semantic: the model is a valid draft.06 model', async () => {
+  const m = await model(
+    semantic((files) =>
+      override(files, 'brand-b', 'leading', { $type: 'number', $value: 1.3 }),
+    ),
+  );
+  expect(m.version).toBe('draft.06');
+  const AjvModule = await import('ajv/dist/2020.js');
+  const Ajv = (AjvModule.default ?? AjvModule) as unknown as new (
+    options: object,
+  ) => {
+    compile(
+      schema: object,
+    ): ((data: unknown) => boolean) & { errors?: unknown };
+  };
+  const validate = new Ajv({ strict: false }).compile(MODEL_SCHEMA);
+  validate(m);
+  expect(validate.errors ?? null).toBeNull();
+});
+
+test('a reference that does not resolve in the composition is typed from its raw value, not thrown on', async () => {
+  const m = await model(
+    collection((files) => {
+      (files['core.json'] as Record<string, unknown>).ghost = {
+        $type: 'color',
+        $value: '{not.defined}',
+      };
+    }),
+    ['brand-a'],
+  );
+  expect(m.version).toBe('draft.06');
 });
